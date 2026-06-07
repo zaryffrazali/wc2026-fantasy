@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 
 // ─── PALETTE (module scope so all tab components share it) ─────────────────────
 const BG = "#060d1a", CARD = "#0d1829", BORDER = "#1e2d42", TEXT = "#e2e8f0", DIM = "#64748b";
+const SANS = "'Inter','DM Sans',system-ui,sans-serif";
+const MONO = "'DM Mono','Fira Code','Courier New',monospace";  // badges / tier codes / pos tags only
 const POS_COLOR = { FWD:"#f97316", MID:"#22c55e", DEF:"#3b82f6", GK:"#a855f7" };
 const ROLE_MULT = {
   SAME:[1,1], DEF_to_ATT:[1.40,1.60], ATT_to_DEF:[0.60,0.70],
@@ -70,7 +72,7 @@ function OwnBar({ pct }) {
 }
 const Badge = ({ children, bg, fg, bd }) => (
   <span style={{ background:bg, border:`1px solid ${bd}`, color:fg, fontSize:9, padding:"1px 5px",
-    borderRadius:4, fontWeight:700, letterSpacing:0.5, whiteSpace:"nowrap" }}>{children}</span>
+    borderRadius:4, fontWeight:700, letterSpacing:0.5, whiteSpace:"nowrap", fontFamily:MONO }}>{children}</span>
 );
 const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80">🎯 SCOUT</Badge>;
 const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc">PEN</Badge>;
@@ -132,7 +134,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               color:riskMode===m?"#f97316":DIM, cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>{riskLabel[m]}</button>
           ))}
         </div>
-        <div style={{ fontSize:11, color:"#94a3b8" }}>{riskDesc[riskMode]}</div>
+        <div style={{ fontSize:13, color:"#94a3b8" }}>{riskDesc[riskMode]}</div>
       </div>
 
       {/* filters */}
@@ -183,14 +185,14 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
               style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 56px 44px 34px 56px",
-                gap:0, padding:"9px 12px", borderBottom:`1px solid ${BORDER}33`,
+                gap:0, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
               <div style={{ fontSize:10, color:i<3?"#f97316":DIM }}>{i+1}</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-                  <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{p.nat} {p.name}</span>
-                  <span style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3 }}>{p.pos}</span>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{p.nat} {p.name}</span>
+                  <span style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
                   {p.scout && p.own<10 && <ScoutBadge/>}
                   {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80">★ EDGE</Badge>}
                   {p.penTaker && <PenBadge/>}
@@ -203,14 +205,14 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   <span style={{ fontSize:11 }}>{p.form}</span>
                 </div>
               </div>
-              <div style={{ textAlign:"right", fontSize:12, color:"#94a3b8" }}>${p.price}m</div>
+              <div style={{ textAlign:"right", fontSize:15, color:"#94a3b8", fontWeight:600 }}>${p.price}m</div>
               <div style={{ textAlign:"right", fontSize:12, color:p.E_mins<60?"#eab308":"#94a3b8" }}>{Math.round(p.E_mins)}'</div>
               <div style={{ textAlign:"center" }}><RoleArrow shift={p.roleShift} note={p.roleShiftNote}/></div>
-              <div style={{ textAlign:"right", fontSize:14, fontWeight:800,
+              <div style={{ textAlign:"right", fontSize:18, fontWeight:800,
                 color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT }}>{p.displayPts.toFixed(1)}</div>
               <div style={{ textAlign:"right" }}><MispriceTag flag={p.mispricing_flag} score={p.intl_premium_score}/></div>
               <div style={{ display:"flex", justifyContent:"flex-end" }}><OwnBar pct={p.own}/></div>
-              <div style={{ textAlign:"center", fontSize:12, fontWeight:800,
+              <div style={{ textAlign:"center", fontSize:13, fontWeight:800, fontFamily:MONO,
                 color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</div>
               <div><MDDots fixtures={p.fixtures}/></div>
             </div>
@@ -645,14 +647,18 @@ export default function App() {
 
   const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"]];
   return (
-    <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:"'DM Mono','Fira Code','Courier New',monospace", fontSize:13 }}>
+    <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:13, fontVariantNumeric:"tabular-nums" }}>
       <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:"16px 20px 0" }}>
         <div style={{ maxWidth:1100, margin:"0 auto" }}>
-          <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4 }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>
+          <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>
           <div style={{ display:"flex", alignItems:"baseline", gap:12, flexWrap:"wrap" }}>
-            <div style={{ fontSize:22, fontWeight:900, letterSpacing:-1, color:"#fff" }}>WC26 <span style={{ color:"#f97316" }}>SCOUT</span></div>
-            <div style={{ fontSize:11, color:DIM }}>{rawPlayers.length} players · R-model engine{analytics ? " · analytics loaded" : ""}</div>
+            <div style={{ fontSize:24, fontWeight:900, letterSpacing:-1, color:"#fff" }}>
+              <span style={{ fontSize:17, fontWeight:400, fontStyle:"italic", color:"#fff" }}>tucheliban's </span>
+              WC26 <span style={{ color:"#f97316" }}>SCOUT</span>
+            </div>
+            <span style={{ fontSize:11, fontStyle:"italic", color:"#64748b" }}>it's coming home 🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
           </div>
+          <div style={{ fontSize:12, color:DIM, marginTop:4 }}>Points Prediction Engine · {rawPlayers.length} players · R-model engine{analytics ? " · analytics loaded" : ""}</div>
           <div style={{ display:"flex", gap:4, marginTop:12 }}>
             {TABS.map(([k,l]) => (
               <button key={k} onClick={()=>setTab(k)} style={{ padding:"8px 14px", border:"none",
