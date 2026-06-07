@@ -11,7 +11,7 @@ Search the web for the most recent (last 24-48h) news that matters for WC2026 fa
 injuries, confirmed/predicted lineups, training-ground reports, suspensions, form, and selection news.
 
 Return ONLY valid JSON. No preamble, no markdown, no backticks.
-Return a JSON ARRAY of news items (most recent first, max 25), each item:
+Return a JSON ARRAY of news items (most recent first, max 15), each item:
 {
   "id": "short-kebab-slug",
   "timestamp": "ISO 8601 datetime of the news",
@@ -30,8 +30,10 @@ async function fetchNews() {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6", max_tokens: 4000,
-      tools: [{ type: "web_search_20260209", name: "web_search" }],
+      // Sonnet 4.6, not Haiku: web_search_20260209 is invoked via programmatic tool
+      // calling, which Haiku 4.5 can't do (HTTP 400). max_tokens/max_uses kept low for cost.
+      model: "claude-sonnet-4-6", max_tokens: 1000,
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }],
       system: SYSTEM,
       messages: [{ role: "user", content: "Search for the latest WC2026 fantasy-relevant news (injuries, lineups, suspensions, training, form). Return a JSON array only, most recent first." }],
     }),
