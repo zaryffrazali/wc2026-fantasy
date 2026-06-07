@@ -1,9 +1,12 @@
 name: Update Predicted Lineups
 
 # Add ANTHROPIC_API_KEY in repo Settings → Secrets and variables → Actions → New repository secret
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: "0 */6 * * *"   # every 6 hours
+    - cron: '0 */3 * * *'   # every 3 hours
   workflow_dispatch:
 
 jobs:
@@ -18,14 +21,18 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: npm run fetch-lineups
+      - name: Fetch news
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run fetch-news
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet public/data/lineups.json; then
-            git add public/data/lineups.json
-            git commit -m "data: refresh predicted lineups"
+          git add public/data/lineups.json public/data/news.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh predicted lineups + news"
             git push
           else
-            echo "No lineup changes."
+            echo "No lineup/news changes."
           fi

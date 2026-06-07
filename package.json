@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "fetch-lineups": "node r-analytics/lineups_fetch.cjs"
+    "fetch-lineups": "node r-analytics/lineups_fetch.cjs",
+    "fetch-news": "node r-analytics/news_fetch.cjs"
   },
   "dependencies": {
     "react": "^19.2.6",

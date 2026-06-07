@@ -1,9 +1,12 @@
 name: Update Player Data
 
 # Rebuilds public/data/players.json from the FIFA Fantasy feeds via build_pool.cjs.
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: "30 5 * * *"   # daily 05:30 UTC
+    - cron: '0 */3 * * *'   # every 3 hours
   workflow_dispatch:
 
 jobs:

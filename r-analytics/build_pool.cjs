@@ -95,7 +95,8 @@ const out = players.map(fp => {
   return rec;
 });
 
-fs.writeFileSync(__dirname + "/../public/data/players.json", JSON.stringify(out, null, 1) + "\n");
+const payload = { generated_at: new Date().toISOString(), players: out };
+fs.writeFileSync(__dirname + "/../public/data/players.json", JSON.stringify(payload, null, 1) + "\n");
 const nC = out.filter(p=>p.data_tier==="curated").length;
 const nT = new Set(out.map(p=>p.team)).size;
 console.log(`pool built: ${out.length} players, ${nT} nations, ${nC} curated stars matched`);
