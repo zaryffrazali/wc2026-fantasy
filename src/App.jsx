@@ -87,6 +87,56 @@ const CLUSTER_TIP = {
   TECHNICAL_LOWBLOCK:"Low block, technical — fewer goals, high clean-sheet prob; GKs & CBs valuable",
   BALANCED_TRANSITIONAL:"Balanced, transitions both ways — creative mids & mobile forwards most valuable" };
 const TIER_TIP = { S:"S-Tier — top 8% by gambling score. Build-around pick.", A:"A-Tier — top 25%. Strong core piece.", B:"B-Tier — top 50%. Solid contributor.", C:"C-Tier — situational/fixture-dependent.", D:"D-Tier — avoid / bench fodder." };
+
+// ── filter predicates (Change A) ───────────────────────────────────────────────
+const overperfTeam = p => p.giant_killer_flag || (p.team_overperf_predicted||0) > 0.3;  // ~quadrant Q2/Q3
+const ROLE_PREDS = {
+  pen:p=>p.penTaker, fk:p=>p.fkTaker, corner:p=>p.cornerTaker,
+  roleUp:p=>/to_ATT|DEF_to_ATT/.test(p.roleShift||""),
+  setCombo:p=>[p.penTaker,p.fkTaker,p.cornerTaker].filter(Boolean).length>=2,
+  csFort:p=>(p.csP||0)>0.52, scout:p=>p.own<10,
+  budgetEnabler:p=>p.price<=5.0 && p.pts_balanced>12,
+  multiThreat:p=>(p.xGp90||0)>0.25 && (p.xAp90||0)>0.25,
+  captainViable:p=>p.captainSlot===3 && p.startProb>0.90,
+  cardSafe:p=>p.cardRisk==="low", koThreat:p=>p.advP>75, overperfTeam,
+  inForm:p=>p.qualifyingForm==="EXCELLENT"||p.qualifyingForm==="GOOD",
+};
+const ROLE_DEFS = [["pen","🎯 PEN"],["fk","🦶 FK"],["corner","📐 CORNER"],["roleUp","⬆️ ROLE↑"],
+  ["setCombo","🔫 SET-PIECE COMBO"],["csFort","🧤 CS FORT"],["scout","👁 SCOUT"],["budgetEnabler","📊 BUDGET ENABLER"],
+  ["multiThreat","💥 MULTI THREAT"],["captainViable","⚡ CAPTAIN VIABLE"],["cardSafe","🃏 CARD SAFE"],
+  ["koThreat","🏆 KO THREAT"],["overperfTeam","⭐ OVERPERF TEAM"],["inForm","⭐ IN FORM"]];
+const SMART_PREDS = {
+  captainPicks:p=>p.captainSlot===3 && p.startProb>0.90 && (p.fixtures?.[0]?.oddsWin||0)>0.65,
+  scoutTargets:p=>p.own<10 && p.pts_balanced>10 && p.startProb>0.85,
+  budgetBuilders:p=>p.price<=5.0 && p.pts_balanced>12 && p.startProb>0.85,
+  roleArb:p=>/ATT/.test(p.roleShift||"") && p.own<20 && p.mispricing_flag==="UNDERRATED",
+  defHolds:p=>(p.pos==="DEF"||p.pos==="GK") && (p.csP||0)>0.50 && p.advP>65 && p.cardRisk==="low",
+  diffStack:p=>p.own<15 && overperfTeam(p) && (p.pts_diff||0)>20,
+};
+const SMART_DEFS = [["captainPicks","🎯 MD1 Captain Picks"],["scoutTargets","🔍 Scouting Bonus"],
+  ["budgetBuilders","💰 Budget Builders"],["roleArb","⬆️ Role Arbitrage"],["defHolds","🏰 Defensive Holds"],["diffStack","📈 Differential Stack"]];
+const CLUSTERS = ["HIGH_PRESS_POSSESSION","COUNTER_DEFENSIVE","DIRECT_PHYSICAL","TECHNICAL_LOWBLOCK","BALANCED_TRANSITIONAL"];
+const FILTER_DEFAULT = { roles:{}, smart:null, md:null, fixStr:"all", teamPlay:"All", oppPlay:"All", xMins:60, advMin:40, ptsMin:0 };
+function passesFilters(p, F, cl) {
+  for (const k in F.roles) if (F.roles[k] && !ROLE_PREDS[k](p)) return false;
+  if (F.smart && SMART_PREDS[F.smart] && !SMART_PREDS[F.smart](p)) return false;
+  const fx = F.md!=null ? (p.fixtures||[])[F.md] : null;
+  if (F.md!=null && F.fixStr!=="all") {
+    const w = fx?.oddsWin ?? 0;
+    if (F.fixStr==="easy" && !(w>0.65)) return false;
+    if (F.fixStr==="medium" && !(w>=0.40 && w<=0.65)) return false;
+    if (F.fixStr==="hard" && !(w<0.40)) return false;
+  }
+  if (F.teamPlay!=="All" && (p.team_cluster||"").replace(/_\d+$/,"")!==F.teamPlay) return false;
+  if (F.md!=null && F.oppPlay!=="All" && (!fx || cl[fx.opponent]!==F.oppPlay)) return false;
+  if ((p.startProb||0)*(p.minsIfStarted||0) < F.xMins) return false;
+  if ((p.advP||0) < F.advMin) return false;
+  if ((p.pts_balanced||0) < F.ptsMin) return false;
+  return true;
+}
+const activeFilterCount = F => Object.values(F.roles).filter(Boolean).length + (F.smart?1:0) + (F.md!=null?1:0)
+  + (F.fixStr!=="all"?1:0) + (F.teamPlay!=="All"?1:0) + (F.oppPlay!=="All"?1:0)
+  + (F.xMins!==60?1:0) + (F.advMin!==40?1:0) + (F.ptsMin!==0?1:0);
 const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title="Scouting Bonus eligible — under 10% owned. +2 bonus pts when scoring >4 in a match. Mini-league swing pick.">🎯 SCOUT</Badge>;
 const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc" title="Confirmed penalty taker — adds +0.5 pts EV per game from penalties.">PEN</Badge>;
 function RoleArrow({ shift, note }) {
@@ -127,10 +177,68 @@ function Sparkline({ matches, w=72, h=22 }) {
   );
 }
 
+// ─── FILTER PANEL (Change A) ────────────────────────────────────────────────────
+function FilterPanel({ F, setF, show, setShow, pool }) {
+  const n = activeFilterCount(F);
+  const toggleRole = k => setF(s=>({...s, roles:{...s.roles, [k]:!s.roles[k]}}));
+  const setSmart = k => setF(s=>({...s, smart:s.smart===k?null:k, md:k==="captainPicks"?0:s.md, fixStr:k==="captainPicks"?"easy":s.fixStr}));
+  const set = (k,v) => setF(s=>({...s, [k]:v}));
+  const pills = [];
+  Object.keys(F.roles).forEach(k=>{ if(F.roles[k]) pills.push([(ROLE_DEFS.find(d=>d[0]===k)||[,k])[1], ()=>toggleRole(k)]); });
+  if(F.smart) pills.push([(SMART_DEFS.find(d=>d[0]===F.smart)||[,F.smart])[1], ()=>set("smart",null)]);
+  if(F.md!=null) pills.push([`MD${F.md+1}`, ()=>set("md",null)]);
+  if(F.fixStr!=="all") pills.push([`Fix: ${F.fixStr}`, ()=>set("fixStr","all")]);
+  if(F.teamPlay!=="All") pills.push([`Team: ${F.teamPlay.replace(/_/g," ")}`, ()=>set("teamPlay","All")]);
+  if(F.oppPlay!=="All") pills.push([`Opp: ${F.oppPlay.replace(/_/g," ")}`, ()=>set("oppPlay","All")]);
+  if(F.xMins!==60) pills.push([`xMins ≥ ${F.xMins}'`, ()=>set("xMins",60)]);
+  if(F.advMin!==40) pills.push([`adv ≥ ${F.advMin}%`, ()=>set("advMin",40)]);
+  if(F.ptsMin!==0) pills.push([`xPts ≥ ${F.ptsMin}`, ()=>set("ptsMin",0)]);
+  const btn = (a,ex={}) => ({ padding:"5px 9px", borderRadius:6, fontFamily:"inherit", fontSize:11, cursor:"pointer",
+    border:`1px solid ${a?"#f97316":BORDER}`, background:a?"#f9731618":"transparent", color:a?"#f97316":DIM, ...ex });
+  const sel = { background:BG, border:`1px solid ${BORDER}`, borderRadius:6, padding:"5px 8px", color:TEXT, fontFamily:"inherit", fontSize:11 };
+  return (
+    <div style={{ marginBottom:12 }}>
+      <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+        <button onClick={()=>setShow(v=>!v)} style={btn(n>0,{fontSize:12,padding:"6px 12px"})}>⚙ FILTERS{n>0?` (${n} active)`:""}</button>
+        {pills.map(([l,clr],i)=>(
+          <span key={i} style={{ display:"inline-flex", alignItems:"center", gap:5, background:"#f9731614", border:"1px solid #f9731644", color:"#f97316", borderRadius:12, padding:"3px 8px", fontSize:11 }}>
+            {l}<span onClick={clr} style={{ cursor:"pointer", fontWeight:700 }}>×</span></span>))}
+        {n>0 && <button onClick={()=>setF(FILTER_DEFAULT)} style={btn(false,{marginLeft:"auto", color:"#ff6b6b", border:"1px solid #ff6b6b55"})}>CLEAR ALL</button>}
+      </div>
+      {show && (
+        <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px", marginTop:8 }}>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>SMART FILTERS</div>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
+            {SMART_DEFS.map(([k,l])=>(<button key={k} onClick={()=>setSmart(k)} style={btn(F.smart===k)}>{l} ({pool.filter(SMART_PREDS[k]).length})</button>))}
+          </div>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>PLAYER ROLE</div>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
+            {ROLE_DEFS.map(([k,l])=>(<button key={k} onClick={()=>toggleRole(k)} style={btn(!!F.roles[k])}>{l}</button>))}
+          </div>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>FIXTURES</div>
+          <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:12, alignItems:"center" }}>
+            <label style={{fontSize:11,color:DIM}}>Matchday <select value={F.md==null?"":F.md} onChange={e=>set("md",e.target.value===""?null:+e.target.value)} style={sel}><option value="">—</option><option value="0">MD1</option><option value="1">MD2</option><option value="2">MD3</option></select></label>
+            {F.md!=null && <label style={{fontSize:11,color:DIM}}>Strength <select value={F.fixStr} onChange={e=>set("fixStr",e.target.value)} style={sel}><option value="all">All</option><option value="easy">Easy &gt;65%</option><option value="medium">Medium 40-65%</option><option value="hard">Hard &lt;40%</option></select></label>}
+            <label style={{fontSize:11,color:DIM}}>Team style <select value={F.teamPlay} onChange={e=>set("teamPlay",e.target.value)} style={sel}><option>All</option>{CLUSTERS.map(c=><option key={c} value={c}>{c.replace(/_/g," ")}</option>)}</select></label>
+            {F.md!=null && <label style={{fontSize:11,color:DIM}}>Opp style <select value={F.oppPlay} onChange={e=>set("oppPlay",e.target.value)} style={sel}><option>All</option>{CLUSTERS.map(c=><option key={c} value={c}>{c.replace(/_/g," ")}</option>)}</select></label>}
+          </div>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>THRESHOLDS</div>
+          <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
+            <label style={{fontSize:11,color:DIM}}>Min minutes: {F.xMins}'<br/><input type="range" min={45} max={90} value={F.xMins} onChange={e=>set("xMins",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
+            <label style={{fontSize:11,color:DIM}}>Survival: {F.advMin}%+<br/><input type="range" min={40} max={90} value={F.advMin} onChange={e=>set("advMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
+            <label style={{fontSize:11,color:DIM}}>Min xPts: {F.ptsMin}<br/><input type="range" min={0} max={40} value={F.ptsMin} onChange={e=>set("ptsMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── TAB: PLAYER TABLE ──────────────────────────────────────────────────────────
 function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch,
-                          ownMax, setOwnMax, mispricedOnly, setMispricedOnly }) {
+                          ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
+                          F, setF, showFilters, setShowFilters, allPlayers }) {
   const riskLabel = { safe:"🛡️ Safe", balanced:"⚖️ Balanced", diff:"🎯 Differential" };
   const riskDesc  = { safe:"Median pts — low-variance template picks",
                       balanced:"Mean expected pts — default projection",
@@ -172,6 +280,9 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
             style={{ width:70, accentColor:"#f97316" }} />
         </div>
       </div>
+
+      {/* filter panel */}
+      <FilterPanel F={F} setF={setF} show={showFilters} setShow={setShowFilters} pool={allPlayers||[]} />
 
       {/* sort tabs */}
       <div style={{ display:"flex", gap:2, borderBottom:`1px solid ${BORDER}` }}>
@@ -679,6 +790,8 @@ export default function App() {
   const [ownMax, setOwnMax] = useState(100);
   const [selected, setSelected] = useState(null);
   const [mispricedOnly, setMispricedOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [F, setF] = useState(FILTER_DEFAULT);
   const [tierPos, setTierPos] = useState("ALL");
   const [pureDiff, setPureDiff] = useState(false);
 
@@ -698,6 +811,9 @@ export default function App() {
   const formById = useMemo(() => {
     const m = {}; (analytics?.form_log || []).forEach(r => { (m[r.id] = m[r.id] || []).push(r); }); return m;
   }, [analytics]);
+  const clusterByTeam = useMemo(() => {
+    const m = {}; (analytics?.team_clusters || []).forEach(t => { m[t.team] = (t.team_cluster||"").replace(/_\d+$/,""); }); return m;
+  }, [analytics]);
 
   const players = useMemo(() => {
     if (!rawPlayers) return [];
@@ -706,6 +822,7 @@ export default function App() {
       .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.team.toLowerCase().includes(search.toLowerCase()))
       .filter(p => p.own <= ownMax)
       .filter(p => !mispricedOnly || ((p.roleShift !== "SAME" || p.mispricing_flag === "UNDERRATED") && p.own < 20))
+      .filter(p => passesFilters(p, F, clusterByTeam))
       .map(p => ({ ...p, ...computePrediction(p, riskMode), formMatches: formById[p.id] || [] }))
       .sort((a,b) => {
         if (sortBy === "displayPts") return b.displayPts - a.displayPts;
@@ -715,7 +832,7 @@ export default function App() {
         if (sortBy === "tier")       return (b.tier_score||0) - (a.tier_score||0);
         return 0;
       });
-  }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById]);
+  }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
 
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
@@ -746,7 +863,8 @@ export default function App() {
 
       <div style={{ maxWidth:1100, margin:"0 auto", padding:"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
-          posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly }} />}
+          posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
+          F, setF, showFilters, setShowFilters, allPlayers: rawPlayers }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
