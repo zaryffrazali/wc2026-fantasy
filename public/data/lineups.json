@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-06-07T12:00:00Z",
+  "teams": {
+    "Spain": {
+      "team": "Spain",
+      "flag": "🇪🇸",
+      "formation": "4-3-3",
+      "confidence": "SEED_DATA",
+      "last_news_date": "seed (placeholder until lineups_fetch runs)",
+      "manager": "Luis de la Fuente",
+      "players": [
+        { "name": "Unai Simón", "position": "GK", "slot": "GK", "status": "CERTAIN", "doubt_reason": null, "caps": 45, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Pedro Porro", "position": "DEF", "slot": "RB", "status": "PROBABLE", "doubt_reason": null, "caps": 18, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Robin Le Normand", "position": "DEF", "slot": "RCB", "status": "CERTAIN", "doubt_reason": null, "caps": 30, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Aymeric Laporte", "position": "DEF", "slot": "LCB", "status": "CERTAIN", "doubt_reason": null, "caps": 40, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Marc Cucurella", "position": "DEF", "slot": "LB", "status": "CERTAIN", "doubt_reason": null, "caps": 28, "in_fantasy_pool": true, "fantasy_price": 5.1, "fantasy_xpts": null },
+        { "name": "Rodri", "position": "MID", "slot": "CDM", "status": "DOUBT", "doubt_reason": "returning from knee injury — minutes managed", "caps": 60, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Pedri", "position": "MID", "slot": "CM", "status": "CERTAIN", "doubt_reason": null, "caps": 35, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
+        { "name": "Dani Olmo", "position": "MID", "slot": "CAM", "status": "PROBABLE", "doubt_reason": null, "caps": 45, "in_fantasy_pool": true, "fantasy_price": 7.7, "fantasy_xpts": null },
+        { "name": "Lamine Yamal", "position": "FWD", "slot": "RW", "status": "CERTAIN", "doubt_reason": null, "caps": 25, "in_fantasy_pool": true, "fantasy_price": 10.0, "fantasy_xpts": null },
+        { "name": "Mikel Oyarzabal", "position": "FWD", "slot": "ST", "status": "PROBABLE", "doubt_reason": null, "caps": 38, "in_fantasy_pool": true, "fantasy_price": 5.0, "fantasy_xpts": null },
+        { "name": "Nico Williams", "position": "FWD", "slot": "LW", "status": "CERTAIN", "doubt_reason": null, "caps": 30, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null }
+      ],
+      "key_absences": ["Gavi — recovering from long-term knee injury", "Carvajal — fitness doubt"],
+      "tactical_note": "Possession-dominant 4-3-3, high press, full-backs provide width with Yamal/Williams inverting.",
+      "fantasy_note": "Stack Spain's attack — easy group fixtures (Cape Verde, Saudi Arabia) and Oyarzabal is first-choice striker at budget price. Cucurella the value clean-sheet route."
+    }
+  }
+}
