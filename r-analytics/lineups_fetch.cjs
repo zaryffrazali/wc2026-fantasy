@@ -12,7 +12,7 @@ const fs = require("fs"), path = require("path");
 const TEAMS_PER_RUN = 8;
 const DELAY_MS = 3000;             // no web search → tiny requests → rate limit is no longer a concern
 const CHECKPOINT_FILE = "public/data/lineups_checkpoint.json";
-const MODEL = "claude-sonnet-4-6"; // no tools now, so Haiku 4.5 would also work (20× cheaper) — see report
+const MODEL = "claude-haiku-4-5-20251001"; // no tools → Haiku works fine (~20× cheaper than Sonnet)
 const MAX_TOKENS = 1000;
 
 const TEST = process.argv.includes("--test");
