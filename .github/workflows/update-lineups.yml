@@ -6,7 +6,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 7 * * *'   # once daily at 07:00 UTC (3pm MYT)
+    - cron: '0 1,5,9,13,17,21 * * *'   # every 4h, 6×/day → 6 runs × 8 teams = 48 teams/day
   workflow_dispatch:
 
 jobs:
@@ -25,9 +25,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data/lineups.json
+          git add public/data/lineups.json public/data/lineups_checkpoint.json
           if ! git diff --cached --quiet; then
-            git commit -m "data: refresh predicted lineups"
+            git commit -m "data: refresh predicted lineups (batch)"
             git push
           else
             echo "No lineup changes."
