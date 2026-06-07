@@ -62,11 +62,20 @@ squads_out <- list(safe = squad_compact(os$safe), balanced = squad_compact(os$ba
 clusters_out <- cl %>% select(team, team_cluster, elo_approx)
 
 # ── SECTION E — merge into players.json (ADD-only) + write analytics.json ──────
-seed <- fromJSON(file.path(PUBLIC_DATA_DIR, "players.json"))
+raw <- fromJSON(file.path(PUBLIC_DATA_DIR, "players.json"))
+# players.json may be a bare array (legacy) or { generated_at, players } (wrapped)
+if (is.list(raw) && !is.null(raw$players)) {
+  seed <- raw$players
+} else {
+  seed <- raw
+}
 ana_cols <- setdiff(names(analytics_players), "id")          # all analytics outputs
 seed_base <- seed %>% select(-any_of(ana_cols))              # drop stale analytics, keep base schema
 merged <- seed_base %>% left_join(analytics_players, by="id")  # write FRESH analytics every run
-write_json(merged, file.path(PUBLIC_DATA_DIR, "players.json"), auto_unbox=TRUE, pretty=TRUE, na="null")
+# write back in the wrapped { generated_at, players } shape so the dashboard's
+# "Data refreshed …" timestamp survives a pipeline run (the UI reads both shapes)
+payload <- list(generated_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"), players = merged)
+write_json(payload, file.path(PUBLIC_DATA_DIR, "players.json"), auto_unbox=TRUE, pretty=TRUE, na="null")
 cat("SECTION E: players.json merged (", length(ana_cols), "analytics fields refreshed)\n")
 
 n_under <- sum(analytics_players$mispricing_flag=="UNDERRATED")

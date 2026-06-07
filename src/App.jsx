@@ -209,11 +209,11 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
         <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px", marginTop:8 }}>
           <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>SMART FILTERS</div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
-            {SMART_DEFS.map(([k,l])=>(<button key={k} onClick={()=>setSmart(k)} style={btn(F.smart===k)}>{l} ({pool.filter(SMART_PREDS[k]).length})</button>))}
+            {SMART_DEFS.map(([k,l])=>(<button key={k} className="smart-filter" onClick={()=>setSmart(k)} style={btn(F.smart===k)}>{l} ({pool.filter(SMART_PREDS[k]).length})</button>))}
           </div>
           <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>PLAYER ROLE</div>
           <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
-            {ROLE_DEFS.map(([k,l])=>(<button key={k} onClick={()=>toggleRole(k)} style={btn(!!F.roles[k])}>{l}</button>))}
+            {ROLE_DEFS.map(([k,l])=>(<button key={k} className="smart-filter" onClick={()=>toggleRole(k)} style={btn(!!F.roles[k])}>{l}</button>))}
           </div>
           <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>FIXTURES</div>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:12, alignItems:"center" }}>
@@ -253,7 +253,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         <div style={{ fontSize:9, letterSpacing:3, color:DIM, marginBottom:8 }}>RISK PREFERENCE</div>
         <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
           {["safe","balanced","diff"].map(m => (
-            <button key={m} onClick={()=>setRiskMode(m)} style={{ padding:"6px 13px", borderRadius:6,
+            <button key={m} className="risk-btn" onClick={()=>setRiskMode(m)} style={{ padding:"6px 13px", borderRadius:6,
               border:`1px solid ${riskMode===m?"#f97316":BORDER}`, background:riskMode===m?"#f9731618":"transparent",
               color:riskMode===m?"#f97316":DIM, cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>{riskLabel[m]}</button>
           ))}
@@ -267,7 +267,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:6, padding:"7px 11px",
             color:TEXT, fontFamily:"inherit", fontSize:12, flex:"1 1 160px", minWidth:0, outline:"none" }} />
         {["ALL","FWD","MID","DEF","GK"].map(pos => (
-          <button key={pos} onClick={()=>setPosFilter(pos)} style={{ padding:"7px 12px", borderRadius:6,
+          <button key={pos} className="filter-btn" onClick={()=>setPosFilter(pos)} style={{ padding:"7px 12px", borderRadius:6,
             fontFamily:"inherit", fontSize:12, cursor:"pointer",
             border:`1px solid ${posFilter===pos?(POS_COLOR[pos]||"#f97316"):BORDER}`,
             background:posFilter===pos?`${(POS_COLOR[pos]||"#f97316")}18`:"transparent",
@@ -290,7 +290,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       {/* sort tabs */}
       <div style={{ display:"flex", gap:2, borderBottom:`1px solid ${BORDER}` }}>
         {[["displayPts","xPts"],["value","Value/£"],["price","Price"],["own","Own"],["tier","Tier"]].map(([k,l])=>(
-          <button key={k} onClick={()=>setSortBy(k)} style={{ padding:"6px 12px", border:"none",
+          <button key={k} className="sort-tab" onClick={()=>setSortBy(k)} style={{ padding:"6px 12px", border:"none",
             borderBottom:`2px solid ${sortBy===k?"#f97316":"transparent"}`, background:"transparent",
             color:sortBy===k?"#f97316":DIM, cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>{l}</button>
         ))}
@@ -765,12 +765,12 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
       {/* tier tabs + filters */}
       <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
         {["S","A","B"].map(t=>(
-          <button key={t} onClick={()=>setTierTab(t)} style={{ padding:"7px 16px", borderRadius:6, fontFamily:"inherit", fontSize:13, fontWeight:tierTab===t?800:400, cursor:"pointer",
+          <button key={t} className="tier-tab" onClick={()=>setTierTab(t)} style={{ padding:"7px 16px", borderRadius:6, fontFamily:"inherit", fontSize:13, fontWeight:tierTab===t?800:400, cursor:"pointer",
             border:`1px solid ${tierTab===t?TIER_COLOR[t]:BORDER}`, background:tierTab===t?`${TIER_COLOR[t]}18`:"transparent", color:tierTab===t?TIER_COLOR[t]:DIM }}>{t} TIER</button>
         ))}
         <span style={{ width:12 }} />
         {["ALL","FWD","MID","DEF","GK"].map(pos=>(
-          <button key={pos} onClick={()=>setPosFilter(pos)} style={{ padding:"6px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
+          <button key={pos} className="filter-btn" onClick={()=>setPosFilter(pos)} style={{ padding:"6px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
             border:`1px solid ${posFilter===pos?(POS_COLOR[pos]||"#f97316"):BORDER}`, background:posFilter===pos?`${(POS_COLOR[pos]||"#f97316")}18`:"transparent", color:posFilter===pos?(POS_COLOR[pos]||"#f97316"):DIM }}>{pos}</button>
         ))}
         <button onClick={()=>setPureDiff(v=>!v)} style={{ padding:"6px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", marginLeft:"auto",
@@ -1282,8 +1282,8 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the Causal tab first</b> — open the Causal tab → Teams to Attack section. Find the weakest defences facing your matchday; these are captain targets.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Use smart filters</b> — "MD1 Captain Picks" surfaces late-kickoff players with easy fixtures.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check for mispricing</b> — "Role Arbitrage" finds players deployed more offensively internationally than their club price implies.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — check the Lineups tab (predicted XIs updated every 6 hours). Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check team announcements</b> — Check the Lineups tab news notes and latest team announcements. One late withdrawal can change your captain decision.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — check the Lineups tab (predicted XIs updated every 3 hours). Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the News tab</b> — Check the 📡 News tab for the latest injury and lineup news before each matchday deadline. One late withdrawal can change your captain decision.</li>
         <li><b style={{color:"#fff"}}>Use Optimal Squads for budget</b> — Start from the Balanced squad, then swap in your differentials.</li>
       </ol>
 
@@ -1324,6 +1324,7 @@ function GlobalCSS() {
     .tabbar::-webkit-scrollbar { height: 3px; }
     .tabbar::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
     .urlbadge:hover { border-color:#f97316 !important; color:#fff !important; }
+    .filter-btn, .sort-tab, .risk-btn, .smart-filter, .tier-tab, .news-filter { min-height: 44px; }
     @media (max-width:768px){
       .tabwrap { position: relative; }
       .tabwrap::after { content:""; position:absolute; top:0; right:0; bottom:0; width:30px; pointer-events:none; background:linear-gradient(to right, transparent, #060d1a); }
@@ -1438,7 +1439,7 @@ function NewsTab({ news, mobile }) {
     <div><Header />
       <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:10 }}>
         {FILTERS.map(([k,l]) => (
-          <button key={k} onClick={()=>setFilter(k)} style={{ padding:"8px 11px", minHeight:mobile?44:0, borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
+          <button key={k} className="news-filter" onClick={()=>setFilter(k)} style={{ padding:"8px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
             border:`1px solid ${filter===k?"#f97316":BORDER}`, background:filter===k?"#f9731618":"transparent", color:filter===k?"#f97316":DIM }}>{l}</button>
         ))}
       </div>

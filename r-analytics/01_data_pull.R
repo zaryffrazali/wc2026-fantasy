@@ -16,7 +16,13 @@ norm_name <- function(x) x |> tolower() |> stringi::stri_trans_general("Latin-AS
 last_tok  <- function(x) word(norm_name(x), -1)
 
 # ── SECTION A — seed crosswalk ────────────────────────────────────────────────
-seed_players <- fromJSON(file.path(PUBLIC_DATA_DIR, "players.json"))
+raw <- fromJSON(file.path(PUBLIC_DATA_DIR, "players.json"))
+# players.json may be a bare array (legacy) or { generated_at, players } (wrapped)
+if (is.list(raw) && !is.null(raw$players)) {
+  seed_players <- raw$players
+} else {
+  seed_players <- raw
+}
 # 07 merges computed analytics back into players.json — strip them so re-runs are
 # idempotent (otherwise bind_cols/joins downstream duplicate these columns).
 ANALYTICS_COLS <- c("intl_premium_xG","intl_premium_xA","intl_premium_score","mispricing_flag",

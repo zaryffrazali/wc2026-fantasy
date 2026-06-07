@@ -18,7 +18,7 @@ Per-team failures are logged and stored as `null`; the run continues.
 
 ## 3. Manual refresh via GitHub Actions
 Repo → **Actions → "Update Predicted Lineups" → Run workflow**.
-Also runs automatically every 6 hours (`cron: 0 */6 * * *`) and commits the file if it changed.
+Also runs automatically every 3 hours (`cron: 0 */3 * * *`) and commits the file if it changed.
 
 ## 4. Verify it worked
 - `public/data/lineups.json` has `generated_at` (recent) and a `teams` object.
