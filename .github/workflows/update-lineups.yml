@@ -12,6 +12,8 @@ on:
 jobs:
   fetch-lineups:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,9 +28,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/lineups.json public/data/lineups_checkpoint.json
-          if ! git diff --cached --quiet; then
-            git commit -m "data: refresh predicted lineups (batch)"
-            git push
-          else
+          if git diff --staged --quiet; then
             echo "No lineup changes."
+          else
+            git commit -m "data: refresh predicted lineups (batch)"
+            git pull --rebase --autostash origin main   # handle 'fetch first' rejection from concurrent runs
+            git push
           fi
