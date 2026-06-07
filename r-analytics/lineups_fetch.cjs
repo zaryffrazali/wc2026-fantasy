@@ -2,19 +2,18 @@
 //   ANTHROPIC_API_KEY=sk-... node r-analytics/lineups_fetch.cjs            (batch of 8)
 //   ANTHROPIC_API_KEY=sk-... node r-analytics/lineups_fetch.cjs --test     (Spain only, verbose)
 //
-// ROOT CAUSE of the 429s: the web_search tool injects fetched page content back into the
-// request as INPUT tokens. One uncapped search can push a single request past the 30k
-// tokens/minute ceiling — so it 429s on the very first team no matter how long we pause.
-// Pacing can't fix a single over-budget request. The real levers are: cap searches with
-// `max_uses`, use Haiku (separate, higher TPM bucket, far cheaper tokens), keep output small.
+// NO WEB SEARCH: web_search injected tens of thousands of input tokens per call, hitting the
+// 30k tokens/min limit on the very first team regardless of pacing. We dropped the tool entirely
+// and rely on the model's training knowledge of WC2026 squads/formations. Lineups are AI-PREDICTED
+// (the UI labels them as such), refreshed daily. Tokens per call are now tiny, so pacing is a
+// non-issue (3s between teams).
 const fs = require("fs"), path = require("path");
 
 const TEAMS_PER_RUN = 8;
-const DELAY_MS = 90000;            // measured ~16.6k input tok/team → 15s re-429s; 90s keeps <30k/min
+const DELAY_MS = 3000;             // no web search → tiny requests → rate limit is no longer a concern
 const CHECKPOINT_FILE = "public/data/lineups_checkpoint.json";
-const MODEL = "claude-sonnet-4-6";   // Haiku 4.5 can't use web_search_20260209 (no programmatic tool calling)
-const MAX_TOKENS = 800;                       // FIX 3 — lineup JSON needs nothing close to 2000
-const MAX_SEARCHES = 2;                        // cap web_search input-token blow-up (real fix)
+const MODEL = "claude-sonnet-4-6"; // no tools now, so Haiku 4.5 would also work (20× cheaper) — see report
+const MAX_TOKENS = 1000;
 
 const TEST = process.argv.includes("--test");
 const KEY = process.env.ANTHROPIC_API_KEY;
@@ -27,13 +26,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const teams = fs.readFileSync(path.join(__dirname, "data", "team_elos.csv"), "utf8")
   .split("\n").slice(1).filter(Boolean).map((l) => l.split(",")[0]);
 
-// FIX 1 — minimal system prompt (<200 words), minimal JSON (name, slot, status, doubt_reason)
-const SYSTEM = `You return predicted WC2026 starting XIs as compact JSON only — no prose, no markdown.
-Use at most ${MAX_SEARCHES} web searches for the latest lineup/injury news, then answer.
+const SYSTEM = `You are a football analyst. Based on your knowledge of WC 2026 squads, typical formations, and player availability as of mid-2026, predict the most likely starting XI for the given national team. Use your training knowledge — do not say you cannot access live data, just give your best prediction. Return only valid JSON, no markdown.
 Output exactly this shape and nothing else:
-{"team":"","flag":"","formation":"4-3-3","confidence":"HIGH|MEDIUM|LOW","manager":"",
-"players":[{"name":"","slot":"GK|LB|LCB|RCB|RB|CDM|CM|CAM|LM|RM|LW|ST|RW","status":"CERTAIN|PROBABLE|DOUBT|OUT","doubt_reason":null}],
-"key_absences":[]}
+{"team":"","flag":"emoji flag","formation":"4-3-3","manager":"","players":[{"name":"","slot":"GK|LB|LCB|RCB|RB|CDM|CM|CAM|LM|RM|LW|ST|RW","status":"CERTAIN|PROBABLE|DOUBT|OUT","doubt_reason":null}],"key_absences":[],"tactical_note":"","fantasy_note":""}
 Give 11 players. Keep every string short.`;
 
 // derive position from slot so the UI keeps its colours without spending output tokens on it
@@ -47,7 +42,6 @@ async function callApi(team) {
     headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: MODEL, max_tokens: MAX_TOKENS,
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: MAX_SEARCHES }],
       system: SYSTEM,
       messages: [{ role: "user", content: `Predicted starting XI for ${team} at the 2026 World Cup. JSON only.` }],
     }),
@@ -67,18 +61,19 @@ function parseLineup(apiJson, team) {
   if (s < 0 || e < 0) throw new Error("no JSON in response");
   const obj = JSON.parse(clean.slice(s, e + 1));
   obj.team = obj.team || team;
-  (obj.players || []).forEach((p) => { p.position = SLOT_POS[p.slot] || "MID"; });   // re-add position
+  obj.confidence = "AI_PREDICTED";                                            // always AI-predicted now
+  (obj.players || []).forEach((p) => { p.position = SLOT_POS[p.slot] || "MID"; });
   return obj;
 }
 
-// one retry after a 60s pause on 429; a second 429 (or other error) is thrown to the caller
+// on 429: wait 20s, retry once; a second 429 (or other error) is thrown so the caller skips the team
 async function fetchWithRetry(team) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try { return parseLineup(await callApi(team), team); }
     catch (e) {
       if (e.status === 429 && attempt === 0) {
-        console.log(`  ⏳ 429 rate-limited on ${team} — pausing 60s before one retry`);
-        await sleep(60000);
+        console.log(`  ⏳ 429 on ${team} — waiting 20s then one retry`);
+        await sleep(20000);
         continue;
       }
       throw e;
@@ -96,11 +91,9 @@ function writeCheckpoint(idx) {
 }
 
 async function runTest() {
-  console.log(`── TEST MODE — fetching Spain only (model ${MODEL}, max_tokens ${MAX_TOKENS}, max_uses ${MAX_SEARCHES}) ──`);
+  console.log(`── TEST MODE — Spain only (model ${MODEL}, max_tokens ${MAX_TOKENS}, no web search) ──`);
   const raw = await callApi("Spain");
-  console.log("\nUSAGE:", JSON.stringify(raw.usage, null, 2));
-  console.log("stop_reason:", raw.stop_reason);
-  console.log("\nFULL RESPONSE:\n", JSON.stringify(raw, null, 2));
+  console.log("\nUSAGE:", JSON.stringify(raw.usage), "| stop_reason:", raw.stop_reason);
   console.log("\nPARSED LINEUP:\n", JSON.stringify(parseLineup(raw, "Spain"), null, 2));
 }
 
