@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T16:14:43.343Z",
+  "generated_at": "2026-06-07T18:02:24.562Z",
   "teams": {
     "Spain": {
       "team": "Spain",
@@ -739,6 +739,742 @@
       ],
       "tactical_note": "Belgium transitions with young core led by De Bruyne. Defensive experience crucial with aging backline.",
       "fantasy_note": "De Bruyne highest fantasy value. Lukaku and Doku provide attacking upside if fit.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Germany": {
+      "team": "Germany",
+      "flag": "🇩🇪",
+      "formation": "4-2-3-1",
+      "manager": "Julian Nagelsmann",
+      "players": [
+        {
+          "name": "Manuel Neuer",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "David Raum",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age/form dependency",
+          "position": "DEF"
+        },
+        {
+          "name": "Antonio Rüdiger",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Jonathan Tah",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition for place",
+          "position": "DEF"
+        },
+        {
+          "name": "Joshua Kimmich",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Toni Kroos",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Retirement uncertainty",
+          "position": "MID"
+        },
+        {
+          "name": "İlkay Gündoğan",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Florian Wirtz",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Jamal Musiala",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Serge Gnabry",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Form/injury history",
+          "position": "FWD"
+        },
+        {
+          "name": "Harry Kane",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Age at tournament",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Leroy Sané (potential injury/form)",
+        "Niclas Füllkrug (squad depth)"
+      ],
+      "tactical_note": "Germany likely plays possession-based 4-2-3-1 with creative midfield dominance. Flexibility to 4-3-3 with Musiala shifting wide.",
+      "fantasy_note": "Wirtz and Musiala key for attacking returns. Kimmich and Gündoğan provide midfield stability. Monitor Kroos availability pre-tournament.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Croatia": {
+      "team": "Croatia",
+      "flag": "🇭🇷",
+      "formation": "4-2-3-1",
+      "manager": "Zlatko Dalić",
+      "players": [
+        {
+          "name": "Dominik Livaković",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Borna Sosa",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 28, consistency needed",
+          "position": "DEF"
+        },
+        {
+          "name": "Joško Gvardiol",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Dejan Lovren",
+          "slot": "RCB",
+          "status": "DOUBT",
+          "doubt_reason": "Age 37, likely retired",
+          "position": "DEF"
+        },
+        {
+          "name": "Sergej Milinković-Savić",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "May compete with alternatives",
+          "position": "DEF"
+        },
+        {
+          "name": "Luka Modrić",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 40, fitness concerns",
+          "position": "MID"
+        },
+        {
+          "name": "Mateo Kovačić",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Mario Pašalić",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition present",
+          "position": "MID"
+        },
+        {
+          "name": "Ante Budimir",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": "Age, form dependent",
+          "position": "FWD"
+        },
+        {
+          "name": "Andrej Kramarić",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Veteran status",
+          "position": "FWD"
+        },
+        {
+          "name": "Bruno Petković",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Likely main striker",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Dejan Lovren (likely retired)",
+        "Ivan Rakitić (retired)"
+      ],
+      "tactical_note": "Transition squad with aging core. Gvardiol and Kovačić anchor younger generation.",
+      "fantasy_note": "Modrić uncertain. Kramarić and Budimir rotation risk. Gvardiol most consistent fantasy option.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Morocco": {
+      "team": "Morocco",
+      "flag": "🇲🇦",
+      "formation": "4-3-3",
+      "manager": "Walid Regragui",
+      "players": [
+        {
+          "name": "Bono",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Achraf Hakimi",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Romain Saïss",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age/Experience",
+          "position": "DEF"
+        },
+        {
+          "name": "Nayef Aguerd",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Noussair Mazraoui",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Sofyan Amrabat",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Selim Bounou",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "MID"
+        },
+        {
+          "name": "Hakim Ziyech",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Form/Age",
+          "position": "MID"
+        },
+        {
+          "name": "Vinícius Souza",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "International eligibility",
+          "position": "FWD"
+        },
+        {
+          "name": "Hamdallah Soudani",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "FWD"
+        },
+        {
+          "name": "Anass Zaroury",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Form",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Abdelhamid Sabiri (aging squad transition)",
+        "Alphonso Davies eligibility unclear"
+      ],
+      "tactical_note": "Morocco likely maintains defensive solidity with wingback support. Balance between experience and emerging talent.",
+      "fantasy_note": "Amrabat and Hakimi are the most consistent fantasy options. Monitor Ziyech's form going into tournament.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Uruguay": {
+      "team": "Uruguay",
+      "flag": "🇺🇾",
+      "formation": "4-3-3",
+      "manager": "Marcelo Bielsa",
+      "players": [
+        {
+          "name": "Sergio Rochet",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Matías Viña",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 29, injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "José María Giménez",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 32, experience compensates",
+          "position": "DEF"
+        },
+        {
+          "name": "Sebastián Caceres",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Nahitan Nández",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition from younger fullbacks",
+          "position": "DEF"
+        },
+        {
+          "name": "Federico Valverde",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Manuel Ugarte",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Nicolás De la Cruz",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Creative midfielder, aging squad",
+          "position": "MID"
+        },
+        {
+          "name": "Vinícius Souza",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "Competition from emerging talents",
+          "position": "FWD"
+        },
+        {
+          "name": "Luis Suárez",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Age 39, may be retired or bench",
+          "position": "FWD"
+        },
+        {
+          "name": "Maximiliano Araújo",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Young talent rising through ranks",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Cavani (retirement)",
+        "Godín (retirement likely)",
+        "Tabárez (manager era ended)"
+      ],
+      "tactical_note": "Bielsa prefers pressing 4-3-3. Uruguay aging but Valverde-Ugarte midfield core remains strong. Rebuild ongoing in attack/defense.",
+      "fantasy_note": "Valverde and Ugarte safest picks. Suárez participation uncertain. Monitor fullback selections pre-tournament.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Colombia": {
+      "team": "Colombia",
+      "flag": "🇨🇴",
+      "formation": "4-2-3-1",
+      "manager": "Néstor Lorenzo",
+      "players": [
+        {
+          "name": "Camilo Vargas",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Johan Mojica",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "age",
+          "position": "DEF"
+        },
+        {
+          "name": "Yerry Mina",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Davinson Sánchez",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Santiago Arias",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "age",
+          "position": "DEF"
+        },
+        {
+          "name": "Wilmar Barrios",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Jefferson Lerma",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "James Rodríguez",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "fitness",
+          "position": "MID"
+        },
+        {
+          "name": "Luis Díaz",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Jhon Durán",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "form",
+          "position": "FWD"
+        },
+        {
+          "name": "Radamel Falcao García",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "age/retirement",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Juan Fernando Quintero (retirement consideration)",
+        "Duván Zapata (age)"
+      ],
+      "tactical_note": "Colombia likely maintains attacking-minded 4-2-3-1 with Díaz and Durán providing width. James playmaking from center critical to creative flow.",
+      "fantasy_note": "Luis Díaz offers best fantasy value with consistent output. Lerma/Barrios are defensive anchors with limited ceiling.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Switzerland": {
+      "team": "Switzerland",
+      "flag": "🇨🇭",
+      "formation": "4-2-3-1",
+      "manager": "Murat Yakin",
+      "players": [
+        {
+          "name": "Yann Sommer",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Ricardo Rodríguez",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 34, may be phased out",
+          "position": "DEF"
+        },
+        {
+          "name": "Fabian Schär",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Manuel Akanji",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Silvan Widmer",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Granit Xhaka",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Remo Freuler",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Dan Ndoye",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Xherdan Shaqiri",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "Age 35, may retire early",
+          "position": "FWD"
+        },
+        {
+          "name": "Breel Embolo",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Rubén Vargas",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Haris Seferović (retired)",
+        "Djibril Sow (injury prone)"
+      ],
+      "tactical_note": "Balanced 4-2-3-1 with creative midfield. Xhaka remains crucial pivot.",
+      "fantasy_note": "Embolo and Ndoye offer attacking returns. Akanji reliable for defense.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Japan": {
+      "team": "Japan",
+      "flag": "🇯🇵",
+      "formation": "4-2-3-1",
+      "manager": "Hajime Moriyasu",
+      "players": [
+        {
+          "name": "Shuichi Gonda",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Hiroki Sakai",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age/form",
+          "position": "DEF"
+        },
+        {
+          "name": "Yohei Yoshida",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Takehiro Tomiyasu",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Hirving Lozano",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Club form",
+          "position": "DEF"
+        },
+        {
+          "name": "Wataru Endo",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Hidemasa Morita",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ritsu Doan",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Takumi Minamino",
+          "slot": "LM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Kaoru Mitoma",
+          "slot": "RM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Marcus Marcus",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Shinji Kagawa (retired)",
+        "Makoto Hasebe (age)"
+      ],
+      "tactical_note": "Japan likely maintains compact 4-2-3-1 with emphasis on possession and quick transitions. Fullback support crucial.",
+      "fantasy_note": "Doan and Endo are fantasy anchors. Mitoma offers upside on left flank. Forward spot volatile.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Senegal": {
+      "team": "Senegal",
+      "flag": "🇸🇳",
+      "formation": "4-2-3-1",
+      "manager": "Aliou Cissé",
+      "players": [
+        {
+          "name": "Édouard Mendy",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Achraf Hakimi",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "May shift to RB or pursue other opportunities",
+          "position": "DEF"
+        },
+        {
+          "name": "Kalidou Koulibaly",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age-related availability concerns",
+          "position": "DEF"
+        },
+        {
+          "name": "Abdou Diallo",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Youssouf Sabaly",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Idrissa Gueye",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Age factor by 2026",
+          "position": "MID"
+        },
+        {
+          "name": "Moussa Wagué",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ismaïla Sarr",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Sadio Mané",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": "Career trajectory uncertain",
+          "position": "FWD"
+        },
+        {
+          "name": "Boulaye Dia",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Ismaël Sarr",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Cheikhou Kouyaté (age/form)"
+      ],
+      "tactical_note": "Senegal likely maintains possession-based approach with width from wing-backs and attacking midfielders.",
+      "fantasy_note": "Mané and I. Sarr provide upside; Gueye offers defensive floor but limited fantasy returns.",
       "confidence": "AI_PREDICTED"
     }
   }
