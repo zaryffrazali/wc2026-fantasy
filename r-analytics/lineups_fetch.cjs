@@ -10,9 +10,9 @@
 const fs = require("fs"), path = require("path");
 
 const TEAMS_PER_RUN = 8;
-const DELAY_MS = 15000;            // FIX 5 fallback: raise to 90000 if 429s persist after this
+const DELAY_MS = 90000;            // measured ~16.6k input tok/team → 15s re-429s; 90s keeps <30k/min
 const CHECKPOINT_FILE = "public/data/lineups_checkpoint.json";
-const MODEL = "claude-haiku-4-5-20251001";   // FIX 2 — cheaper/faster, separate rate-limit bucket
+const MODEL = "claude-sonnet-4-6";   // Haiku 4.5 can't use web_search_20260209 (no programmatic tool calling)
 const MAX_TOKENS = 800;                       // FIX 3 — lineup JSON needs nothing close to 2000
 const MAX_SEARCHES = 2;                        // cap web_search input-token blow-up (real fix)
 
