@@ -238,7 +238,10 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
 function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch,
                           ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
-                          F, setF, showFilters, setShowFilters, allPlayers }) {
+                          F, setF, showFilters, setShowFilters, allPlayers, mobile, dataTimestamp }) {
+  const refreshed = dataTimestamp
+    ? new Date(dataTimestamp).toLocaleString("en-US", { timeZone:"Asia/Kuala_Lumpur", month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true })
+    : null;
   const riskLabel = { safe:"🛡️ Safe", balanced:"⚖️ Balanced", diff:"🎯 Differential" };
   const riskDesc  = { safe:"Median pts — low-variance template picks",
                       balanced:"Mean expected pts — default projection",
@@ -294,7 +297,31 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         <span style={{ marginLeft:"auto", fontSize:10, color:DIM, alignSelf:"center", paddingRight:4 }}>{players.length>200?`top 200 of ${players.length}`:`${players.length} players`}</span>
       </div>
 
-      {/* table */}
+      {/* last updated */}
+      {refreshed && <div style={{ textAlign:"right", fontSize:11, color:"#64748b", margin:"6px 0" }}>Data refreshed: {refreshed} MYT · Auto-refreshes every 3h</div>}
+
+      {/* table — mobile: compact 2-line cards; desktop: full grid */}
+      {mobile ? (
+        <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:4 }}>
+          {players.slice(0,200).map((p) => { const posCol = POS_COLOR[p.pos];
+            return (
+              <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
+                style={{ background:selected?.id===p.id?"#f9731610":CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"8px 11px", maxHeight:60, overflow:"hidden", cursor:"pointer" }}>
+                <div style={{ display:"flex", flexWrap:"nowrap", alignItems:"center", gap:6, overflow:"hidden" }}>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:14, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", flex:"1 1 auto", minWidth:0 }}>{p.nat} {p.name}</span>
+                  <span title={POS_TIP[p.pos]} style={{ flex:"0 0 auto", fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
+                  <span style={{ flex:"0 0 auto", fontSize:12, fontWeight:800, fontFamily:MONO, color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</span>
+                </div>
+                <div style={{ display:"flex", gap:8, fontSize:12, color:DIM, marginTop:3, whiteSpace:"nowrap", overflow:"hidden" }}>
+                  <span style={{ color:"#94a3b8" }}>${p.price}m</span>
+                  <span style={{ color:p.E_mins<60?"#eab308":"#94a3b8" }}>{Math.round(p.E_mins)}'</span>
+                  <span style={{ color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT, fontWeight:700 }}>xPTS {p.displayPts.toFixed(1)}</span>
+                  <span>Own {p.own}%</span>
+                </div>
+              </div>);
+          })}
+        </div>
+      ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
         <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 56px 44px 34px 56px",
           gap:0, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
@@ -346,6 +373,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           );
         })}
       </div>
+      )}
 
       {selected && <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} />}
     </>
@@ -472,7 +500,7 @@ function PlayerDetail({ p, riskMode, onClose }) {
 }
 
 // ─── TAB: STARTING XI (CSS pitch with positioned cards) ────────────────────────
-function StartingXITab({ pool }) {
+function StartingXITab({ pool, mobile }) {
   const [open, setOpen] = useState(null);
   const [md, setMd] = useState(0);
   const [showDesc, setShowDesc] = useState(true);
@@ -551,7 +579,8 @@ function StartingXITab({ pool }) {
       <div style={{ fontSize:12, color:DIM, marginBottom:6 }}>MD{md+1} — {MD_DATES[md]} | optimised for matchday {md+1} fixtures</div>
       <div style={{ fontSize:12, color:"#fbbf24", marginBottom:4, fontWeight:600 }}>MD{md+1} CAPTAIN: {cap.name} vs {cap.opp} ({Math.round(cap.win*100)}% win prob)</div>
       <div style={{ fontSize:11, color:DIM, marginBottom:12 }}>Easiest fixtures: {fixCtx.map(x=>`${x.team} v ${x.opp} (${Math.round(x.win*100)}%)`).join(" · ")}</div>
-      <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
+      {mobile && <div style={{ fontSize:11, color:DIM, marginBottom:10 }}>List view — tap a card for detail</div>}
+      {!mobile && <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
         background:"linear-gradient(#0a3d1f,#072d17)", border:`2px solid #1e6b3a`, borderRadius:10 }}>
         <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
         <div style={{ position:"absolute", left:"30%", right:"30%", top:0, height:"14%", border:"1px solid #2e7d4f", borderTop:"none" }} />
@@ -571,8 +600,8 @@ function StartingXITab({ pool }) {
             {pl.is_vc && <div style={{ fontSize:8, color:"#cbd5e1" }}>2× if C DNP</div>}
           </div>
         ))}
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:10, marginTop:16 }}>
+      </div>}
+      <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(260px,1fr))", gap:10, marginTop:16 }}>
         {xi.players.map(pl => (
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
             style={{ background:CARD, border:`1px solid ${pl.is_captain?"#fbbf24":BORDER}`, borderRadius:8, padding:"10px 12px", cursor:"pointer" }}>
@@ -607,9 +636,9 @@ function StartingXITab({ pool }) {
       {/* BENCH */}
       <div style={{ marginTop:18 }}>
         <div style={{ fontSize:11, letterSpacing:2, color:DIM, marginBottom:8, fontFamily:MONO }}>BENCH — AUTO-SUB ORDER</div>
-        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap:10, flexWrap: mobile?"nowrap":"wrap", overflowX: mobile?"auto":"visible", WebkitOverflowScrolling:"touch", paddingBottom: mobile?6:0 }}>
           {(xi.bench||[]).map(b=>(
-            <div key={b.id} style={{ flex:"1 1 170px", background:CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 12px" }}>
+            <div key={b.id} style={{ flex: mobile?"0 0 70%":"1 1 170px", background:CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 12px" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>
                   <span title={`Priority ${b.benchOrder} auto-sub — activates if a starter does not play`} style={{ background:"#1e293b", color:"#94a3b8", borderRadius:4, padding:"0 5px", fontSize:10, marginRight:5, fontFamily:MONO, cursor:"help" }}>{b.benchOrder}</span>
@@ -627,10 +656,10 @@ function StartingXITab({ pool }) {
 }
 
 // ─── TAB: OPTIMAL SQUADS ─────────────────────────────────────────────────────────
-function OptimalSquadsTab({ squads, meta }) {
+function OptimalSquadsTab({ squads, meta, mobile }) {
   if (!squads) return <div style={{ color:DIM }}>No squad data — run the R pipeline.</div>;
   return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))", gap:12 }}>
+    <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fit,minmax(250px,1fr))", gap:12 }}>
       {Object.entries(squads).map(([key, sq]) => {
         if (!sq) return null;
         const m = (meta && meta[key]) || {};
@@ -638,7 +667,7 @@ function OptimalSquadsTab({ squads, meta }) {
           <div key={key} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px" }}>
             <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3 }}>{m.label||key}</div>
             <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, lineHeight:1.45 }}>{m.description||""}</div>
-            <div style={{ fontSize:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
+            <div style={{ fontSize:mobile?11:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:10, fontSize:11, color:DIM, marginBottom:10, borderBottom:`1px solid ${BORDER}`, paddingBottom:8 }}>
               <span><b style={{color:TEXT}}>{m.total_pts??"—"}</b> pts</span>
               <span><b style={{color:TEXT}}>${m.budget??"—"}m</b></span>
@@ -669,7 +698,7 @@ const BAND_CUT = { GK:[4.1,5.0], DEF:[4.4,5.5], MID:[6.4,8.5], FWD:[6.9,9.0] }; 
 const bandOf = (pos,pr) => { const c=BAND_CUT[pos]||[6.4,8.5]; return pr>=c[1]?"PREMIUM":pr<=c[0]?"BUDGET":"MID-RANGE"; };
 const TIER_COLOR = { S:"#fbbf24", A:"#cbd5e1", B:"#d97706", C:"#64748b", D:"#475569" };
 
-function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, setPureDiff }) {
+function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, setPureDiff, mobile }) {
   const [tierTab, setTierTab] = useState("S");
   const [open, setOpen] = useState(null);
   if (!pool || !pool.length) return <div style={{ color:DIM }}>No data.</div>;
@@ -718,7 +747,7 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
     <div>
       {/* BEST VALUE BY BAND */}
       <div style={{ fontSize:13, fontWeight:900, color:"#fff", letterSpacing:1, marginBottom:10 }}>BEST VALUE BY BAND</div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:8, marginBottom:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns: mobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(180px,1fr))", gap:8, marginBottom:24 }}>
         {BANDS.flatMap(b=>POSES.map(pos=>{
           const best=pool.filter(p=>p.pos===pos&&bandOf(p.pos,p.price)===b).sort((a,c)=>(c.tier_score||0)-(a.tier_score||0))[0];
           if(!best) return null; const tc=TIER_COLOR[best.tier]||DIM; const n=narr[best.id]||{};
@@ -748,8 +777,8 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
           border:`1px solid ${pureDiff?"#4ade80":BORDER}`, background:pureDiff?"#16a34a22":"transparent", color:pureDiff?"#4ade80":DIM }}>PURE DIFFERENTIALS</button>
       </div>
 
-      {/* 3-column band grid, each column grouped by position */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:14 }}>
+      {/* band grid (single column on mobile — bands become section headers) */}
+      <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fit,minmax(280px,1fr))", gap:14 }}>
         {BANDS.map(b=>(
           <div key={b}>
             <div style={{ fontSize:12, fontWeight:800, color:"#fff", letterSpacing:1, marginBottom:8, borderBottom:`2px solid ${BORDER}`, paddingBottom:4 }}>{b}</div>
@@ -884,7 +913,7 @@ const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""
 const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
   : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
 
-function LineupsTab({ lineups, pool, goToPlayer }) {
+function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow }) {
   const [sel, setSel] = useState("Spain");
   const [cmp, setCmp] = useState(null);
   const [compareMode, setCompareMode] = useState(false);
@@ -910,9 +939,9 @@ function LineupsTab({ lineups, pool, goToPlayer }) {
           <div style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{L.flag} {L.team} <span style={{ fontSize:12, color:DIM, fontWeight:400 }}>{L.formation} · {L.manager}</span></div>
           <div style={{ fontSize:11, color: L.confidence==="HIGH"?"#4ade80":L.confidence==="LOW"||L.confidence==="SEED_DATA"?"#ff8c42":"#eab308" }}>{confTxt}</div>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"minmax(220px,1fr) minmax(220px,1.2fr)", gap:14, marginTop:10 }}>
-          {/* pitch */}
-          <div style={{ position:"relative", aspectRatio:"3/4", background:"linear-gradient(#0a3d1f,#072d17)", border:"2px solid #1e6b3a", borderRadius:10 }}>
+        <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "minmax(220px,1fr) minmax(220px,1.2fr)", gap:14, marginTop:10 }}>
+          {/* pitch — hidden on very narrow screens (<480) in favour of the list */}
+          {!narrow && <div style={{ position:"relative", aspectRatio:"3/4", maxWidth:"100%", background:"linear-gradient(#0a3d1f,#072d17)", border:"2px solid #1e6b3a", borderRadius:10 }}>
             <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
             {(L.players||[]).map((pl,i)=>{ const xy=SLOT_XY[pl.slot]||[50, 50-(["GK","DEF","MID","FWD"].indexOf(pl.position)-1.5)*22];
               return (
@@ -924,18 +953,21 @@ function LineupsTab({ lineups, pool, goToPlayer }) {
                   <div style={{ fontSize:8, color:"#cbd5e1" }}>{pl.caps}c</div>
                 </div>);
             })}
-          </div>
+          </div>}
           {/* list */}
           <div>
             {(L.players||[]).map((pl,i)=>{ const m=matchPool(pl.name,team);
-              return (<div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:`1px solid ${BORDER}33`, fontSize:12 }}>
-                <span style={{ width:18, color:DIM, fontFamily:MONO }}>{i+1}</span>
-                <span style={{ width:34, fontSize:10, color:POS_COLOR[pl.position], fontFamily:MONO }}>{pl.slot}</span>
-                <span style={{ flex:1, color:"#fff" }}>{pl.name}
-                  {m && <span onClick={()=>goToPlayer(m.name)} style={{ marginLeft:6, fontSize:9, color:"#f97316", cursor:"pointer", border:"1px solid #f9731655", borderRadius:3, padding:"0 4px" }}>VIEW →</span>}
-                  {m && <span style={{ marginLeft:6, fontSize:10, color:DIM }}>${m.price}m · {m.pts_balanced} xPts · {m.own}%</span>}
-                  {pl.doubt_reason && <div style={{ fontSize:10, color:"#ff6b6b" }}>{pl.doubt_reason}</div>}
+              const nm = mobile && (pl.name||"").length>15 ? (pl.name||"").slice(0,15)+"…" : pl.name;
+              return (<div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:`1px solid ${BORDER}33`, fontSize:12, minHeight:mobile?40:0 }}>
+                {!mobile && <span style={{ width:18, color:DIM, fontFamily:MONO }}>{i+1}</span>}
+                <span style={{ width:34, flex:"0 0 auto", fontSize:10, color:POS_COLOR[pl.position], fontFamily:MONO }}>{pl.slot}</span>
+                <span style={{ flex:"1 1 auto", minWidth:0, color:"#fff", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{nm}
+                  {m && !mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ marginLeft:6, fontSize:9, color:"#f97316", cursor:"pointer", border:"1px solid #f9731655", borderRadius:3, padding:"0 4px" }}>VIEW →</span>}
+                  {m && !mobile && <span style={{ marginLeft:6, fontSize:10, color:DIM }}>${m.price}m · {m.pts_balanced} xPts · {m.own}%</span>}
+                  {pl.doubt_reason && !mobile && <div style={{ fontSize:10, color:"#ff6b6b" }}>{pl.doubt_reason}</div>}
                 </span>
+                {m && mobile && <span style={{ flex:"0 0 auto", fontSize:11, color:DIM }}>${m.price}m</span>}
+                {m && mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ flex:"0 0 auto", fontSize:14, color:"#f97316", cursor:"pointer", padding:"0 4px" }}>→</span>}
                 <Badge bg={pl.status==="CERTAIN"?"#16a34a22":pl.status==="DOUBT"?"#3d2a00":"#1e293b"} bd={pl.status==="CERTAIN"?"#22c55e88":pl.status==="DOUBT"?"#eab30888":"#334155"} fg={pl.status==="CERTAIN"?"#4ade80":pl.status==="DOUBT"?"#eab308":"#94a3b8"}>{pl.status}</Badge>
               </div>);
             })}
@@ -964,10 +996,10 @@ function LineupsTab({ lineups, pool, goToPlayer }) {
     return (
       <div key={t} onClick={()=>{ if(compareMode){ if(sel===t)setSel(null); else if(cmp===t)setCmp(null); else if(!sel)setSel(t); else setCmp(t);} else setSel(t); }}
         style={{ background:CARD, border:`1px solid ${isSel?"#f97316":BORDER}`, borderRadius:8, padding:"7px 9px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-        <span style={{ fontSize:14 }}>{teamsData[t]?.flag||"⚽"}</span>
-        <span style={{ flex:1, fontSize:12, color:"#fff", fontWeight:600 }}>{t}</span>
-        <span style={{ fontSize:9, color:DIM, fontFamily:MONO }}>{LU_GROUP_OF[t]}</span>
-        {has && <span style={{ color:"#4ade80", fontSize:11 }}>✓</span>}
+        <span style={{ fontSize:14, flex:"0 0 auto" }}>{teamsData[t]?.flag||"⚽"}</span>
+        <span style={{ flex:"1 1 auto", minWidth:0, fontSize:mobile?11:12, color:"#fff", fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{t}</span>
+        {!mobile && <span style={{ fontSize:9, color:DIM, fontFamily:MONO }}>{LU_GROUP_OF[t]}</span>}
+        {has && <span style={{ color:"#4ade80", fontSize:11, flex:"0 0 auto" }}>✓</span>}
       </div>);
   };
 
@@ -986,7 +1018,7 @@ function LineupsTab({ lineups, pool, goToPlayer }) {
       {Object.entries(LU_CONF).map(([conf, ts])=>{ const show=ts.filter(filtered); if(!show.length) return null;
         return (<div key={conf} style={{ marginBottom:10 }}>
           <div onClick={()=>setCollapsed(c=>({...c,[conf]:!c[conf]}))} style={{ fontSize:11, color:DIM, letterSpacing:1, marginBottom:6, cursor:"pointer" }}>{collapsed[conf]?"▸":"▾"} {conf} ({show.length})</div>
-          {!collapsed[conf] && <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:6 }}>{show.map(teamCard)}</div>}
+          {!collapsed[conf] && <div style={{ display:"grid", gridTemplateColumns: mobile ? "repeat(3,1fr)" : "repeat(auto-fill,minmax(150px,1fr))", gap:6 }}>{show.map(teamCard)}</div>}
         </div>);
       })}
       {compareMode ? (
@@ -1247,11 +1279,11 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
       <MtH>Recommended workflow</MtH>
       <ol style={{ paddingLeft:18, lineHeight:1.6, fontSize:13, color:"#cbd5e1" }}>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Set your risk profile</b> — In Players, set risk by mini-league position. Behind → Differential. Ahead → Safe.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check Intel first</b> — Find the weakest defences facing your matchday; these are captain targets.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the Causal tab first</b> — open the Causal tab → Teams to Attack section. Find the weakest defences facing your matchday; these are captain targets.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Use smart filters</b> — "MD1 Captain Picks" surfaces late-kickoff players with easy fixtures.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check for mispricing</b> — "Role Arbitrage" finds players deployed more offensively internationally than their club price implies.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the News</b> — One late withdrawal can change your captain decision.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — check the Lineups tab (predicted XIs updated every 6 hours). Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check team announcements</b> — Check the Lineups tab news notes and latest team announcements. One late withdrawal can change your captain decision.</li>
         <li><b style={{color:"#fff"}}>Use Optimal Squads for budget</b> — Start from the Balanced squad, then swap in your differentials.</li>
       </ol>
 
@@ -1267,6 +1299,166 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
         Frontend: React + Vite · Deployed on Cloudflare Pages
       </div>
       <div style={{ textAlign:"right", fontSize:11, fontStyle:"italic", color:"#475569", marginTop:18 }}>it's coming home 🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+    </div>
+  );
+}
+
+// ─── MOBILE + CHROME (hook, deadline banner, url badge, news tab, global css) ──
+function useIsMobile() {
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  useEffect(() => {
+    const on = () => setW(window.innerWidth);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return { mobile: w <= 768, narrow: w < 480, width: w };
+}
+
+function GlobalCSS() {
+  return <style>{`
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, #root { width: 100%; max-width: 100vw; margin: 0; overflow-x: hidden; }
+    @keyframes dlPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes dlFlash { 0%,100%{background:#991b1b} 50%{background:#5c0f0f} }
+    .tabbar { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scroll-behavior: smooth; }
+    .tabbar::-webkit-scrollbar { height: 3px; }
+    .tabbar::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
+    .urlbadge:hover { border-color:#f97316 !important; color:#fff !important; }
+    @media (max-width:768px){
+      .tabwrap { position: relative; }
+      .tabwrap::after { content:""; position:absolute; top:0; right:0; bottom:0; width:30px; pointer-events:none; background:linear-gradient(to right, transparent, #060d1a); }
+    }
+  `}</style>;
+}
+
+const MATCHDAY_DEADLINES = [
+  { label: "MD1 Deadline", datetime: "2026-06-12T12:00:00-05:00" },
+  { label: "MD2 Deadline", datetime: "2026-06-20T09:00:00-05:00" },
+  { label: "MD3 Deadline", datetime: "2026-06-26T14:00:00-04:00" },
+  { label: "R32 Deadline", datetime: "2026-06-29T12:00:00-04:00" },
+  { label: "R16 Deadline", datetime: "2026-07-05T12:00:00-04:00" },
+  { label: "QF Deadline",  datetime: "2026-07-10T12:00:00-04:00" },
+  { label: "SF Deadline",  datetime: "2026-07-14T12:00:00-04:00" },
+  { label: "Final",        datetime: "2026-07-19T11:00:00-04:00" },
+];
+const MD_FULL = { "MD1 Deadline":"Matchday 1", "MD2 Deadline":"Matchday 2", "MD3 Deadline":"Matchday 3",
+  "R32 Deadline":"Round of 32", "R16 Deadline":"Round of 16", "QF Deadline":"Quarter-finals",
+  "SF Deadline":"Semi-finals", "Final":"Final" };
+const pad2 = n => String(n).padStart(2, "0");
+
+function DeadlineBanner({ mobile }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  const next = MATCHDAY_DEADLINES.find(d => new Date(d.datetime).getTime() > now);
+  const base = { display:"flex", alignItems:"center", justifyContent:"center", color:"#fff",
+    fontFamily:SANS, borderBottom:`1px solid ${BORDER}` };
+  if (!next) return <div style={{ ...base, height: mobile?28:36, fontSize: mobile?12:14, fontWeight:700, background:"linear-gradient(90deg,#166534,#14532d)" }}>Tournament Complete 🏆</div>;
+  const ms = new Date(next.datetime).getTime() - now;
+  const d = Math.floor(ms/86400000), h = Math.floor(ms/3600000)%24, m = Math.floor(ms/60000)%60, s = Math.floor(ms/1000)%60;
+  const under24 = ms < 86400000, under1 = ms < 3600000;
+  const short = next.label.split(" ")[0], full = MD_FULL[next.label] || next.label;
+  const center = short === full ? full : `${short} · ${full}`;
+  const cd = `${d}d ${pad2(h)}h ${pad2(m)}m ${pad2(s)}s`;
+  const bg = under1 ? "#991b1b" : under24 ? "#991b1b" : "linear-gradient(90deg,#92400e,#78350f)";
+  const anim = under1 ? "dlFlash 1s steps(1) infinite" : undefined;
+  const cdAnim = under24 ? "dlPulse 1.2s ease-in-out infinite" : undefined;
+
+  if (mobile) {
+    return (
+      <div style={{ ...base, height:28, fontSize:12, background:bg, animation:anim, gap:8, padding:"0 12px" }}>
+        <span style={{ fontFamily:MONO, fontWeight:700, animation:cdAnim }}>{short} · {d}d {pad2(h)}h {pad2(m)}m</span>
+        {under1 && <span style={{ fontSize:10, fontWeight:800 }}>⚠ LOCK</span>}
+      </div>
+    );
+  }
+  return (
+    <div style={{ ...base, height:36, background:bg, animation:anim, padding:"0 20px" }}>
+      <div style={{ maxWidth:1100, width:"100%", margin:"0 auto", display:"flex", alignItems:"center", gap:14 }}>
+        <span style={{ fontSize:9, letterSpacing:2, color:"#fde68a", fontFamily:MONO }}>NEXT DEADLINE</span>
+        <span style={{ fontSize:13, fontWeight:700 }}>{center}</span>
+        {under1 && <span style={{ fontSize:11, fontWeight:800, color:"#fff" }}>⚠ LOCK IMMINENT</span>}
+        <span style={{ marginLeft:"auto", fontFamily:MONO, fontSize:17, fontWeight:800, letterSpacing:0.5, animation:cdAnim }}>{cd}</span>
+      </div>
+    </div>
+  );
+}
+
+function UrlBadge() {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    const t = "https://makscouthijau.uk";
+    (navigator.clipboard?.writeText(t) || Promise.reject())
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })
+      .catch(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
+  };
+  return (
+    <span className="urlbadge" title="Share this dashboard" onClick={copy}
+      style={{ background:"#0f172a", border:"1px solid #334155", color:"#94a3b8", borderRadius:20,
+        padding:"4px 10px", fontSize:11, cursor:"pointer", whiteSpace:"nowrap", transition:"all .15s",
+        fontFamily:MONO }}>
+      {copied ? "✓ copied!" : "🌐 makscouthijau.uk"}
+    </span>
+  );
+}
+
+// ─── TAB: NEWS (reads pre-fetched public/data/news.json; no client API calls) ──
+function NewsTab({ news, mobile }) {
+  const [filter, setFilter] = useState("ALL");
+  const [q, setQ] = useState("");
+  const items = news?.items || [];
+  const gen = news?.generated_at;
+  const ageH = gen ? (Date.now() - new Date(gen).getTime()) / 3600000 : null;
+  const stale = ageH == null ? { t:"● —", c:DIM } : ageH < 3 ? { t:"● LIVE", c:"#4ade80" } : ageH < 6 ? { t:"● RECENT", c:"#eab308" } : { t:"● STALE", c:"#ef4444" };
+  const PRI = { HIGH:"#ef4444", MEDIUM:"#f97316", LOW:"#475569" };
+  const Header = () => (
+    <div style={{ marginBottom:12 }}>
+      <div style={{ display:"flex", alignItems:"baseline", gap:10, flexWrap:"wrap" }}>
+        <span style={{ fontSize:17, fontWeight:800, color:"#fff" }}>📡 LIVE INTEL</span>
+        <span style={{ fontSize:12, fontWeight:700, color:stale.c }}>{stale.t}</span>
+        {gen && <span style={{ fontSize:11, color:DIM }}>updated {new Date(gen).toLocaleString("en-GB",{ timeZone:"Asia/Kuala_Lumpur", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} MYT</span>}
+      </div>
+      <div style={{ fontSize:11, color:"#475569", marginTop:2 }}>Data refreshes every 3 hours</div>
+    </div>
+  );
+  if (!items.length) return (
+    <div><Header />
+      <div style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:10, padding:"40px 20px", textAlign:"center", color:DIM, fontSize:14 }}>
+        📡 News data loading — check back shortly
+      </div>
+    </div>
+  );
+  const FILTERS = [["ALL","ALL"],["HIGH","🔴 HIGH"],["INJURY","INJURY"],["LINEUP","LINEUP"],["TRAINING","TRAINING"],["SUSPENSION","SUSPENSION"]];
+  const s = (q||"").toLowerCase();
+  const shown = items.filter(it => {
+    if (filter === "HIGH" && it.priority !== "HIGH") return false;
+    if (filter !== "ALL" && filter !== "HIGH" && it.category !== filter) return false;
+    return !s || (it.player_name||"").toLowerCase().includes(s) || (it.team||"").toLowerCase().includes(s) || (it.headline||"").toLowerCase().includes(s);
+  });
+  return (
+    <div><Header />
+      <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:10 }}>
+        {FILTERS.map(([k,l]) => (
+          <button key={k} onClick={()=>setFilter(k)} style={{ padding:"8px 11px", minHeight:mobile?44:0, borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
+            border:`1px solid ${filter===k?"#f97316":BORDER}`, background:filter===k?"#f9731618":"transparent", color:filter===k?"#f97316":DIM }}>{l}</button>
+        ))}
+      </div>
+      <input placeholder="Search player or team…" value={q} onChange={e=>setQ(e.target.value)} style={{ width:"100%", background:CARD, border:`1px solid ${BORDER}`, borderRadius:6, padding:"9px 12px", color:TEXT, fontFamily:"inherit", fontSize:13, marginBottom:12 }} />
+      {shown.map((it,i) => (
+        <div key={it.id||i} style={{ background:CARD, border:`1px solid ${BORDER}`, borderLeft:`4px solid ${PRI[it.priority]||DIM}`, borderRadius:8, padding:"11px 14px", marginBottom:8 }}>
+          <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap", marginBottom:4 }}>
+            <Badge bg="#0a1322" bd={BORDER} fg="#94a3b8">{it.category||"NEWS"}</Badge>
+            {it.priority==="HIGH" && <Badge bg="#3d0d0d" bd="#ef444488" fg="#ff6b6b">HIGH</Badge>}
+            {it.player_name && <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{it.player_name}</span>}
+            {it.team && <span style={{ fontSize:11, color:DIM }}>{it.team}</span>}
+            {it.timestamp && <span style={{ marginLeft:"auto", fontSize:10, color:"#475569" }}>{new Date(it.timestamp).toLocaleString("en-GB",{ day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}</span>}
+          </div>
+          <div style={{ fontSize:14, fontWeight:600, color:"#e2e8f0", marginBottom:3 }}>{it.headline}</div>
+          {it.summary && <div style={{ fontSize:12.5, color:"#94a3b8", lineHeight:1.5 }}>{it.summary}</div>}
+          {it.fantasy_impact && <div style={{ fontSize:12, color:"#4ade80", marginTop:5 }}>⚽ {it.fantasy_impact}</div>}
+          {it.source_hint && <div style={{ fontSize:10, color:"#475569", marginTop:4 }}>{it.source_hint}</div>}
+        </div>
+      ))}
+      {!shown.length && <div style={{ color:DIM, padding:12 }}>No items match this filter.</div>}
     </div>
   );
 }
@@ -1287,17 +1479,27 @@ export default function App() {
   const [pureDiff, setPureDiff] = useState(false);
 
   const [rawPlayers, setRawPlayers] = useState(null);
+  const [dataTimestamp, setDataTimestamp] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [lineups, setLineups] = useState(null);
+  const [news, setNews] = useState(null);
   const [loadError, setLoadError] = useState(false);
+  const { mobile, narrow } = useIsMobile();
 
   useEffect(() => {
     Promise.all([
       fetch("/data/players.json").then(r => { if (!r.ok) throw new Error("players " + r.status); return r.json(); }),
       fetch("/data/analytics.json").then(r => r.ok ? r.json() : null).catch(() => null), // optional
       fetch("/data/lineups.json").then(r => r.ok ? r.json() : null).catch(() => null), // optional
+      fetch("/data/news.json").then(r => r.ok ? r.json() : null).catch(() => null), // optional
     ])
-      .then(([players, a, l]) => { setRawPlayers(players); setAnalytics(a); setLineups(l); })
+      .then(([players, a, l, nw]) => {
+        // players.json may be a bare array (legacy) or { generated_at, players }
+        const arr = Array.isArray(players) ? players : players.players;
+        setRawPlayers(arr);
+        setDataTimestamp(Array.isArray(players) ? null : players.generated_at);
+        setAnalytics(a); setLineups(l); setNews(nw);
+      })
       .catch(err => { console.error("Failed to load data:", err); setLoadError(true); });
   }, []);
 
@@ -1332,38 +1534,48 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["lineups","📋 Lineups"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["lineups","📋 Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
-    <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:13, fontVariantNumeric:"tabular-nums" }}>
-      <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:"16px 20px 0" }}>
+    <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
+      <GlobalCSS />
+      <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:mobile?"12px 12px 0":"16px 20px 0" }}>
         <div style={{ maxWidth:1100, margin:"0 auto" }}>
-          <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>
+          {!mobile && <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>}
           <div style={{ display:"flex", alignItems:"baseline", gap:12, flexWrap:"wrap" }}>
-            <div style={{ fontSize:24, fontWeight:900, letterSpacing:-1, color:"#fff" }}>
-              <span style={{ fontSize:17, fontWeight:400, fontStyle:"italic", color:"#fff" }}>tucheliban's </span>
+            <div style={{ fontSize:mobile?20:24, fontWeight:900, letterSpacing:-1, color:"#fff" }}>
+              <span style={{ fontSize:mobile?15:17, fontWeight:400, fontStyle:"italic", color:"#fff" }}>tucheliban's </span>
               WC26 <span style={{ color:"#f97316" }}>SCOUT</span>
             </div>
             <span style={{ fontSize:11, fontStyle:"italic", color:"#64748b" }}>it's coming home 🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
+            <span style={{ marginLeft:"auto" }}><UrlBadge /></span>
           </div>
-          <div style={{ fontSize:12, color:DIM, marginTop:4 }}>Points Prediction Engine · {rawPlayers.length} players · R-model engine{analytics ? " · analytics loaded" : ""}</div>
-          <div style={{ display:"flex", gap:4, marginTop:12 }}>
+          <div style={{ fontSize:mobile?11:12, color:DIM, marginTop:4 }}>Points Prediction Engine · {rawPlayers.length} players · R-model engine{analytics ? " · analytics loaded" : ""}</div>
+        </div>
+      </div>
+
+      <DeadlineBanner mobile={mobile} />
+
+      <div className="tabwrap" style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}` }}>
+        <div style={{ maxWidth:1100, margin:"0 auto", padding:mobile?"0 12px":"0 20px" }}>
+          <div className="tabbar" style={{ display:"flex", gap:mobile?2:4 }}>
             {TABS.map(([k,l]) => (
-              <button key={k} onClick={()=>setTab(k)} style={{ padding:"8px 14px", border:"none",
+              <button key={k} onClick={()=>setTab(k)} style={{ padding:mobile?"8px 10px":"8px 14px", minHeight:mobile?44:0, border:"none", whiteSpace:"nowrap",
                 borderBottom:`2px solid ${tab===k?"#f97316":"transparent"}`, background:"transparent",
-                color:tab===k?"#f97316":DIM, cursor:"pointer", fontFamily:"inherit", fontSize:12, fontWeight:tab===k?700:400 }}>{l}</button>
+                color:tab===k?"#f97316":DIM, cursor:"pointer", fontFamily:"inherit", fontSize:mobile?11:12, fontWeight:tab===k?700:400 }}>{l}</button>
             ))}
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth:1100, margin:"0 auto", padding:"16px 16px 40px" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto", padding:mobile?"14px 12px 40px":"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
-          F, setF, showFilters, setShowFilters, allPlayers: rawPlayers }} />}
-        {tab==="xi" && <StartingXITab pool={rawPlayers} />}
-        {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} />}
-        {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} />}
-        {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
+          F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp }} />}
+        {tab==="xi" && <StartingXITab pool={rawPlayers} mobile={mobile} />}
+        {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} />}
+        {tab==="news" && <NewsTab news={news} mobile={mobile} />}
+        {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} mobile={mobile} />}
+        {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} mobile={mobile} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
         {tab==="method" && <MethodTab analytics={analytics} />}
 
