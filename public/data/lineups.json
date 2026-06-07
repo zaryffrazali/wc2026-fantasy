@@ -1,29 +1,745 @@
 {
-  "generated_at": "2026-06-07T12:00:00Z",
+  "generated_at": "2026-06-07T16:14:43.343Z",
   "teams": {
     "Spain": {
       "team": "Spain",
       "flag": "🇪🇸",
       "formation": "4-3-3",
-      "confidence": "SEED_DATA",
-      "last_news_date": "seed (placeholder until lineups_fetch runs)",
       "manager": "Luis de la Fuente",
       "players": [
-        { "name": "Unai Simón", "position": "GK", "slot": "GK", "status": "CERTAIN", "doubt_reason": null, "caps": 45, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Pedro Porro", "position": "DEF", "slot": "RB", "status": "PROBABLE", "doubt_reason": null, "caps": 18, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Robin Le Normand", "position": "DEF", "slot": "RCB", "status": "CERTAIN", "doubt_reason": null, "caps": 30, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Aymeric Laporte", "position": "DEF", "slot": "LCB", "status": "CERTAIN", "doubt_reason": null, "caps": 40, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Marc Cucurella", "position": "DEF", "slot": "LB", "status": "CERTAIN", "doubt_reason": null, "caps": 28, "in_fantasy_pool": true, "fantasy_price": 5.1, "fantasy_xpts": null },
-        { "name": "Rodri", "position": "MID", "slot": "CDM", "status": "DOUBT", "doubt_reason": "returning from knee injury — minutes managed", "caps": 60, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Pedri", "position": "MID", "slot": "CM", "status": "CERTAIN", "doubt_reason": null, "caps": 35, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null },
-        { "name": "Dani Olmo", "position": "MID", "slot": "CAM", "status": "PROBABLE", "doubt_reason": null, "caps": 45, "in_fantasy_pool": true, "fantasy_price": 7.7, "fantasy_xpts": null },
-        { "name": "Lamine Yamal", "position": "FWD", "slot": "RW", "status": "CERTAIN", "doubt_reason": null, "caps": 25, "in_fantasy_pool": true, "fantasy_price": 10.0, "fantasy_xpts": null },
-        { "name": "Mikel Oyarzabal", "position": "FWD", "slot": "ST", "status": "PROBABLE", "doubt_reason": null, "caps": 38, "in_fantasy_pool": true, "fantasy_price": 5.0, "fantasy_xpts": null },
-        { "name": "Nico Williams", "position": "FWD", "slot": "LW", "status": "CERTAIN", "doubt_reason": null, "caps": 30, "in_fantasy_pool": false, "fantasy_price": null, "fantasy_xpts": null }
+        {
+          "name": "Unai Simón",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Alejandro Balde",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age/competition",
+          "position": "DEF"
+        },
+        {
+          "name": "Pau Torres",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Fitness",
+          "position": "DEF"
+        },
+        {
+          "name": "Íñigo Martínez",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age (35+)",
+          "position": "DEF"
+        },
+        {
+          "name": "Jesús Navas",
+          "slot": "RB",
+          "status": "DOUBT",
+          "doubt_reason": "Age (40+)",
+          "position": "DEF"
+        },
+        {
+          "name": "Sergio Busquets",
+          "slot": "CDM",
+          "status": "OUT",
+          "doubt_reason": "Retirement",
+          "position": "MID"
+        },
+        {
+          "name": "Rodri",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Pedri",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ferran Torres",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Álvaro Morata",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Age (34+)",
+          "position": "FWD"
+        },
+        {
+          "name": "Gavi",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
       ],
-      "key_absences": ["Gavi — recovering from long-term knee injury", "Carvajal — fitness doubt"],
-      "tactical_note": "Possession-dominant 4-3-3, high press, full-backs provide width with Yamal/Williams inverting.",
-      "fantasy_note": "Stack Spain's attack — easy group fixtures (Cape Verde, Saudi Arabia) and Oyarzabal is first-choice striker at budget price. Cucurella the value clean-sheet route."
+      "key_absences": [
+        "Sergio Busquets (retired)",
+        "Dani Olmo (unavailable)",
+        "Ansu Fati (fitness)"
+      ],
+      "tactical_note": "Spain adapts to midfield evolution; Gavi/Pedri pivot likely. Defensive transitions challenging without Busquets experience.",
+      "fantasy_note": "Rodri and Pedri are fantasy anchors. Morata's minutes questionable; monitor striker rotation.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Argentina": {
+      "team": "Argentina",
+      "flag": "🇦🇷",
+      "formation": "4-3-3",
+      "manager": "Lionel Scaloni",
+      "players": [
+        {
+          "name": "Gonzalo Montiel",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Nicolás Tagliafico",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age factor",
+          "position": "DEF"
+        },
+        {
+          "name": "Cristian Romero",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Lisandro Martínez",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Gonzalo Montiel",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Enzo Fernández",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Rodrigo De Paul",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Age considerations",
+          "position": "MID"
+        },
+        {
+          "name": "Alexis Mac Allister",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Alejandro Garnacho",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "FWD"
+        },
+        {
+          "name": "Julián Álvarez",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Vinícius Jr",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "International availability",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Messi (retired)",
+        "Otamendi (age)",
+        "Foyth (depth)"
+      ],
+      "tactical_note": "Argentina shifts to post-Messi era with youthful attacking talent. Flexible 4-3-3 balances control and directness.",
+      "fantasy_note": "Álvarez and Mac Allister offer consistent attacking returns. Fernández crucial for midfield dominance.",
+      "confidence": "AI_PREDICTED"
+    },
+    "France": {
+      "team": "France",
+      "flag": "🇫🇷",
+      "formation": "4-3-3",
+      "manager": "Didier Deschamps",
+      "players": [
+        {
+          "name": "Mike Maignan",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Théo Hernández",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 28, injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "William Saliba",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Dayot Upamecano",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 30 by tournament",
+          "position": "DEF"
+        },
+        {
+          "name": "Jules Koundé",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Aurélien Tchouaméni",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Eduardo Camavinga",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition intense",
+          "position": "MID"
+        },
+        {
+          "name": "Antoine Griezmann",
+          "slot": "CAM",
+          "status": "DOUBT",
+          "doubt_reason": "Age 35, may retire",
+          "position": "MID"
+        },
+        {
+          "name": "Kylian Mbappé",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Olivier Giroud",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Age 37, likely retired",
+          "position": "FWD"
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Fitness, form dependent",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Karim Benzema (retired)",
+        "N'Golo Kanté (age/retirement)",
+        "Raphaël Varane (retired)"
+      ],
+      "tactical_note": "France likely maintains 4-3-3 with Mbappé leading attack. Midfield rotation between Camavinga, Fofana, Verratti successors.",
+      "fantasy_note": "Mbappé is standout asset. Tchouaméni offers midfield security. Griezmann/Giroud retirements may open striker opportunities for younger talent like Haller or Tielemans midfield depth.",
+      "confidence": "AI_PREDICTED"
+    },
+    "England": {
+      "team": "England",
+      "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "formation": "4-3-3",
+      "manager": "Thomas Tuchel",
+      "players": [
+        {
+          "name": "Aaron Ramsdale",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Luke Shaw",
+          "slot": "LB",
+          "status": "DOUBT",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "John Stones",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Harry Maguire",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Kyle Walker",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age",
+          "position": "DEF"
+        },
+        {
+          "name": "Jude Bellingham",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Declan Rice",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Phil Foden",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Bukayo Saka",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Harry Kane",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Age/Form",
+          "position": "FWD"
+        },
+        {
+          "name": "Jarrod Bowen",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Mason Mount (injuries)",
+        "Jordan Henderson (retirement)",
+        "Raheem Sterling (age)"
+      ],
+      "tactical_note": "Tuchel likely employs balanced 4-3-3 with Bellingham as box-to-box anchor. Foden provides attacking midfield threat.",
+      "fantasy_note": "Bellingham and Foden are premium picks. Saka consistent. Kane's inclusion uncertain—monitor form.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Brazil": {
+      "team": "Brazil",
+      "flag": "🇧🇷",
+      "formation": "4-3-3",
+      "manager": "Carlo Ancelotti",
+      "players": [
+        {
+          "name": "Alisson",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Renan Lodi",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age and competition",
+          "position": "DEF"
+        },
+        {
+          "name": "Bremer",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Marquinhos",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Danilo",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age considerations",
+          "position": "DEF"
+        },
+        {
+          "name": "Lucas Paquetá",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Bruno Guimarães",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Vinícius Júnior",
+          "slot": "LM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Rodrygo",
+          "slot": "RM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Neymar",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "Age and fitness",
+          "position": "FWD"
+        },
+        {
+          "name": "Richarlison",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Neymar (fitness concerns)",
+        "Mbappé unavailable (France player)"
+      ],
+      "tactical_note": "Attacking 4-3-3 with emphasis on width. Bruno Guimarães as box-to-box anchor.",
+      "fantasy_note": "Vinícius and Rodrygo offer high upside. Monitor Neymar recovery status.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Portugal": {
+      "team": "Portugal",
+      "flag": "🇵🇹",
+      "formation": "4-3-3",
+      "manager": "Roberto Martínez",
+      "players": [
+        {
+          "name": "Diogo Costa",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "João Cancelo",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 33, fitness",
+          "position": "DEF"
+        },
+        {
+          "name": "Rúben Dias",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Pepe",
+          "slot": "RCB",
+          "status": "DOUBT",
+          "doubt_reason": "Age 43, likely retired",
+          "position": "DEF"
+        },
+        {
+          "name": "Nélson Semedo",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 31, backup availability",
+          "position": "DEF"
+        },
+        {
+          "name": "João Neves",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Bruno Fernandes",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Vitinha",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition for spots",
+          "position": "MID"
+        },
+        {
+          "name": "Cristiano Ronaldo",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "Age 41, likely retired",
+          "position": "FWD"
+        },
+        {
+          "name": "Gonçalo Ramos",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "FWD"
+        },
+        {
+          "name": "Rafael Leão",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Form dependent",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Pepe (likely retired)",
+        "Cristiano Ronaldo (likely retired)"
+      ],
+      "tactical_note": "Portugal transitions post-Ronaldo with younger attacking talent. Neves integrates into midfield core.",
+      "fantasy_note": "Bruno Fernandes remains essential. Monitor Gonçalo Ramos and Rafael Leão fitness.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Netherlands": {
+      "team": "Netherlands",
+      "flag": "🇳🇱",
+      "formation": "4-3-3",
+      "manager": "Ronald Koeman",
+      "players": [
+        {
+          "name": "Bart Verbruggen",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Tyrell Malacia",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Virgil van Dijk",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Stefan de Vrij",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age",
+          "position": "DEF"
+        },
+        {
+          "name": "Jeremie Freuler",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "DEF"
+        },
+        {
+          "name": "Frenkie de Jong",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury prone",
+          "position": "MID"
+        },
+        {
+          "name": "Teun Koopmeiners",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Xavi Simons",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Cody Gakpo",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Memphis Depay",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Age and form",
+          "position": "FWD"
+        },
+        {
+          "name": "Steven Bergwijn",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Donny van de Beek",
+        "Daley Blind"
+      ],
+      "tactical_note": "Balanced 4-3-3 with creative midfield; emphasis on possession and wide play",
+      "fantasy_note": "Gakpo and Koopmeiners offer best fantasy value; Depay risky",
+      "confidence": "AI_PREDICTED"
+    },
+    "Belgium": {
+      "team": "Belgium",
+      "flag": "🇧🇪",
+      "formation": "4-2-3-1",
+      "manager": "Domenico Tedesco",
+      "players": [
+        {
+          "name": "Thibaut Courtois",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Jan Vertonghen",
+          "slot": "LB",
+          "status": "DOUBT",
+          "doubt_reason": "Age 37, may retire",
+          "position": "DEF"
+        },
+        {
+          "name": "Wout Faes",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Dedryck Boyata",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Thomas Meunier",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Axel Witsel",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Youri Tielemans",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Kevin De Bruyne",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Jeremy Doku",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Leandro Trossard",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Romelu Lukaku",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Eden Hazard (retired)",
+        "Michy Batshuayi (likely decline)"
+      ],
+      "tactical_note": "Belgium transitions with young core led by De Bruyne. Defensive experience crucial with aging backline.",
+      "fantasy_note": "De Bruyne highest fantasy value. Lukaku and Doku provide attacking upside if fit.",
+      "confidence": "AI_PREDICTED"
     }
   }
 }
