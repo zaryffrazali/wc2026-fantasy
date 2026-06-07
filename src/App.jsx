@@ -475,6 +475,7 @@ function PlayerDetail({ p, riskMode, onClose }) {
 function StartingXITab({ pool }) {
   const [open, setOpen] = useState(null);
   const [md, setMd] = useState(0);
+  const [showDesc, setShowDesc] = useState(true);
   if (!pool || !pool.length) return <div style={{ color:DIM }}>No player data.</div>;
 
   const ROW = n => n ? Array.from({length:n}, (_,i)=> n>1 ? 15+(i/(n-1))*70 : 50) : [];
@@ -505,11 +506,26 @@ function StartingXITab({ pool }) {
     }
     const [d,m,f]=best.dims, xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[6,...Array(d).fill(28),...Array(m).fill(55),...Array(f).fill(82)];
     const cap=best.arr.reduce((a,b)=>b.mdPts>a.mdPts?b:a);
+    const cap2 = best.arr.filter(p=>p.id!==cap.id).reduce((a,b)=>((b.pts_diff||b.mdPts)>(a.pts_diff||a.mdPts)?b:a));
     const players=best.arr.map((p,i)=>({...p, x:xs[i], y:ys[i], pts_balanced:Math.round(p.mdPts*10)/10,
-      is_captain:p.id===cap.id, value:+(p.mdPts/p.price).toFixed(2),
-      model_signals:[`MD${mi+1} vs ${p.mdOpp} — ${Math.round(p.mdWin*100)}% win prob`,
-                     `xMins ${Math.round((p.startProb??0.85)*(p.minsIfStarted??90))}' · $${p.price}m`]}));
-    return { formation:best.form, total_pts:best.tot, players, captain:{...cap, opp:cap.mdOpp, win:cap.mdWin} };
+      is_captain:p.id===cap.id, is_vc:p.id===cap2.id, value:+(p.mdPts/p.price).toFixed(2)}));
+    // bench: best non-XI GK + next 3 outfield by this MD's pts
+    const xiIds = new Set(best.arr.map(p=>p.id));
+    const bGK = sc.filter(p=>p.pos==="GK" && !xiIds.has(p.id)).sort((a,b)=>b.mdPts-a.mdPts)[0];
+    const bOut = sc.filter(p=>p.pos!=="GK" && !xiIds.has(p.id)).sort((a,b)=>b.mdPts-a.mdPts).slice(0,3);
+    const benchReason = p => {
+      const wins=(p.fixtures||[]).map(f=>f?.oddsWin||0), bestMd=wins.indexOf(Math.max(...wins));
+      if (bestMd>mi) return `Tough MD${mi+1} fixture — key MD${bestMd+1} asset`;
+      if ((p.startProb||1)<0.88) return "Rotation risk — monitor";
+      if (p.own<10) return "Differential option — activate for easy fixtures";
+      if (p.price<5.0) return "Budget enabler — quality backup";
+      return `Strong backup — covers ${p.pos} injury risk`;
+    };
+    const bench = [...bOut, bGK].filter(Boolean).map((p,i)=>({...p, benchOrder:i+1,
+      benchPts:+((p.pts_balanced||0)*0.3).toFixed(1), benchReason:benchReason(p)}));
+    return { formation:best.form, total_pts:best.tot, players, bench,
+      budget:+best.arr.reduce((s,p)=>s+p.price,0).toFixed(1),
+      captain:{...cap, opp:cap.mdOpp, win:cap.mdWin} };
   };
   const xis = [0,1,2].map(buildXI);
   const idSets = xis.map(x=>new Set(x.players.map(p=>p.id)));
@@ -526,10 +542,13 @@ function StartingXITab({ pool }) {
             border:`1px solid ${md===i?"#f97316":BORDER}`, background:md===i?"#f9731618":"transparent", color:md===i?"#f97316":DIM }}>MD{i+1}</button>
         ))}
       </div>
-      <div style={{ marginBottom:6 }}>
-        <span style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{xi.formation} · {Math.round(xi.total_pts)} pts</span>
-        <span style={{ marginLeft:10, fontSize:12, color:DIM }}>MD{md+1} — {MD_DATES[md]} | optimised for matchday {md+1} fixtures</span>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", flexWrap:"wrap", gap:8, marginBottom:6 }}>
+        <span style={{ fontSize:15, fontWeight:800, color:"#fff" }}>Formation: {xi.formation} | Total xPts: {Math.round(xi.total_pts)} | Budget: ${xi.budget}m used</span>
+        <label style={{ fontSize:11, color:DIM, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+          <input type="checkbox" checked={showDesc} onChange={e=>setShowDesc(e.target.checked)} style={{accentColor:"#f97316"}} /> Show descriptions
+        </label>
       </div>
+      <div style={{ fontSize:12, color:DIM, marginBottom:6 }}>MD{md+1} — {MD_DATES[md]} | optimised for matchday {md+1} fixtures</div>
       <div style={{ fontSize:12, color:"#fbbf24", marginBottom:4, fontWeight:600 }}>MD{md+1} CAPTAIN: {cap.name} vs {cap.opp} ({Math.round(cap.win*100)}% win prob)</div>
       <div style={{ fontSize:11, color:DIM, marginBottom:12 }}>Easiest fixtures: {fixCtx.map(x=>`${x.team} v ${x.opp} (${Math.round(x.win*100)}%)`).join(" · ")}</div>
       <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
@@ -540,14 +559,16 @@ function StartingXITab({ pool }) {
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
             style={{ position:"absolute", left:`${pl.x}%`, top:`${pl.y}%`, transform:"translate(-50%,-50%)",
               textAlign:"center", cursor:"pointer", width:84 }}>
-            <div style={{ width:Math.max(34, Math.min(54, pl.pts_balanced/2)), height:Math.max(34, Math.min(54, pl.pts_balanced/2)),
-              margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
-              alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:800, color:"#06121f",
-              border: pl.is_captain ? "3px solid #fbbf24" : "2px solid #ffffff55", position:"relative" }}>
-              {Math.round(pl.pts_balanced)}
-              {pl.is_captain && <span style={{ position:"absolute", top:-8, right:-8, fontSize:14 }}>©</span>}
+            <div style={{ width:40, height:40, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
+              alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#06121f",
+              border: pl.is_captain ? "3px solid #fbbf24" : pl.is_vc ? "3px solid #cbd5e1" : "2px solid #ffffff55", position:"relative" }}>
+              {pl.pts_balanced}
+              {pl.is_captain && <span style={{ position:"absolute", top:-9, right:-9, fontSize:10, fontWeight:800, background:"#fbbf24", color:"#000", borderRadius:"50%", width:17, height:17, display:"flex", alignItems:"center", justifyContent:"center" }}>C</span>}
+              {pl.is_vc && <span style={{ position:"absolute", top:-9, right:-11, fontSize:8, fontWeight:800, background:"#cbd5e1", color:"#000", borderRadius:8, padding:"1px 3px" }}>VC</span>}
             </div>
-            <div style={{ fontSize:10, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000" }}>{pl.name}</div>
+            <div style={{ fontSize:11, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000" }}>{pl.name}</div>
+            {pl.is_captain && <div style={{ fontSize:8, color:"#fbbf24", fontWeight:700 }}>2× pts</div>}
+            {pl.is_vc && <div style={{ fontSize:8, color:"#cbd5e1" }}>2× if C DNP</div>}
           </div>
         ))}
       </div>
@@ -561,18 +582,45 @@ function StartingXITab({ pool }) {
               <span style={{ fontSize:12, color:POS_COLOR[pl.pos], fontFamily:MONO }}>{pl.pos}</span>
             </div>
             <div style={{ fontSize:11, color:DIM, margin:"4px 0" }}>{pl.team} · ${pl.price}m · {pl.pts_balanced} xPts · {pl.value} val</div>
-            <div style={{ fontSize:11, color:"#c8c8c8" }}>{(pl.model_signals||[])[0]}</div>
-            {open===pl.id && (
-              <div style={{ marginTop:8, borderTop:`1px solid ${BORDER}`, paddingTop:8, fontSize:11, color:"#aaa", lineHeight:1.6 }}>
-                {(pl.model_signals||[]).map((s,i)=><div key={i}>• {s}</div>)}
-                <div style={{ color:"#f97316", marginTop:6 }}>{pl.role_analysis}</div>
-                {pl.mispricing_signal && <div style={{ color:"#4ade80", marginTop:4 }}>{pl.mispricing_signal}</div>}
-                {pl.captain_case && <div style={{ color:"#fbbf24", marginTop:4 }}>{pl.captain_case}</div>}
-                {(pl.risk_flags||[]).length>0 && <div style={{ color:"#ff8c42", marginTop:4 }}>{pl.risk_flags.join(" · ")}</div>}
-              </div>
-            )}
+            {showDesc && (() => {
+              const E = (3 + (pl.advP/100)*5).toFixed(1);
+              const why = `MD${md+1} pick — ${Math.round(pl.mdWin*100)}% win vs ${pl.mdOpp}, ${pl.pts_balanced} xPts.`;
+              const key = (pl.pos==="GK"||pl.pos==="DEF")
+                ? `Clean sheet prob ${Math.round((pl.csP||0)*100)}% → expected CS pts (adv ${pl.advP}%, ~${E} matches)`
+                : `npxG/90 ${(pl.xGp90||0).toFixed(2)} → goal threat (adv ${pl.advP}%, ~${E} matches)`;
+              const risk = pl.own>40 ? `⚠ ${pl.own}% owned — template, no mini-league edge`
+                : pl.cardRisk==="high" ? "⚠ High card risk — avoid captaining"
+                : (pl.startProb||1)<0.88 ? "⚠ Rotation possible if group already won"
+                : "✓ Low risk profile";
+              return (
+                <div style={{ marginTop:6, borderTop:`1px solid ${BORDER}`, paddingTop:6, fontSize:11, lineHeight:1.5 }}>
+                  <div style={{ color:"#c8c8c8" }}>{why}</div>
+                  <div style={{ color:"#94a3b8", marginTop:3 }}>{key}</div>
+                  <div style={{ color: risk.startsWith("✓")?"#4ade80":"#ff8c42", marginTop:3 }}>{risk}</div>
+                </div>
+              );
+            })()}
           </div>
         ))}
+      </div>
+
+      {/* BENCH */}
+      <div style={{ marginTop:18 }}>
+        <div style={{ fontSize:11, letterSpacing:2, color:DIM, marginBottom:8, fontFamily:MONO }}>BENCH — AUTO-SUB ORDER</div>
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+          {(xi.bench||[]).map(b=>(
+            <div key={b.id} style={{ flex:"1 1 170px", background:CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"10px 12px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>
+                  <span title={`Priority ${b.benchOrder} auto-sub — activates if a starter does not play`} style={{ background:"#1e293b", color:"#94a3b8", borderRadius:4, padding:"0 5px", fontSize:10, marginRight:5, fontFamily:MONO, cursor:"help" }}>{b.benchOrder}</span>
+                  {b.name}</span>
+                <span style={{ fontSize:11, color:POS_COLOR[b.pos], fontFamily:MONO }}>{b.pos}</span>
+              </div>
+              <div style={{ fontSize:11, color:DIM, margin:"4px 0" }}>${b.price}m · Bench EV: {b.benchPts} pts</div>
+              <div style={{ fontSize:11, color:"#94a3b8" }}>{b.benchReason}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
