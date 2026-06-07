@@ -1,0 +1,49 @@
+team,competition,year,stage_reached,pts_per_game_group,xG_per_game_approx,xGA_per_game_approx,form_rating
+Spain,Euros,2024,Winner,3.0,2.1,0.8,9.5
+England,Euros,2024,Final,1.7,1.4,0.9,8.0
+Netherlands,Euros,2024,SF,1.7,1.7,1.1,7.8
+France,Euros,2024,SF,1.7,1.2,0.7,7.5
+Germany,Euros,2024,QF,2.3,2.0,1.0,7.7
+Portugal,Euros,2024,QF,2.3,1.8,0.9,7.6
+Switzerland,Euros,2024,QF,1.7,1.6,1.1,7.2
+Croatia,Euros,2024,Group,0.7,1.2,1.5,5.5
+Austria,Euros,2024,R16,2.0,1.7,1.2,7.0
+Belgium,Euros,2024,R16,1.3,1.2,1.0,6.5
+Scotland,Euros,2024,Group,0.3,0.7,2.0,4.5
+Czech Republic,Euros,2024,Group,0.7,1.0,1.4,5.2
+Argentina,Copa,2024,Winner,2.7,1.8,0.6,9.3
+Colombia,Copa,2024,Final,2.3,1.9,0.9,8.4
+Uruguay,Copa,2024,SF,2.3,1.9,0.8,8.2
+Brazil,Copa,2024,QF,1.7,1.6,1.0,7.4
+Ecuador,Copa,2024,QF,1.3,1.2,1.0,6.8
+Paraguay,Copa,2024,Group,0.3,0.8,1.6,4.8
+Ivory Coast,AFCON,2024,Winner,1.7,1.5,1.1,7.6
+South Africa,AFCON,2024,SF,1.7,1.3,0.9,7.0
+DR Congo,AFCON,2024,SF,1.3,1.1,0.9,6.8
+Morocco,AFCON,2024,R16,1.7,1.6,1.0,7.5
+Senegal,AFCON,2024,R16,2.0,1.6,0.8,7.6
+Egypt,AFCON,2024,R16,1.3,1.2,1.1,6.7
+Cape Verde,AFCON,2024,QF,1.3,1.0,1.0,6.4
+Algeria,AFCON,2024,Group,0.7,1.1,1.4,5.4
+Ghana,AFCON,2024,Group,0.3,0.9,1.6,4.9
+Tunisia,AFCON,2024,Group,0.7,0.9,1.3,5.3
+Qatar,Asian Cup,2024,Winner,2.7,1.9,0.8,7.4
+Jordan,Asian Cup,2024,Final,1.7,1.5,1.1,6.9
+Iran,Asian Cup,2024,SF,2.3,1.7,0.9,7.2
+South Korea,Asian Cup,2024,SF,1.7,1.6,1.2,7.1
+Australia,Asian Cup,2024,QF,2.3,1.6,0.8,6.9
+Japan,Asian Cup,2024,QF,2.0,2.0,1.0,7.5
+Saudi Arabia,Asian Cup,2024,R16,1.7,1.2,1.0,6.2
+Iraq,Asian Cup,2024,R16,2.3,1.5,1.0,6.4
+Uzbekistan,Asian Cup,2024,QF,1.7,1.3,0.9,6.5
+Mexico,Gold Cup,2023,Winner,2.3,1.7,0.8,7.0
+Panama,Gold Cup,2023,Final,2.0,1.4,1.0,6.5
+United States,Gold Cup,2023,SF,2.3,1.6,0.9,7.1
+Canada,Gold Cup,2023,QF,1.7,1.3,1.1,6.6
+New Zealand,OFC Nations Cup,2024,Winner,3.0,2.4,0.6,5.8
+Norway,Qualifying,2025,NA,2.4,2.0,0.9,7.3
+Sweden,Qualifying,2025,NA,1.6,1.4,1.2,6.0
+Bosnia and Herzegovina,Qualifying,2025,NA,1.8,1.3,1.1,5.9
+Haiti,Qualifying,2025,NA,1.5,1.1,1.3,5.0
+Curacao,Qualifying,2025,NA,1.7,1.2,1.2,5.2
+Jordan,Qualifying,2025,NA,2.0,1.4,1.0,6.5

@@ -1,0 +1,423 @@
+{
+  "MD1": [
+    {
+      "id": 138,
+      "name": "Kevin De Bruyne",
+      "team": "Belgium",
+      "pos": "MID",
+      "price": 7.5,
+      "pts": 7.3,
+      "data_tier": "curated"
+    },
+    {
+      "id": 183,
+      "name": "Alisson Becker",
+      "team": "Brazil",
+      "pos": "GK",
+      "price": 5,
+      "pts": 4.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 500,
+      "name": "Kylian Mbappé",
+      "team": "France",
+      "pos": "FWD",
+      "price": 10.5,
+      "pts": 8.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 521,
+      "name": "David Raum",
+      "team": "Germany",
+      "pos": "DEF",
+      "price": 4.9,
+      "pts": 4.9,
+      "data_tier": "curated"
+    },
+    {
+      "id": 542,
+      "name": "Joshua Kimmich",
+      "team": "Germany",
+      "pos": "DEF",
+      "price": 5.5,
+      "pts": 7.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 610,
+      "name": "Mehdi Taremi",
+      "team": "Iran",
+      "pos": "FWD",
+      "price": 6.1,
+      "pts": 4.2,
+      "data_tier": "curated"
+    },
+    {
+      "id": 765,
+      "name": "Samir El Mourabet",
+      "team": "Morocco",
+      "pos": "MID",
+      "price": 4.7,
+      "pts": 2.4,
+      "data_tier": "pool"
+    },
+    {
+      "id": 916,
+      "name": "Nuno Mendes",
+      "team": "Portugal",
+      "pos": "DEF",
+      "price": 5.8,
+      "pts": 6.4,
+      "data_tier": "curated"
+    },
+    {
+      "id": 939,
+      "name": "Bruno Fernandes",
+      "team": "Portugal",
+      "pos": "MID",
+      "price": 8.5,
+      "pts": 7.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1088,
+      "name": "Marc Cucurella",
+      "team": "Spain",
+      "pos": "DEF",
+      "price": 5.1,
+      "pts": 5.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1092,
+      "name": "Lamine Yamal",
+      "team": "Spain",
+      "pos": "MID",
+      "price": 10,
+      "pts": 7.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1142,
+      "name": "Ricardo Rodríguez",
+      "team": "Switzerland",
+      "pos": "DEF",
+      "price": 4.5,
+      "pts": 4.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1338,
+      "name": "Lautaro Martínez",
+      "team": "Argentina",
+      "pos": "FWD",
+      "price": 8.8,
+      "pts": 6.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1366,
+      "name": "Raphinha",
+      "team": "Brazil",
+      "pos": "MID",
+      "price": 8.2,
+      "pts": 6.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1522,
+      "name": "Thibaut Courtois",
+      "team": "Belgium",
+      "pos": "GK",
+      "price": 4.9,
+      "pts": 5,
+      "data_tier": "curated"
+    }
+  ],
+  "MD2": [
+    {
+      "id": 138,
+      "name": "Kevin De Bruyne",
+      "team": "Belgium",
+      "pos": "MID",
+      "price": 7.5,
+      "pts": 7.4,
+      "data_tier": "curated"
+    },
+    {
+      "id": 183,
+      "name": "Alisson Becker",
+      "team": "Brazil",
+      "pos": "GK",
+      "price": 5,
+      "pts": 5.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 500,
+      "name": "Kylian Mbappé",
+      "team": "France",
+      "pos": "FWD",
+      "price": 10.5,
+      "pts": 9.2,
+      "data_tier": "curated"
+    },
+    {
+      "id": 521,
+      "name": "David Raum",
+      "team": "Germany",
+      "pos": "DEF",
+      "price": 4.9,
+      "pts": 4.3,
+      "data_tier": "curated"
+    },
+    {
+      "id": 542,
+      "name": "Joshua Kimmich",
+      "team": "Germany",
+      "pos": "DEF",
+      "price": 5.5,
+      "pts": 6.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 610,
+      "name": "Mehdi Taremi",
+      "team": "Iran",
+      "pos": "FWD",
+      "price": 6.1,
+      "pts": 4.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 777,
+      "name": "Ayoub El Kaabi",
+      "team": "Morocco",
+      "pos": "FWD",
+      "price": 5.9,
+      "pts": 4.2,
+      "data_tier": "curated"
+    },
+    {
+      "id": 916,
+      "name": "Nuno Mendes",
+      "team": "Portugal",
+      "pos": "DEF",
+      "price": 5.8,
+      "pts": 6.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 939,
+      "name": "Bruno Fernandes",
+      "team": "Portugal",
+      "pos": "MID",
+      "price": 8.5,
+      "pts": 7.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1088,
+      "name": "Marc Cucurella",
+      "team": "Spain",
+      "pos": "DEF",
+      "price": 5.1,
+      "pts": 5.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1092,
+      "name": "Lamine Yamal",
+      "team": "Spain",
+      "pos": "MID",
+      "price": 10,
+      "pts": 7.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1142,
+      "name": "Ricardo Rodríguez",
+      "team": "Switzerland",
+      "pos": "DEF",
+      "price": 4.5,
+      "pts": 5.1,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1248,
+      "name": "Federico Valverde",
+      "team": "Uruguay",
+      "pos": "MID",
+      "price": 7.5,
+      "pts": 6.6,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1366,
+      "name": "Raphinha",
+      "team": "Brazil",
+      "pos": "MID",
+      "price": 8.2,
+      "pts": 7.4,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1522,
+      "name": "Thibaut Courtois",
+      "team": "Belgium",
+      "pos": "GK",
+      "price": 4.9,
+      "pts": 5.1,
+      "data_tier": "curated"
+    }
+  ],
+  "MD3": [
+    {
+      "id": 138,
+      "name": "Kevin De Bruyne",
+      "team": "Belgium",
+      "pos": "MID",
+      "price": 7.5,
+      "pts": 7.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 183,
+      "name": "Alisson Becker",
+      "team": "Brazil",
+      "pos": "GK",
+      "price": 5,
+      "pts": 5.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 451,
+      "name": "Mohamed El Shenawy",
+      "team": "Egypt",
+      "pos": "GK",
+      "price": 3.6,
+      "pts": 5.1,
+      "data_tier": "curated"
+    },
+    {
+      "id": 500,
+      "name": "Kylian Mbappé",
+      "team": "France",
+      "pos": "FWD",
+      "price": 10.5,
+      "pts": 8.9,
+      "data_tier": "curated"
+    },
+    {
+      "id": 542,
+      "name": "Joshua Kimmich",
+      "team": "Germany",
+      "pos": "DEF",
+      "price": 5.5,
+      "pts": 6.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 610,
+      "name": "Mehdi Taremi",
+      "team": "Iran",
+      "pos": "FWD",
+      "price": 6.1,
+      "pts": 5.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 777,
+      "name": "Ayoub El Kaabi",
+      "team": "Morocco",
+      "pos": "FWD",
+      "price": 5.9,
+      "pts": 4.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 916,
+      "name": "Nuno Mendes",
+      "team": "Portugal",
+      "pos": "DEF",
+      "price": 5.8,
+      "pts": 5.5,
+      "data_tier": "curated"
+    },
+    {
+      "id": 939,
+      "name": "Bruno Fernandes",
+      "team": "Portugal",
+      "pos": "MID",
+      "price": 8.5,
+      "pts": 7.1,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1088,
+      "name": "Marc Cucurella",
+      "team": "Spain",
+      "pos": "DEF",
+      "price": 5.1,
+      "pts": 4.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1092,
+      "name": "Lamine Yamal",
+      "team": "Spain",
+      "pos": "MID",
+      "price": 10,
+      "pts": 7.1,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1142,
+      "name": "Ricardo Rodríguez",
+      "team": "Switzerland",
+      "pos": "DEF",
+      "price": 4.5,
+      "pts": 4.8,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1248,
+      "name": "Federico Valverde",
+      "team": "Uruguay",
+      "pos": "MID",
+      "price": 7.5,
+      "pts": 6.6,
+      "data_tier": "curated"
+    },
+    {
+      "id": 1366,
+      "name": "Raphinha",
+      "team": "Brazil",
+      "pos": "MID",
+      "price": 8.2,
+      "pts": 7.7,
+      "data_tier": "curated"
+    },
+    {
+      "id": 2012,
+      "name": "Achraf Hakimi",
+      "team": "Morocco",
+      "pos": "DEF",
+      "price": 6,
+      "pts": 7.6,
+      "data_tier": "curated"
+    }
+  ],
+  "transfers": {
+    "MD2": {
+      "out": [765, 1338],
+      "in": [777, 1248]
+    },
+    "MD3": {
+      "out": [521, 1522],
+      "in": [451, 2012]
+    }
+  }
+}

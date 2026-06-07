@@ -1,0 +1,49 @@
+group,team,md1_opponent,md2_opponent,md3_opponent
+A,Mexico,South Korea,South Africa,Czech Republic
+A,South Korea,Mexico,South Africa,Czech Republic
+A,South Africa,Mexico,South Korea,Czech Republic
+A,Czech Republic,Mexico,South Korea,South Africa
+B,Canada,Switzerland,Qatar,Bosnia and Herzegovina
+B,Switzerland,Canada,Qatar,Bosnia and Herzegovina
+B,Qatar,Canada,Switzerland,Bosnia and Herzegovina
+B,Bosnia and Herzegovina,Canada,Switzerland,Qatar
+C,Brazil,Morocco,Scotland,Haiti
+C,Morocco,Brazil,Scotland,Haiti
+C,Scotland,Brazil,Morocco,Haiti
+C,Haiti,Brazil,Morocco,Scotland
+D,United States,Paraguay,Australia,Turkey
+D,Paraguay,United States,Australia,Turkey
+D,Australia,United States,Paraguay,Turkey
+D,Turkey,United States,Paraguay,Australia
+E,Germany,Curacao,Ivory Coast,Ecuador
+E,Curacao,Germany,Ivory Coast,Ecuador
+E,Ivory Coast,Germany,Curacao,Ecuador
+E,Ecuador,Germany,Curacao,Ivory Coast
+F,Netherlands,Japan,Sweden,Tunisia
+F,Japan,Netherlands,Sweden,Tunisia
+F,Sweden,Netherlands,Japan,Tunisia
+F,Tunisia,Netherlands,Japan,Sweden
+G,Belgium,Egypt,Iran,New Zealand
+G,Egypt,Belgium,Iran,New Zealand
+G,Iran,Belgium,Egypt,New Zealand
+G,New Zealand,Belgium,Egypt,Iran
+H,Spain,Cape Verde,Saudi Arabia,Uruguay
+H,Cape Verde,Spain,Saudi Arabia,Uruguay
+H,Saudi Arabia,Spain,Cape Verde,Uruguay
+H,Uruguay,Spain,Cape Verde,Saudi Arabia
+I,France,Senegal,Iraq,Norway
+I,Senegal,France,Iraq,Norway
+I,Iraq,France,Senegal,Norway
+I,Norway,France,Senegal,Iraq
+J,Argentina,Algeria,Austria,Jordan
+J,Algeria,Argentina,Austria,Jordan
+J,Austria,Argentina,Algeria,Jordan
+J,Jordan,Argentina,Algeria,Austria
+K,Portugal,DR Congo,Uzbekistan,Colombia
+K,DR Congo,Portugal,Uzbekistan,Colombia
+K,Uzbekistan,Portugal,DR Congo,Colombia
+K,Colombia,Portugal,DR Congo,Uzbekistan
+L,England,Croatia,Ghana,Panama
+L,Croatia,England,Ghana,Panama
+L,Ghana,England,Croatia,Panama
+L,Panama,England,Croatia,Ghana
