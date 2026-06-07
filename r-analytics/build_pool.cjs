@@ -88,6 +88,10 @@ const out = players.map(fp => {
     oneToWatch: !!fp.oneToWatch, data_tier: cur ? "curated" : (own>0?"pool":"pool"),
   };
   if (cur) { CURATED_FIELDS.forEach(f => { if (cur[f]!==undefined && cur[f]!==null) rec[f]=cur[f]; }); rec.data_tier="curated"; usedCurated.add(cur.name+"|"+cur.team); }
+  // qualifying-form proxy (no per-player qualifier logs available → from xG+xA involvement / CS for GK)
+  const gi = (rec.xGp90||0) + (rec.xAp90||0);
+  rec.qualifyingForm = rec.pos==="GK" ? (rec.csP>0.5?"GOOD":rec.csP>0.42?"AVERAGE":"POOR")
+    : gi>0.6?"EXCELLENT" : gi>0.3?"GOOD" : gi>0.1?"AVERAGE" : "POOR";
   return rec;
 });
 

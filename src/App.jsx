@@ -452,18 +452,25 @@ function StartingXITab({ pool }) {
 }
 
 // ─── TAB: OPTIMAL SQUADS ─────────────────────────────────────────────────────────
-function OptimalSquadsTab({ squads }) {
+function OptimalSquadsTab({ squads, meta }) {
   if (!squads) return <div style={{ color:DIM }}>No squad data — run the R pipeline.</div>;
-  const labels = { safe:"🛡️ Safe", balanced:"⚖️ Balanced", differential:"🎯 Differential", pure_differential:"💎 Pure Diff (≤15% own)" };
   return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))", gap:12 }}>
+    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))", gap:12 }}>
       {Object.entries(squads).map(([key, sq]) => {
         if (!sq) return null;
-        const total = sq.reduce((a,p)=>a+p.pts,0), budget = sq.reduce((a,p)=>a+p.price,0);
+        const m = (meta && meta[key]) || {};
         return (
           <div key={key} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#fff", marginBottom:2 }}>{labels[key]||key}</div>
-            <div style={{ fontSize:11, color:DIM, marginBottom:10 }}>{Math.round(total)} pts · ${budget.toFixed(1)}m</div>
+            <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3 }}>{m.label||key}</div>
+            <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, lineHeight:1.45 }}>{m.description||""}</div>
+            <div style={{ fontSize:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:10, fontSize:11, color:DIM, marginBottom:10, borderBottom:`1px solid ${BORDER}`, paddingBottom:8 }}>
+              <span><b style={{color:TEXT}}>{m.total_pts??"—"}</b> pts</span>
+              <span><b style={{color:TEXT}}>${m.budget??"—"}m</b></span>
+              <span>own <b style={{color:TEXT}}>{m.avg_own??"—"}%</b></span>
+              <span>scout <b style={{color:"#4ade80"}}>{m.n_scout??0}</b></span>
+              <span>template <b style={{color:TEXT}}>{m.template_overlap_pct??"—"}%</b></span>
+            </div>
             {["GK","DEF","MID","FWD"].map(pos => (
               <div key={pos} style={{ marginBottom:6 }}>
                 <div style={{ fontSize:9, color:POS_COLOR[pos], letterSpacing:1, marginBottom:2 }}>{pos}</div>
@@ -725,7 +732,7 @@ export default function App() {
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} />}
-        {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} />}
+        {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
 

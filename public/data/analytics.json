@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T15:35:28",
+  "generated_at": "2026-06-07T22:15:58",
   "starting_xi": {
     "formation": "3-4-3",
     "total_pts": 570.6923,
@@ -257,23 +257,31 @@
         "team": "Brazil",
         "pos": "GK",
         "price": 5,
-        "pts": 32
+        "pts": 37
       },
       {
-        "id": 1522,
-        "name": "Thibaut Courtois",
-        "team": "Belgium",
+        "id": 1244,
+        "name": "Sergio Rochet",
+        "team": "Uruguay",
         "pos": "GK",
-        "price": 4.9,
-        "pts": 30.6
+        "price": 4.1,
+        "pts": 27.4
       },
       {
-        "id": 168,
-        "name": "Douglas Santos",
+        "id": 165,
+        "name": "Marquinhos",
         "team": "Brazil",
         "pos": "DEF",
-        "price": 4.3,
-        "pts": 30
+        "price": 5.2,
+        "pts": 32.7
+      },
+      {
+        "id": 404,
+        "name": "Joel Ordóñez",
+        "team": "Ecuador",
+        "pos": "DEF",
+        "price": 3.9,
+        "pts": 19.7
       },
       {
         "id": 542,
@@ -281,15 +289,7 @@
         "team": "Germany",
         "pos": "DEF",
         "price": 5.5,
-        "pts": 44
-      },
-      {
-        "id": 846,
-        "name": "Kristoffer Ajer",
-        "team": "Norway",
-        "pos": "DEF",
-        "price": 4.3,
-        "pts": 48.6
+        "pts": 50.1
       },
       {
         "id": 916,
@@ -297,15 +297,15 @@
         "team": "Portugal",
         "pos": "DEF",
         "price": 5.8,
-        "pts": 35
+        "pts": 39.8
       },
       {
-        "id": 2016,
-        "name": "Issa Diop",
-        "team": "Morocco",
+        "id": 1088,
+        "name": "Marc Cucurella",
+        "team": "Spain",
         "pos": "DEF",
-        "price": 4.5,
-        "pts": 34.3
+        "price": 5.1,
+        "pts": 38.1
       },
       {
         "id": 138,
@@ -313,15 +313,7 @@
         "team": "Belgium",
         "pos": "MID",
         "price": 7.5,
-        "pts": 43.3
-      },
-      {
-        "id": 173,
-        "name": "Vinícius Júnior",
-        "team": "Brazil",
-        "pos": "MID",
-        "price": 10,
-        "pts": 50.6
+        "pts": 50
       },
       {
         "id": 939,
@@ -329,15 +321,7 @@
         "team": "Portugal",
         "pos": "MID",
         "price": 8.5,
-        "pts": 42.6
-      },
-      {
-        "id": 1081,
-        "name": "Yéremy Pino",
-        "team": "Spain",
-        "pos": "MID",
-        "price": 5.9,
-        "pts": 34.2
+        "pts": 48.5
       },
       {
         "id": 1092,
@@ -345,7 +329,23 @@
         "team": "Spain",
         "pos": "MID",
         "price": 10,
-        "pts": 54.7
+        "pts": 62.1
+      },
+      {
+        "id": 1248,
+        "name": "Federico Valverde",
+        "team": "Uruguay",
+        "pos": "MID",
+        "price": 7.5,
+        "pts": 35.7
+      },
+      {
+        "id": 1366,
+        "name": "Raphinha",
+        "team": "Brazil",
+        "pos": "MID",
+        "price": 8.2,
+        "pts": 48.7
       },
       {
         "id": 500,
@@ -353,26 +353,34 @@
         "team": "France",
         "pos": "FWD",
         "price": 10.5,
-        "pts": 57.9
+        "pts": 65.8
       },
       {
-        "id": 1093,
-        "name": "Ferran Torres",
-        "team": "Spain",
+        "id": 610,
+        "name": "Mehdi Taremi",
+        "team": "Iran",
         "pos": "FWD",
-        "price": 7.8,
-        "pts": 42.6
+        "price": 6.1,
+        "pts": 26.1
       },
       {
-        "id": 2024,
-        "name": "Abde Ezzalzouli",
-        "team": "Morocco",
+        "id": 748,
+        "name": "Raúl Jiménez",
+        "team": "Mexico",
         "pos": "FWD",
-        "price": 5.3,
-        "pts": 29
+        "price": 7,
+        "pts": 24.9
       }
     ],
     "balanced": [
+      {
+        "id": 45,
+        "name": "Emiliano Martínez",
+        "team": "Argentina",
+        "pos": "GK",
+        "price": 5,
+        "pts": 30.6
+      },
       {
         "id": 183,
         "name": "Alisson Becker",
@@ -380,22 +388,6 @@
         "pos": "GK",
         "price": 5,
         "pts": 37
-      },
-      {
-        "id": 1522,
-        "name": "Thibaut Courtois",
-        "team": "Belgium",
-        "pos": "GK",
-        "price": 4.9,
-        "pts": 35
-      },
-      {
-        "id": 168,
-        "name": "Douglas Santos",
-        "team": "Brazil",
-        "pos": "DEF",
-        "price": 4.3,
-        "pts": 35.9
       },
       {
         "id": 542,
@@ -422,6 +414,14 @@
         "pts": 39.8
       },
       {
+        "id": 1088,
+        "name": "Marc Cucurella",
+        "team": "Spain",
+        "pos": "DEF",
+        "price": 5.1,
+        "pts": 38.1
+      },
+      {
         "id": 2016,
         "name": "Issa Diop",
         "team": "Morocco",
@@ -438,12 +438,12 @@
         "pts": 50
       },
       {
-        "id": 173,
-        "name": "Vinícius Júnior",
-        "team": "Brazil",
+        "id": 514,
+        "name": "Maghnes Akliouche",
+        "team": "France",
         "pos": "MID",
-        "price": 10,
-        "pts": 57.5
+        "price": 6.4,
+        "pts": 42.1
       },
       {
         "id": 939,
@@ -454,20 +454,20 @@
         "pts": 48.5
       },
       {
-        "id": 1081,
-        "name": "Yéremy Pino",
-        "team": "Spain",
-        "pos": "MID",
-        "price": 5.9,
-        "pts": 40.6
-      },
-      {
         "id": 1092,
         "name": "Lamine Yamal",
         "team": "Spain",
         "pos": "MID",
         "price": 10,
         "pts": 62.1
+      },
+      {
+        "id": 1366,
+        "name": "Raphinha",
+        "team": "Brazil",
+        "pos": "MID",
+        "price": 8.2,
+        "pts": 48.7
       },
       {
         "id": 500,
@@ -501,7 +501,7 @@
         "team": "Brazil",
         "pos": "GK",
         "price": 5,
-        "pts": 54.6
+        "pts": 37
       },
       {
         "id": 1522,
@@ -509,7 +509,15 @@
         "team": "Belgium",
         "pos": "GK",
         "price": 4.9,
-        "pts": 48.8
+        "pts": 35
+      },
+      {
+        "id": 34,
+        "name": "Nicolás Tagliafico",
+        "team": "Argentina",
+        "pos": "DEF",
+        "price": 4.3,
+        "pts": 31.6
       },
       {
         "id": 168,
@@ -517,7 +525,7 @@
         "team": "Brazil",
         "pos": "DEF",
         "price": 4.3,
-        "pts": 50.1
+        "pts": 35.9
       },
       {
         "id": 542,
@@ -525,137 +533,15 @@
         "team": "Germany",
         "pos": "DEF",
         "price": 5.5,
-        "pts": 74.2
-      },
-      {
-        "id": 846,
-        "name": "Kristoffer Ajer",
-        "team": "Norway",
-        "pos": "DEF",
-        "price": 4.3,
-        "pts": 78.9
-      },
-      {
-        "id": 916,
-        "name": "Nuno Mendes",
-        "team": "Portugal",
-        "pos": "DEF",
-        "price": 5.8,
-        "pts": 58.7
-      },
-      {
-        "id": 2016,
-        "name": "Issa Diop",
-        "team": "Morocco",
-        "pos": "DEF",
-        "price": 4.5,
-        "pts": 56.2
-      },
-      {
-        "id": 138,
-        "name": "Kevin De Bruyne",
-        "team": "Belgium",
-        "pos": "MID",
-        "price": 7.5,
-        "pts": 69.7
-      },
-      {
-        "id": 173,
-        "name": "Vinícius Júnior",
-        "team": "Brazil",
-        "pos": "MID",
-        "price": 10,
-        "pts": 84.6
-      },
-      {
-        "id": 939,
-        "name": "Bruno Fernandes",
-        "team": "Portugal",
-        "pos": "MID",
-        "price": 8.5,
-        "pts": 71.4
-      },
-      {
-        "id": 1081,
-        "name": "Yéremy Pino",
-        "team": "Spain",
-        "pos": "MID",
-        "price": 5.9,
-        "pts": 56.5
-      },
-      {
-        "id": 1092,
-        "name": "Lamine Yamal",
-        "team": "Spain",
-        "pos": "MID",
-        "price": 10,
-        "pts": 85.8
-      },
-      {
-        "id": 500,
-        "name": "Kylian Mbappé",
-        "team": "France",
-        "pos": "FWD",
-        "price": 10.5,
-        "pts": 96.7
-      },
-      {
-        "id": 1093,
-        "name": "Ferran Torres",
-        "team": "Spain",
-        "pos": "FWD",
-        "price": 7.8,
-        "pts": 69.7
-      },
-      {
-        "id": 2024,
-        "name": "Abde Ezzalzouli",
-        "team": "Morocco",
-        "pos": "FWD",
-        "price": 5.3,
-        "pts": 47.8
-      }
-    ],
-    "pure_differential": [
-      {
-        "id": 183,
-        "name": "Alisson Becker",
-        "team": "Brazil",
-        "pos": "GK",
-        "price": 5,
-        "pts": 54.6
-      },
-      {
-        "id": 1522,
-        "name": "Thibaut Courtois",
-        "team": "Belgium",
-        "pos": "GK",
-        "price": 4.9,
-        "pts": 48.8
-      },
-      {
-        "id": 168,
-        "name": "Douglas Santos",
-        "team": "Brazil",
-        "pos": "DEF",
-        "price": 4.3,
         "pts": 50.1
       },
       {
-        "id": 521,
-        "name": "David Raum",
-        "team": "Germany",
-        "pos": "DEF",
-        "price": 4.9,
-        "pts": 51.6
-      },
-      {
         "id": 846,
         "name": "Kristoffer Ajer",
         "team": "Norway",
         "pos": "DEF",
         "price": 4.3,
-        "pts": 78.9
+        "pts": 56.9
       },
       {
         "id": 2016,
@@ -663,15 +549,7 @@
         "team": "Morocco",
         "pos": "DEF",
         "price": 4.5,
-        "pts": 56.2
-      },
-      {
-        "id": 2037,
-        "name": "Jurriën Timber",
-        "team": "Netherlands",
-        "pos": "DEF",
-        "price": 5.2,
-        "pts": 44.8
+        "pts": 40.7
       },
       {
         "id": 138,
@@ -679,31 +557,7 @@
         "team": "Belgium",
         "pos": "MID",
         "price": 7.5,
-        "pts": 69.7
-      },
-      {
-        "id": 173,
-        "name": "Vinícius Júnior",
-        "team": "Brazil",
-        "pos": "MID",
-        "price": 10,
-        "pts": 84.6
-      },
-      {
-        "id": 469,
-        "name": "Bukayo Saka",
-        "team": "England",
-        "pos": "MID",
-        "price": 9.5,
-        "pts": 71.3
-      },
-      {
-        "id": 474,
-        "name": "Anthony Gordon",
-        "team": "England",
-        "pos": "MID",
-        "price": 7,
-        "pts": 58.6
+        "pts": 50
       },
       {
         "id": 514,
@@ -711,15 +565,39 @@
         "team": "France",
         "pos": "MID",
         "price": 6.4,
-        "pts": 58.5
+        "pts": 42.1
       },
       {
-        "id": 502,
-        "name": "Marcus Thuram",
+        "id": 1081,
+        "name": "Yéremy Pino",
+        "team": "Spain",
+        "pos": "MID",
+        "price": 5.9,
+        "pts": 40.6
+      },
+      {
+        "id": 1092,
+        "name": "Lamine Yamal",
+        "team": "Spain",
+        "pos": "MID",
+        "price": 10,
+        "pts": 62.1
+      },
+      {
+        "id": 1218,
+        "name": "Juan Manuel Sanabria",
+        "team": "Uruguay",
+        "pos": "MID",
+        "price": 4.5,
+        "pts": 31
+      },
+      {
+        "id": 500,
+        "name": "Kylian Mbappé",
         "team": "France",
         "pos": "FWD",
-        "price": 7.5,
-        "pts": 55.6
+        "price": 10.5,
+        "pts": 65.8
       },
       {
         "id": 1093,
@@ -727,17 +605,181 @@
         "team": "Spain",
         "pos": "FWD",
         "price": 7.8,
-        "pts": 69.7
+        "pts": 50.2
       },
       {
-        "id": 1338,
-        "name": "Lautaro Martínez",
-        "team": "Argentina",
+        "id": 2024,
+        "name": "Abde Ezzalzouli",
+        "team": "Morocco",
         "pos": "FWD",
-        "price": 8.8,
-        "pts": 67.7
+        "price": 5.3,
+        "pts": 34.5
+      }
+    ],
+    "pure_differential": [
+      {
+        "id": 47,
+        "name": "Juan Musso",
+        "team": "Argentina",
+        "pos": "GK",
+        "price": 4.3,
+        "pts": 25.1
+      },
+      {
+        "id": 1343,
+        "name": "Weverton",
+        "team": "Brazil",
+        "pos": "GK",
+        "price": 4.5,
+        "pts": 23.7
+      },
+      {
+        "id": 168,
+        "name": "Douglas Santos",
+        "team": "Brazil",
+        "pos": "DEF",
+        "price": 4.3,
+        "pts": 35.9
+      },
+      {
+        "id": 170,
+        "name": "Léo Pereira",
+        "team": "Brazil",
+        "pos": "DEF",
+        "price": 4.2,
+        "pts": 22.5
+      },
+      {
+        "id": 846,
+        "name": "Kristoffer Ajer",
+        "team": "Norway",
+        "pos": "DEF",
+        "price": 4.3,
+        "pts": 56.9
+      },
+      {
+        "id": 1708,
+        "name": "Jarell Quansah",
+        "team": "England",
+        "pos": "DEF",
+        "price": 4.4,
+        "pts": 22.8
+      },
+      {
+        "id": 2016,
+        "name": "Issa Diop",
+        "team": "Morocco",
+        "pos": "DEF",
+        "price": 4.5,
+        "pts": 40.7
+      },
+      {
+        "id": 348,
+        "name": "Martin Baturina",
+        "team": "Croatia",
+        "pos": "MID",
+        "price": 6.5,
+        "pts": 36.2
+      },
+      {
+        "id": 514,
+        "name": "Maghnes Akliouche",
+        "team": "France",
+        "pos": "MID",
+        "price": 6.4,
+        "pts": 42.1
+      },
+      {
+        "id": 1081,
+        "name": "Yéremy Pino",
+        "team": "Spain",
+        "pos": "MID",
+        "price": 5.9,
+        "pts": 40.6
+      },
+      {
+        "id": 1218,
+        "name": "Juan Manuel Sanabria",
+        "team": "Uruguay",
+        "pos": "MID",
+        "price": 4.5,
+        "pts": 31
+      },
+      {
+        "id": 2042,
+        "name": "Justin Kluivert",
+        "team": "Netherlands",
+        "pos": "MID",
+        "price": 6.5,
+        "pts": 36.3
+      },
+      {
+        "id": 806,
+        "name": "Noa Lang",
+        "team": "Netherlands",
+        "pos": "FWD",
+        "price": 5.9,
+        "pts": 29.7
+      },
+      {
+        "id": 1604,
+        "name": "Maximilian Beier",
+        "team": "Germany",
+        "pos": "FWD",
+        "price": 6.5,
+        "pts": 32.8
+      },
+      {
+        "id": 2024,
+        "name": "Abde Ezzalzouli",
+        "team": "Morocco",
+        "pos": "FWD",
+        "price": 5.3,
+        "pts": 34.5
       }
     ]
+  },
+  "optimal_squads_meta": {
+    "safe": {
+      "label": "🛡️ Safe — Minutes Certainty",
+      "description": "Maximises guaranteed minutes. Every player >85% start probability. Zero rotation risk, lower ceiling.",
+      "objective": "max Σ pts s.t. startProb ≥ 0.85 (all nailed starters)",
+      "total_pts": 606.5,
+      "budget": 99.9,
+      "avg_own": 19.6,
+      "n_scout": 4,
+      "template_overlap_pct": 100
+    },
+    "balanced": {
+      "label": "⚖️ Balanced — Core + Edge",
+      "description": "8 template anchors + 3-4 differentials. Tracks the field while keeping mini-league edge.",
+      "objective": "max Σ pts s.t. ≥8 own>20%, ≥3 own<15%, ≤4/nation",
+      "total_pts": 695,
+      "budget": 99.4,
+      "avg_own": 20,
+      "n_scout": 5,
+      "template_overlap_pct": 80
+    },
+    "differential": {
+      "label": "📈 Differential — Value Hunt",
+      "description": "Maximises points-per-dollar. Targets systematically underpriced players. High variance, high upside.",
+      "objective": "max Σ (pts / price) s.t. ≥6 own<15%",
+      "total_pts": 663.4,
+      "budget": 90.7,
+      "avg_own": 10.3,
+      "n_scout": 9,
+      "template_overlap_pct": 60
+    },
+    "pure_differential": {
+      "label": "🎯 Pure Diff — Ceiling & Scarcity",
+      "description": "Explosive ceiling in low-owned players. Built to win mini-leagues, not finish top-10k overall.",
+      "objective": "max Σ (pts_p90 × 1/(own+1)) s.t. ≤2 own>30%",
+      "total_pts": 510.8,
+      "budget": 78,
+      "avg_own": 0.2,
+      "n_scout": 15,
+      "template_overlap_pct": 7
+    }
   },
   "team_clusters": [
     {
@@ -3028,7 +3070,7 @@
         "one_line_verdict": "B-TIER | $6.5m | 2.2% own | 36.2 ceiling | SCOUT | "
       }
     ],
-    "generated_at": "2026-06-07T15:35:28"
+    "generated_at": "2026-06-07T22:15:58"
   },
   "player_analytics": [
     {

@@ -92,38 +92,56 @@ if (!is.null(cz)) {
   cat("SECTION A2: causal nudge applied at weight", CAUSAL_WT, "(giant-killers +, overvalued -)\n")
 } else cat("SECTION A2: no causal_results.rds yet — skipped (run 09 first)\n")
 
-# ── SECTION B — LP optimiser ──────────────────────────────────────────────────
-solve_squad <- function(metric, own_cap = NULL, label = "") {
-  keep <- if (is.null(own_cap)) rep(TRUE, nrow(players)) else players$own <= own_cap
-  P <- players[keep, ]; o <- P[[metric]]
-  pos <- P$pos; teams <- unique(P$team)
-  cons <- rbind(
-    P$price,                                                  # budget
-    as.integer(pos == "GK"), as.integer(pos == "DEF"),
-    as.integer(pos == "MID"), as.integer(pos == "FWD"),
-    t(sapply(teams, function(tm) as.integer(P$team == tm)))   # max 3 per nation
-  )
-  dir <- c("<=", "=", "=", "=", "=", rep("<=", length(teams)))
-  rhs <- c(100, 2, 5, 5, 3, rep(3, length(teams)))
+# ── SECTION B — LP optimiser: four REDEFINED objectives (Change 3) ────────────
+top20_cut <- as.numeric(quantile(players$own, 0.80, na.rm = TRUE))   # "template" = top-20% owned
+
+# general solver: objective vector + candidate filter + nation cap + extra structural constraints
+solve_squad <- function(obj, label, cand = rep(TRUE, nrow(players)), nation_cap = 3, extra = list()) {
+  P <- players[cand, ]; o <- obj[cand]; pos <- P$pos; teams <- unique(P$team)
+  cons <- rbind(P$price, as.integer(pos=="GK"), as.integer(pos=="DEF"),
+                as.integer(pos=="MID"), as.integer(pos=="FWD"),
+                t(sapply(teams, function(tm) as.integer(P$team==tm))))
+  dir <- c("<=","=","=","=","=", rep("<=", length(teams)))
+  rhs <- c(100, 2, 5, 5, 3, rep(nation_cap, length(teams)))
+  for (e in extra) { cons <- rbind(cons, as.integer(e$coef[cand])); dir <- c(dir, e$dir); rhs <- c(rhs, e$rhs) }
   sol <- lp("max", o, cons, dir, rhs, all.bin = TRUE)
   if (sol$status != 0) { cat("  [", label, "] LP infeasible\n"); return(NULL) }
-  pick <- sol$solution > 0.5
-  sel <- P[pick, ]
-  cat(sprintf("\n[%s] total pts=%.1f  budget=$%.1fm  (%d players)\n",
-              label, sum(o[pick]), sum(sel$price), nrow(sel)))
-  print(sel %>% mutate(pts = round(.data[[metric]], 1)) %>%
-          arrange(factor(pos, c("GK","DEF","MID","FWD")), desc(price)) %>%
-          select(name, team, pos, price, pts))
-  sel %>% mutate(squad = label, sel_metric = metric, sel_pts = .data[[metric]])
+  sel <- P[sol$solution > 0.5, ] %>% mutate(squad = label, sel_pts = pts_balanced)
+  cat(sprintf("  [%s] %d players · $%.1fm · %.0f pts · avg own %.1f%%\n",
+              label, nrow(sel), sum(sel$price), sum(sel$pts_balanced), mean(sel$own)))
+  sel
 }
-cat("\nSECTION B: solving squads\n")
-sq_safe <- solve_squad("pts_safe",     NULL, "safe")
-sq_bal  <- solve_squad("pts_balanced", NULL, "balanced")
-sq_diff <- solve_squad("pts_diff",     NULL, "differential")
-sq_pure <- solve_squad("pts_diff",     15,   "pure_differential")
+cat("\nSECTION B: solving four squads\n")
+sq_safe <- solve_squad(players$pts_balanced, "safe", cand = players$startProb >= 0.85)
+sq_bal  <- solve_squad(players$pts_balanced, "balanced", nation_cap = 4, extra = list(
+  list(coef = players$own > 20, dir = ">=", rhs = 8),       # ≥8 template anchors
+  list(coef = players$own < 15, dir = ">=", rhs = 3)))      # ≥3 differentials
+sq_diff <- solve_squad(players$pts_balanced / players$price, "differential", extra = list(
+  list(coef = players$own < 15, dir = ">=", rhs = 6)))       # value hunt, ≥6 low-owned
+sq_pure <- solve_squad(players$pts_diff * (1/(players$own + 1)), "pure_differential", extra = list(
+  list(coef = players$own > 30, dir = "<=", rhs = 2)))       # ceiling×scarcity, ≤2 template
+
+meta <- function(sq, label, desc, objtxt) if (is.null(sq)) NULL else list(
+  label = label, description = desc, objective = objtxt,
+  total_pts = round(sum(sq$pts_balanced),1), budget = round(sum(sq$price),1),
+  avg_own = round(mean(sq$own),1), n_scout = sum(sq$own < 5),
+  template_overlap_pct = round(100*mean(sq$own >= top20_cut)))
+squad_meta <- list(
+  safe = meta(sq_safe, "🛡️ Safe — Minutes Certainty",
+    "Maximises guaranteed minutes. Every player >85% start probability. Zero rotation risk, lower ceiling.",
+    "max Σ pts s.t. startProb ≥ 0.85 (all nailed starters)"),
+  balanced = meta(sq_bal, "⚖️ Balanced — Core + Edge",
+    "8 template anchors + 3-4 differentials. Tracks the field while keeping mini-league edge.",
+    "max Σ pts s.t. ≥8 own>20%, ≥3 own<15%, ≤4/nation"),
+  differential = meta(sq_diff, "📈 Differential — Value Hunt",
+    "Maximises points-per-dollar. Targets systematically underpriced players. High variance, high upside.",
+    "max Σ (pts / price) s.t. ≥6 own<15%"),
+  pure_differential = meta(sq_pure, "🎯 Pure Diff — Ceiling & Scarcity",
+    "Explosive ceiling in low-owned players. Built to win mini-leagues, not finish top-10k overall.",
+    "max Σ (pts_p90 × 1/(own+1)) s.t. ≤2 own>30%"))
 
 optimal_squads <- list(
   safe = sq_safe, balanced = sq_bal, differential = sq_diff, pure_differential = sq_pure,
-  all_players = players)
+  meta = squad_meta, all_players = players)
 saveRDS(optimal_squads, file.path(DATA_DIR, "optimal_squads.rds"))
 cat("\n✓ 04_lp_optimizer.R complete\n")

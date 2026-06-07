@@ -97,7 +97,7 @@ causal_out <- if (!is.null(cz)) {
 
 analytics <- list(
   generated_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%S"),
-  starting_xi = xi, optimal_squads = squads_out, team_clusters = clusters_out,
+  starting_xi = xi, optimal_squads = squads_out, optimal_squads_meta = os$meta, team_clusters = clusters_out,
   tier_list = list(S=tl$S, A=tl$A, B=tl$B, generated_at=format(Sys.time(),"%Y-%m-%dT%H:%M:%S")),
   player_analytics = analytics_players,
   form_log = if (!is.null(flog)) flog else tibble(),
