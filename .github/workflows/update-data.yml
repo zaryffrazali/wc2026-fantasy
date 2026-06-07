@@ -19,14 +19,18 @@ jobs:
           node-version: "20"
       - name: Rebuild player pool
         run: node r-analytics/build_pool.cjs
+      - name: Fetch news
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm run fetch-news
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet public/data/players.json; then
-            git add public/data/players.json
-            git commit -m "data: refresh player pool"
+          git add public/data/players.json public/data/news.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: refresh player pool + news"
             git push
           else
-            echo "No player-pool changes."
+            echo "No player/news changes."
           fi

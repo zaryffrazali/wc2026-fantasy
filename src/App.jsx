@@ -1008,7 +1008,7 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow }) {
   return (
     <div>
       <div style={{ marginBottom:4, fontSize:16, fontWeight:800, color:"#fff" }}>📋 Predicted Lineups — WC2026</div>
-      <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI web-search based · latest press conferences & team news</div>
+      <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI web-search based · latest press conferences & team news · updates daily at 3pm MYT</div>
       <div style={{ fontSize:11, color:"#475569", marginBottom:10 }}>Last updated: {lineups.generated_at}</div>
       <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
         <input placeholder="Search team…" value={search} onChange={e=>setSearch(e.target.value)} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:6, padding:"7px 11px", color:TEXT, fontFamily:"inherit", fontSize:12, flex:"1 1 160px" }} />
@@ -1282,7 +1282,7 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the Causal tab first</b> — open the Causal tab → Teams to Attack section. Find the weakest defences facing your matchday; these are captain targets.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Use smart filters</b> — "MD1 Captain Picks" surfaces late-kickoff players with easy fixtures.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check for mispricing</b> — "Role Arbitrage" finds players deployed more offensively internationally than their club price implies.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — check the Lineups tab (predicted XIs updated every 3 hours). Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — check the Lineups tab (updates daily at 3pm MYT). Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the News tab</b> — Check the 📡 News tab for the latest injury and lineup news before each matchday deadline. One late withdrawal can change your captain decision.</li>
         <li><b style={{color:"#fff"}}>Use Optimal Squads for budget</b> — Start from the Balanced squad, then swap in your differentials.</li>
       </ol>
@@ -1418,7 +1418,7 @@ function NewsTab({ news, mobile }) {
         <span style={{ fontSize:12, fontWeight:700, color:stale.c }}>{stale.t}</span>
         {gen && <span style={{ fontSize:11, color:DIM }}>updated {new Date(gen).toLocaleString("en-GB",{ timeZone:"Asia/Kuala_Lumpur", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} MYT</span>}
       </div>
-      <div style={{ fontSize:11, color:"#475569", marginTop:2 }}>Data refreshes every 3 hours</div>
+      <div style={{ fontSize:11, color:"#475569", marginTop:2 }}>Refreshes every 3 hours</div>
     </div>
   );
   if (!items.length) return (
