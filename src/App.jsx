@@ -665,60 +665,105 @@ function OptimalSquadsTab({ squads, meta }) {
 }
 
 // ─── TAB: TIERS ──────────────────────────────────────────────────────────────────
-function TiersTab({ tiers, posFilter, setPosFilter, pureDiff, setPureDiff }) {
+const BAND_CUT = { GK:[4.1,5.0], DEF:[4.4,5.5], MID:[6.4,8.5], FWD:[6.9,9.0] };  // [budgetMax, premiumMin]
+const bandOf = (pos,pr) => { const c=BAND_CUT[pos]||[6.4,8.5]; return pr>=c[1]?"PREMIUM":pr<=c[0]?"BUDGET":"MID-RANGE"; };
+const TIER_COLOR = { S:"#fbbf24", A:"#cbd5e1", B:"#d97706", C:"#64748b", D:"#475569" };
+
+function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, setPureDiff }) {
+  const [tierTab, setTierTab] = useState("S");
   const [open, setOpen] = useState(null);
-  if (!tiers) return <div style={{ color:DIM }}>No tier data — run the R pipeline.</div>;
-  const tierStyle = { S:{c:"#fbbf24",g:"0 0 16px #fbbf2433",t:"BUILD AROUND"}, A:{c:"#cbd5e1",g:"none",t:"STRONG CORE"}, B:{c:"#d97706",g:"none",t:"WATCHLIST"} };
-  const filt = (arr) => (arr||[]).filter(p =>
-    (posFilter==="ALL"||p.pos===posFilter) && (!pureDiff || p.own<=15));
+  if (!pool || !pool.length) return <div style={{ color:DIM }}>No data.</div>;
+  const xptsOf = p => riskMode==="safe"?p.pts_safe : riskMode==="diff"?p.pts_diff : p.pts_balanced;
+  const narr = {}; ["S","A","B"].forEach(t=>(tiers?.[t]||[]).forEach(n=>{narr[n.id]=n;}));
+  const bestInBand = {};
+  pool.forEach(p=>{ const k=p.pos+"|"+bandOf(p.pos,p.price); if(!bestInBand[k]||(p.tier_score||0)>bestInBand[k].ts) bestInBand[k]={id:p.id, ts:p.tier_score||0}; });
+  const BANDS=["PREMIUM","MID-RANGE","BUDGET"], POSES=["GK","DEF","MID","FWD"];
+
+  const card = (p) => {
+    const band=bandOf(p.pos,p.price), n=narr[p.id]||{}, tc=TIER_COLOR[p.tier]||DIM;
+    const isBest=bestInBand[p.pos+"|"+band]?.id===p.id;
+    return (
+      <div key={p.id} onClick={()=>setOpen(open===p.id?null:p.id)}
+        style={{ background:CARD, border:`1.5px solid ${tc}`, borderRadius:10, padding:"11px 13px", cursor:"pointer", marginBottom:8, boxShadow:p.tier==="S"?"0 0 12px #fbbf2422":"none" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+          <span style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{p.nat} {p.name}</span>
+          <span style={{ fontSize:12, color:tc, fontWeight:800 }} title={TIER_TIP[p.tier]}>{(p.tier_score||0).toFixed(0)}</span>
+        </div>
+        <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
+          <span style={{ fontSize:11, color:DIM }}>{p.team}</span>
+          <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:POS_COLOR[p.pos], border:`1px solid ${POS_COLOR[p.pos]}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
+          <span style={{ fontSize:11, color:DIM }}>${p.price}m · {band}</span>
+          {isBest && <Badge bg="#3b2f0a" bd="#fbbf24" fg="#fbbf24" title="Highest tier score in this position + price band">BEST IN BAND</Badge>}
+          {p.own<10 && <ScoutBadge/>}
+          {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: +${(p.intl_premium_score||0).toFixed(2)}σ vs club stats`}>★ MODEL EDGE</Badge>}
+          {p.roleShift && p.roleShift!=="SAME" && <Badge bg="#f9731618" bd="#f9731688" fg="#f97316" title={`Role shift: ${p.roleShiftNote||p.roleShift}`}>↑ ROLE SHIFT</Badge>}
+        </div>
+        <OwnBar pct={p.own}/>
+        <div style={{ fontSize:12, color:TEXT, marginTop:6 }}>{xptsOf(p)?.toFixed(1)} xPts <span style={{color:DIM,fontSize:10}}>({riskMode})</span></div>
+        <div style={{ fontSize:11, color:"#94a3b8", marginTop:4, fontStyle:"italic" }}>{n.one_line_verdict||n.headline||""}</div>
+        {open===p.id && (
+          <div style={{ marginTop:8, borderTop:`1px solid ${BORDER}`, paddingTop:8, fontSize:11, color:"#c8c8c8", lineHeight:1.6 }}>
+            <div style={{ marginBottom:5 }}><b style={{color:TIER_COLOR[p.tier]}}>CEILING:</b> {n.ceiling_case||"—"}</div>
+            <div style={{ marginBottom:5 }}><b style={{color:"#4ade80"}}>EDGE:</b> {n.differential_edge||"—"}</div>
+            <div style={{ marginBottom:5, color:"#ff8c42" }}><b>RISK:</b> {n.floor_warning||"—"}</div>
+            {p.captainSlot===3 && n.captain_verdict && <div style={{ color:"#fbbf24" }}>{n.captain_verdict}</div>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const tierPlayers = pool.filter(p=>p.tier===tierTab && (posFilter==="ALL"||p.pos===posFilter) && (!pureDiff||p.own<=15));
   return (
     <div>
-      <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap" }}>
-        {["ALL","FWD","MID","DEF","GK"].map(pos=>(
-          <button key={pos} onClick={()=>setPosFilter(pos)} style={{ padding:"6px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
-            border:`1px solid ${posFilter===pos?(POS_COLOR[pos]||"#f97316"):BORDER}`,
-            background:posFilter===pos?`${(POS_COLOR[pos]||"#f97316")}18`:"transparent", color:posFilter===pos?(POS_COLOR[pos]||"#f97316"):DIM }}>{pos}</button>
-        ))}
-        <button onClick={()=>setPureDiff(v=>!v)} style={{ padding:"6px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", marginLeft:"auto",
-          border:`1px solid ${pureDiff?"#4ade80":BORDER}`, background:pureDiff?"#16a34a22":"transparent", color:pureDiff?"#4ade80":DIM }}>PURE DIFFERENTIALS ONLY</button>
-      </div>
-      {["S","A","B"].map(t => {
-        const st = tierStyle[t], list = filt(tiers[t]);
-        return (
-          <div key={t} style={{ marginBottom:20 }}>
-            <div style={{ fontSize:13, fontWeight:900, color:st.c, letterSpacing:2, marginBottom:10 }}>{t} TIER — {st.t} <span style={{color:DIM, fontWeight:400}}>({list.length})</span></div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:10 }}>
-              {list.map(p => (
-                <div key={p.id} onClick={()=>setOpen(open===p.id?null:p.id)}
-                  style={{ background:CARD, border:`1.5px solid ${st.c}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", boxShadow:st.g }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-                    <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{p.name}</span>
-                    <span style={{ fontSize:11, color:st.c, fontWeight:800 }}>{p.tier_score?.toFixed(0)}</span>
-                  </div>
-                  <div style={{ display:"flex", gap:6, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
-                    <span style={{ fontSize:11, color:DIM }}>{p.team}</span>
-                    <span style={{ fontSize:10, color:POS_COLOR[p.pos], border:`1px solid ${POS_COLOR[p.pos]}44`, padding:"0 5px", borderRadius:3 }}>{p.pos}</span>
-                    <span style={{ fontSize:11, color:DIM }}>${p.price}m</span>
-                    {p.own<10 && <ScoutBadge/>}
-                    {p.mispricing_angle && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80">★ EDGE</Badge>}
-                  </div>
-                  <OwnBar pct={p.own}/>
-                  <div style={{ fontSize:11, color:"#94a3b8", marginTop:8, fontStyle:"italic" }}>{p.headline}</div>
-                  {open===p.id && (
-                    <div style={{ marginTop:10, borderTop:`1px solid ${BORDER}`, paddingTop:10, fontSize:11, color:"#c8c8c8", lineHeight:1.65 }}>
-                      <div style={{ marginBottom:6 }}><b style={{color:st.c}}>Ceiling:</b> {p.ceiling_case}</div>
-                      <div style={{ marginBottom:6 }}><b style={{color:"#4ade80"}}>Differential:</b> {p.differential_edge}</div>
-                      {p.mispricing_angle && <div style={{ marginBottom:6, color:"#4ade80" }}>{p.mispricing_angle}</div>}
-                      <div style={{ marginBottom:6, color:"#ff8c42" }}>{p.floor_warning}</div>
-                      <div style={{ color:"#fbbf24" }}>{p.captain_verdict}</div>
-                    </div>
-                  )}
-                </div>
-              ))}
+      {/* BEST VALUE BY BAND */}
+      <div style={{ fontSize:13, fontWeight:900, color:"#fff", letterSpacing:1, marginBottom:10 }}>BEST VALUE BY BAND</div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:8, marginBottom:24 }}>
+        {BANDS.flatMap(b=>POSES.map(pos=>{
+          const best=pool.filter(p=>p.pos===pos&&bandOf(p.pos,p.price)===b).sort((a,c)=>(c.tier_score||0)-(a.tier_score||0))[0];
+          if(!best) return null; const tc=TIER_COLOR[best.tier]||DIM; const n=narr[best.id]||{};
+          return (
+            <div key={b+pos} style={{ background:CARD, border:`2px solid ${tc}`, borderRadius:8, padding:"9px 11px" }}>
+              <div style={{ fontSize:9, color:DIM, letterSpacing:1, marginBottom:3 }}>BEST {b} {pos}</div>
+              <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{best.nat} {best.name}</div>
+              <div style={{ fontSize:11, color:DIM, marginTop:2 }}><b style={{color:tc}}>{best.tier}</b> · {xptsOf(best)?.toFixed(1)} xPts · ${best.price}m</div>
+              <div style={{ fontSize:10, color:"#94a3b8", marginTop:3, fontStyle:"italic" }}>{(n.one_line_verdict||n.headline||"").slice(0,70)}</div>
             </div>
+          );
+        }))}
+      </div>
+
+      {/* tier tabs + filters */}
+      <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
+        {["S","A","B"].map(t=>(
+          <button key={t} onClick={()=>setTierTab(t)} style={{ padding:"7px 16px", borderRadius:6, fontFamily:"inherit", fontSize:13, fontWeight:tierTab===t?800:400, cursor:"pointer",
+            border:`1px solid ${tierTab===t?TIER_COLOR[t]:BORDER}`, background:tierTab===t?`${TIER_COLOR[t]}18`:"transparent", color:tierTab===t?TIER_COLOR[t]:DIM }}>{t} TIER</button>
+        ))}
+        <span style={{ width:12 }} />
+        {["ALL","FWD","MID","DEF","GK"].map(pos=>(
+          <button key={pos} onClick={()=>setPosFilter(pos)} style={{ padding:"6px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
+            border:`1px solid ${posFilter===pos?(POS_COLOR[pos]||"#f97316"):BORDER}`, background:posFilter===pos?`${(POS_COLOR[pos]||"#f97316")}18`:"transparent", color:posFilter===pos?(POS_COLOR[pos]||"#f97316"):DIM }}>{pos}</button>
+        ))}
+        <button onClick={()=>setPureDiff(v=>!v)} style={{ padding:"6px 11px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", marginLeft:"auto",
+          border:`1px solid ${pureDiff?"#4ade80":BORDER}`, background:pureDiff?"#16a34a22":"transparent", color:pureDiff?"#4ade80":DIM }}>PURE DIFFERENTIALS</button>
+      </div>
+
+      {/* 3-column band grid, each column grouped by position */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))", gap:14 }}>
+        {BANDS.map(b=>(
+          <div key={b}>
+            <div style={{ fontSize:12, fontWeight:800, color:"#fff", letterSpacing:1, marginBottom:8, borderBottom:`2px solid ${BORDER}`, paddingBottom:4 }}>{b}</div>
+            {POSES.map(pos=>{
+              const grp=tierPlayers.filter(p=>p.pos===pos&&bandOf(p.pos,p.price)===b).sort((a,c)=>(c.tier_score||0)-(a.tier_score||0));
+              if(!grp.length) return null;
+              return (<div key={pos} style={{ marginBottom:6 }}>
+                <div style={{ fontSize:9, color:POS_COLOR[pos], letterSpacing:1, marginBottom:4 }}>{pos}</div>
+                {grp.map(card)}
+              </div>);
+            })}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
@@ -915,7 +960,7 @@ export default function App() {
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} />}
-        {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
+        {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
 
         {analytics?.model_summary && (
