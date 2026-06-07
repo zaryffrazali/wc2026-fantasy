@@ -873,6 +873,404 @@ function CausalTab({ causal, players }) {
   );
 }
 
+// ─── TAB: LINEUPS (Change 8 — reads pre-fetched public/data/lineups.json) ──────
+const LU_GROUPS = {A:["Mexico","South Korea","South Africa","Czech Republic"],B:["Canada","Switzerland","Qatar","Bosnia and Herzegovina"],C:["Brazil","Morocco","Scotland","Haiti"],D:["United States","Paraguay","Australia","Turkey"],E:["Germany","Curacao","Ivory Coast","Ecuador"],F:["Netherlands","Japan","Sweden","Tunisia"],G:["Belgium","Egypt","Iran","New Zealand"],H:["Spain","Cape Verde","Saudi Arabia","Uruguay"],I:["France","Senegal","Iraq","Norway"],J:["Argentina","Algeria","Austria","Jordan"],K:["Portugal","DR Congo","Uzbekistan","Colombia"],L:["England","Croatia","Ghana","Panama"]};
+const LU_CONF = {UEFA:["Spain","France","England","Germany","Portugal","Netherlands","Belgium","Croatia","Switzerland","Austria","Norway","Scotland","Sweden","Czech Republic","Bosnia and Herzegovina","Turkey"],CONMEBOL:["Brazil","Argentina","Uruguay","Colombia","Ecuador","Paraguay"],CAF:["Morocco","Senegal","Egypt","Algeria","Tunisia","Ivory Coast","South Africa","DR Congo","Cape Verde","Ghana"],AFC:["Japan","South Korea","Iran","Saudi Arabia","Qatar","Australia","Iraq","Uzbekistan","Jordan"],CONCACAF:["Mexico","United States","Canada","Panama","Haiti","Curacao"],OFC:["New Zealand"]};
+const LU_GROUP_OF = {}; Object.entries(LU_GROUPS).forEach(([g,ts])=>ts.forEach(t=>LU_GROUP_OF[t]=g));
+const SLOT_XY = { GK:[50,88], LB:[16,68], LCB:[38,72], RCB:[62,72], CB:[50,72], RB:[84,68],
+  CDM:[50,58], LM:[20,50], CM:[50,50], LCM:[36,50], RCM:[64,50], RM:[80,50], CAM:[50,38],
+  LW:[20,20], ST:[50,14], RW:[80,20], LF:[32,17], RF:[68,17] };
+const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ").trim();
+const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
+  : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
+
+function LineupsTab({ lineups, pool, goToPlayer }) {
+  const [sel, setSel] = useState("Spain");
+  const [cmp, setCmp] = useState(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [search, setSearch] = useState("");
+  const [collapsed, setCollapsed] = useState({});
+  if (!lineups) return <div style={{ color:DIM }}>Loading lineups… (run <code>npm run fetch-lineups</code> to populate)</div>;
+  const teamsData = lineups.teams || {};
+  const matchPool = (nm, team) => {
+    const toks = new Set(luNorm(nm).split(" ").filter(t=>t.length>1));
+    return pool.filter(p=>p.team===team).map(p=>({p, s:luNorm(p.name).split(" ").filter(t=>toks.has(t)).length}))
+      .filter(x=>x.s>0).sort((a,b)=>b.s-a.s)[0]?.p;
+  };
+
+  const renderLineup = (team) => {
+    const L = teamsData[team];
+    if (!L) return <div style={{ color:DIM, padding:12 }}>No lineup fetched for {team}. Run <code>npm run fetch-lineups</code>.</div>;
+    const confTxt = { HIGH:"✓ High confidence — confirmed lineup", MEDIUM:"~ Medium confidence — recent form + injury news", LOW:"? Low confidence — limited info", SEED_DATA:"⚠ Seed placeholder — run fetch-lineups for live data" }[L.confidence] || L.confidence;
+    const picks = (L.players||[]).map(pl=>({pl, m:matchPool(pl.name, team)})).filter(x=>x.m)
+      .map(x=>({...x.pl, m:x.m})).sort((a,b)=>(b.m.pts_balanced||0)-(a.m.pts_balanced||0));
+    return (
+      <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"14px 16px", marginTop:8 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
+          <div style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{L.flag} {L.team} <span style={{ fontSize:12, color:DIM, fontWeight:400 }}>{L.formation} · {L.manager}</span></div>
+          <div style={{ fontSize:11, color: L.confidence==="HIGH"?"#4ade80":L.confidence==="LOW"||L.confidence==="SEED_DATA"?"#ff8c42":"#eab308" }}>{confTxt}</div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"minmax(220px,1fr) minmax(220px,1.2fr)", gap:14, marginTop:10 }}>
+          {/* pitch */}
+          <div style={{ position:"relative", aspectRatio:"3/4", background:"linear-gradient(#0a3d1f,#072d17)", border:"2px solid #1e6b3a", borderRadius:10 }}>
+            <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
+            {(L.players||[]).map((pl,i)=>{ const xy=SLOT_XY[pl.slot]||[50, 50-(["GK","DEF","MID","FWD"].indexOf(pl.position)-1.5)*22];
+              return (
+                <div key={i} title={pl.doubt_reason||pl.status} style={{ position:"absolute", left:`${xy[0]}%`, top:`${xy[1]}%`, transform:"translate(-50%,-50%)", textAlign:"center", width:70 }}>
+                  <div style={{ width:30, height:30, margin:"0 auto", borderRadius:"50%", background:luStatusColor(pl.status,pl.position), border:"2px solid #ffffff55", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#06121f", fontWeight:800 }}>
+                    {pl.status==="DOUBT"?"⚠":pl.status==="OUT"?"✕":pl.slot}
+                  </div>
+                  <div style={{ fontSize:9, color:"#fff", fontWeight:700, marginTop:2, textShadow:"0 1px 3px #000", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{(pl.name||"").split(" ").slice(-1)[0]}</div>
+                  <div style={{ fontSize:8, color:"#cbd5e1" }}>{pl.caps}c</div>
+                </div>);
+            })}
+          </div>
+          {/* list */}
+          <div>
+            {(L.players||[]).map((pl,i)=>{ const m=matchPool(pl.name,team);
+              return (<div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"5px 0", borderBottom:`1px solid ${BORDER}33`, fontSize:12 }}>
+                <span style={{ width:18, color:DIM, fontFamily:MONO }}>{i+1}</span>
+                <span style={{ width:34, fontSize:10, color:POS_COLOR[pl.position], fontFamily:MONO }}>{pl.slot}</span>
+                <span style={{ flex:1, color:"#fff" }}>{pl.name}
+                  {m && <span onClick={()=>goToPlayer(m.name)} style={{ marginLeft:6, fontSize:9, color:"#f97316", cursor:"pointer", border:"1px solid #f9731655", borderRadius:3, padding:"0 4px" }}>VIEW →</span>}
+                  {m && <span style={{ marginLeft:6, fontSize:10, color:DIM }}>${m.price}m · {m.pts_balanced} xPts · {m.own}%</span>}
+                  {pl.doubt_reason && <div style={{ fontSize:10, color:"#ff6b6b" }}>{pl.doubt_reason}</div>}
+                </span>
+                <Badge bg={pl.status==="CERTAIN"?"#16a34a22":pl.status==="DOUBT"?"#3d2a00":"#1e293b"} bd={pl.status==="CERTAIN"?"#22c55e88":pl.status==="DOUBT"?"#eab30888":"#334155"} fg={pl.status==="CERTAIN"?"#4ade80":pl.status==="DOUBT"?"#eab308":"#94a3b8"}>{pl.status}</Badge>
+              </div>);
+            })}
+          </div>
+        </div>
+        {(L.key_absences||[]).length>0 && <div style={{ marginTop:10 }}>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:4 }}>KEY ABSENCES</div>
+          <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>{L.key_absences.map((a,i)=><span key={i} style={{ fontSize:11, color:"#ff8c42", background:"#3d0d0d", border:"1px solid #5a0000", borderRadius:6, padding:"3px 8px" }}>{a}</span>)}</div>
+        </div>}
+        {L.tactical_note && <div style={{ fontSize:12, color:"#c8c8c8", marginTop:10 }}><b style={{color:DIM}}>Tactical:</b> {L.tactical_note}</div>}
+        {L.fantasy_note && <div style={{ fontSize:12, color:"#4ade80", marginTop:4 }}><b style={{color:DIM}}>Fantasy:</b> {L.fantasy_note}</div>}
+        {picks.length>0 && <div style={{ marginTop:12, borderTop:`1px solid ${BORDER}`, paddingTop:10 }}>
+          <div style={{ fontSize:11, letterSpacing:1, color:"#f97316", fontWeight:700, marginBottom:8 }}>⭐ FANTASY PICKS FROM THIS XI</div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>{picks.map(x=>(
+            <div key={x.m.id} onClick={()=>goToPlayer(x.m.name)} style={{ background:BG, border:`1px solid ${BORDER}`, borderRadius:8, padding:"7px 10px", cursor:"pointer", minWidth:130 }}>
+              <div style={{ color:"#fff", fontWeight:700, fontSize:12 }}>{x.m.name} <span style={{ fontSize:10, color:POS_COLOR[x.m.pos] }}>{x.m.pos}</span></div>
+              <div style={{ fontSize:11, color:DIM }}>${x.m.price}m · {x.m.pts_balanced} xPts · {x.m.own}% {x.m.tier&&<b style={{color:TIER_COLOR[x.m.tier]}}>· {x.m.tier}</b>}</div>
+            </div>))}</div>
+        </div>}
+      </div>
+    );
+  };
+
+  const teamCard = (t) => {
+    const has = !!teamsData[t]; const isSel = compareMode ? (sel===t||cmp===t) : sel===t;
+    return (
+      <div key={t} onClick={()=>{ if(compareMode){ if(sel===t)setSel(null); else if(cmp===t)setCmp(null); else if(!sel)setSel(t); else setCmp(t);} else setSel(t); }}
+        style={{ background:CARD, border:`1px solid ${isSel?"#f97316":BORDER}`, borderRadius:8, padding:"7px 9px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
+        <span style={{ fontSize:14 }}>{teamsData[t]?.flag||"⚽"}</span>
+        <span style={{ flex:1, fontSize:12, color:"#fff", fontWeight:600 }}>{t}</span>
+        <span style={{ fontSize:9, color:DIM, fontFamily:MONO }}>{LU_GROUP_OF[t]}</span>
+        {has && <span style={{ color:"#4ade80", fontSize:11 }}>✓</span>}
+      </div>);
+  };
+
+  const allTeams = Object.values(LU_GROUPS).flat();
+  const filtered = t => t.toLowerCase().includes(search.toLowerCase());
+  return (
+    <div>
+      <div style={{ marginBottom:4, fontSize:16, fontWeight:800, color:"#fff" }}>📋 Predicted Lineups — WC2026</div>
+      <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI web-search based · latest press conferences & team news</div>
+      <div style={{ fontSize:11, color:"#475569", marginBottom:10 }}>Last updated: {lineups.generated_at}</div>
+      <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
+        <input placeholder="Search team…" value={search} onChange={e=>setSearch(e.target.value)} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:6, padding:"7px 11px", color:TEXT, fontFamily:"inherit", fontSize:12, flex:"1 1 160px" }} />
+        <button onClick={()=>{setCompareMode(v=>!v); setCmp(null);}} style={{ padding:"7px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", border:`1px solid ${compareMode?"#f97316":BORDER}`, background:compareMode?"#f9731618":"transparent", color:compareMode?"#f97316":DIM }}>⇄ COMPARE</button>
+        <button onClick={()=>alert("To refresh lineups, run:  npm run fetch-lineups\nor trigger the 'Update Predicted Lineups' GitHub Action.")} style={{ padding:"7px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", border:`1px solid ${BORDER}`, background:"transparent", color:DIM }}>↻ REFRESH</button>
+      </div>
+      {Object.entries(LU_CONF).map(([conf, ts])=>{ const show=ts.filter(filtered); if(!show.length) return null;
+        return (<div key={conf} style={{ marginBottom:10 }}>
+          <div onClick={()=>setCollapsed(c=>({...c,[conf]:!c[conf]}))} style={{ fontSize:11, color:DIM, letterSpacing:1, marginBottom:6, cursor:"pointer" }}>{collapsed[conf]?"▸":"▾"} {conf} ({show.length})</div>
+          {!collapsed[conf] && <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))", gap:6 }}>{show.map(teamCard)}</div>}
+        </div>);
+      })}
+      {compareMode ? (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:12 }}>
+          {sel && renderLineup(sel)}{cmp && renderLineup(cmp)}
+          {!cmp && <div style={{ color:DIM, alignSelf:"center" }}>Pick a second team to compare…</div>}
+        </div>
+      ) : (sel && renderLineup(sel))}
+    </div>
+  );
+}
+
+// ─── TAB: METHOD (static methodology explainer) ───────────────────────────────
+const OR = "#f97316";
+function MtCollapse({ title, sub, children, open: defOpen=false }) {
+  const [open, setOpen] = useState(defOpen);
+  return (
+    <div style={{ border:`1px solid ${BORDER}`, borderRadius:8, marginBottom:8, background:CARD, overflow:"hidden" }}>
+      <div onClick={()=>setOpen(o=>!o)} style={{ display:"flex", alignItems:"center", gap:8, padding:"11px 14px", cursor:"pointer" }}>
+        <span style={{ color:OR, fontSize:11, width:10 }}>{open?"▾":"▸"}</span>
+        <span style={{ fontWeight:700, color:"#fff", fontSize:13.5 }}>{title}</span>
+        {sub && <span style={{ fontSize:11, color:DIM }}>· {sub}</span>}
+      </div>
+      {open && <div style={{ padding:"0 16px 14px 32px", fontSize:13, lineHeight:1.6, color:"#cbd5e1" }}>{children}</div>}
+    </div>
+  );
+}
+const MtFormula = ({ children }) => (
+  <div style={{ background:"#0a1322", border:`1px solid ${BORDER}`, borderLeft:`3px solid ${OR}`, borderRadius:6, padding:"10px 14px", margin:"10px 0", fontFamily:MONO, fontSize:12.5, color:"#e2e8f0", whiteSpace:"pre-wrap", lineHeight:1.7 }}>{children}</div>
+);
+const MtH = ({ children }) => <div style={{ fontSize:18, fontWeight:800, color:"#fff", margin:"30px 0 4px" }}>{children}</div>;
+const MtO = ({ children }) => <span style={{ color:OR, fontWeight:700, fontFamily:MONO }}>{children}</span>;
+const MtNote = ({ children }) => <div style={{ background:"#1a1206", border:"1px solid #3d2a00", borderRadius:6, padding:"9px 12px", margin:"8px 0", fontSize:12, color:"#d4a574", fontStyle:"italic" }}>⚠ {children}</div>;
+const MtTable = ({ head, rows }) => (
+  <div style={{ overflowX:"auto", margin:"10px 0" }}>
+    <table style={{ borderCollapse:"collapse", fontSize:12, width:"100%" }}>
+      <thead><tr>{head.map((h,i)=><th key={i} style={{ textAlign:"left", padding:"6px 10px", color:DIM, borderBottom:`1px solid ${BORDER}`, fontWeight:600, whiteSpace:"nowrap" }}>{h}</th>)}</tr></thead>
+      <tbody>{rows.map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j} style={{ padding:"5px 10px", borderBottom:`1px solid ${BORDER}44`, color: j===r.length-1&&typeof c==="string"&&c.includes("✓")?"#4ade80":"#cbd5e1" }}>{c}</td>)}</tr>)}</tbody>
+    </table>
+  </div>
+);
+
+function MethodTab({ analytics }) {
+  const flags = analytics?.player_analytics || [];
+  const under = flags.filter(p => p.mispricing_flag === "UNDERRATED").slice(0, 20);
+  const over  = flags.filter(p => p.mispricing_flag === "OVERRATED").slice(0, 20);
+  const sig = p => { const v = p.mispricing_z ?? p.intl_z ?? p.intl_residual_z; return v==null ? "" : `${v>0?"+":""}${Number(v).toFixed(1)}σ`; };
+  const Pill = ({ name, s, col }) => <span style={{ display:"inline-block", fontSize:11, background:CARD, border:`1px solid ${col}55`, color:"#e2e8f0", borderRadius:20, padding:"3px 10px", margin:3 }}>{name} {s && <b style={{ color:col }}>{s}</b>}</span>;
+
+  return (
+    <div style={{ maxWidth:800, margin:"0 auto", fontFamily:SANS }}>
+      {/* SECTION 0 — TL;DR */}
+      <div style={{ background:CARD, borderLeft:`4px solid ${OR}`, borderRadius:8, padding:"16px 18px", marginBottom:14 }}>
+        <div style={{ fontSize:10, letterSpacing:3, color:OR, marginBottom:8, fontFamily:MONO }}>TL;DR</div>
+        <div style={{ fontSize:14.5, lineHeight:1.65, color:"#e2e8f0" }}>
+          WC26 SCOUT builds predicted fantasy points from the ground up — combining club-level performance stats, international role adjustments, betting market signals, and a causal model of tournament overperformance. <b style={{ color:"#fff" }}>Every number has a source. Every pick has a reason.</b>
+        </div>
+        <div style={{ display:"flex", gap:8, marginTop:14, flexWrap:"wrap" }}>
+          {["58 seed players","9 R model files","4 prediction layers"].map(t=>(
+            <span key={t} style={{ background:"#0a1322", border:`1px solid ${BORDER}`, borderRadius:20, padding:"6px 14px", fontSize:12, color:"#fff", fontWeight:600 }}>{t}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* SECTION 1 — Data Sources */}
+      <MtH>What data powers this</MtH>
+      <MtCollapse title="1.1 — Player Statistics" sub="FBref · worldfootballR">
+        <div>Source: <b>FBref</b> via the <code>worldfootballR</code> R package. Variables pulled per 90 minutes:</div>
+        <ul style={{ margin:"8px 0", paddingLeft:18 }}>
+          <li><MtO>npxG/90</MtO> — non-penalty expected goals</li>
+          <li><MtO>xAG/90</MtO> — expected assisted goals</li>
+          <li><MtO>SoT/90</MtO> — shots on target · <MtO>KP/90</MtO> — key passes · <MtO>TklW/90</MtO> — tackles won</li>
+          <li><MtO>Save%</MtO> and <MtO>SoTA/90</MtO> for goalkeepers · yellow/red card rates</li>
+        </ul>
+        <div>Coverage: Big 5 European leagues (EPL, La Liga, Bundesliga, Serie A, Ligue 1) + supplementary Understat. Season: <b>2025/26</b>.</div>
+        <MtNote>FBref rate limits mean some pulls use cached data. Players from non-Big5 leagues (Saudi Pro League, Liga MX, MLS) use manually seeded estimates flagged with lower confidence.</MtNote>
+      </MtCollapse>
+      <MtCollapse title="1.2 — International Performance Data" sub="FBref national-team pages">
+        <div>Source: FBref national team pages via <code>worldfootballR</code>. Coverage: last <b>24 months</b> of international matches. Used to calibrate club stats to international context.</div>
+        <div style={{ marginTop:8 }}><b style={{color:"#fff"}}>Key insight:</b> a player's club xG/90 systematically over- or under-estimates their international output depending on role, team-quality differential, and playing style.</div>
+      </MtCollapse>
+      <MtCollapse title="1.3 — Betting Market Signals" sub="The Odds API">
+        <div>We extract P(win)/P(draw)/P(loss) per fixture → clean-sheet probability; outright tournament odds → advancement probability; Golden Boot odds → forward-valuation cross-check.</div>
+        <div style={{ marginTop:8 }}>Betting markets aggregate injury news, squad depth, tactical matchups. We treat implied probabilities as <b>priors, not gospel</b> — where our model diverges from the market, that divergence is the signal.</div>
+        <div style={{ marginTop:8 }}><b style={{color:"#fff"}}>Vig removal:</b> we use Pinnacle (lowest-margin book) as the no-vig reference and normalise probabilities to sum to 1 across outcomes.</div>
+      </MtCollapse>
+      <MtCollapse title="1.4 — Tournament Structure" sub="OpenFootball">
+        <div>Source: <b>OpenFootball</b> (free GitHub JSON) — fixtures, groups, round schedules for all 48 teams. Used to compute expected matches per team given advancement probability.</div>
+      </MtCollapse>
+
+      {/* SECTION 2 — Points model */}
+      <MtH>How xPts is calculated</MtH>
+      <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6, marginBottom:6 }}>xPts is not a single number — it's a <b>distribution</b>. We report three versions: <MtO>Median</MtO> (safe floor), <MtO>Mean</MtO> (balanced), and <MtO>P90</MtO> (ceiling). The risk slider moves between them.</div>
+      <MtCollapse title="2.1 — Scoring Rules Implementation" sub="official FIFA fantasy scoring">
+        <MtTable head={["Position","Action","Pts"]} rows={[
+          ["GK","Clean sheet (60+ mins)","+5"],["GK","Goal scored","+9"],["GK","Penalty save","+3"],["GK","Every 3 saves","+1"],["GK","Each goal conceded after 1st","−1"],
+          ["DEF","Clean sheet","+5"],["DEF","Goal scored","+7"],["DEF","Each goal conceded after 1st","−1"],
+          ["MID","Goal scored","+6"],["MID","Every 2 chances created","+1"],["MID","Every 3 tackles","+1"],["MID","Clean sheet","+1"],
+          ["FWD","Goal scored","+5"],["FWD","Every 2 shots on target","+1"],
+          ["ALL","Appearance <60 mins","+1"],["ALL","Appearance 60+ mins","+2"],["ALL","Assist","+3"],["ALL","Yellow card","−1"],["ALL","Red card","−2"],["ALL","Scouting Bonus (>4pts, <5% owned)","+2"],
+        ]} />
+      </MtCollapse>
+      <MtCollapse title="2.2 — Expected Minutes" sub="the single biggest lever">
+        <div>Every prediction is weighted by expected minutes:</div>
+        <MtFormula>{`E[mins]            = startProb × minsIfStarted
+E[appearance_pts]  = startProb × 2   (60+ min players)`}</MtFormula>
+        <div><MtO>startProb</MtO> ranges 0.40 (fringe) to 0.97 (nailed starter). This adjustment has more impact on predicted points than almost any other variable.</div>
+      </MtCollapse>
+      <MtCollapse title="2.3 — Per-Matchday Fixture Difficulty" sub="MD1/MD2/MD3 separately">
+        <div>Difficulty is computed for each of the three group-stage matchdays, not a single FDR:</div>
+        <MtFormula>{`csP_md   = oddsWin × 0.72 + oddsDraw × 0.28
+goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
+        <div>Clean-sheet probability scales with win probability (winners keep clean sheets). The 0.72 coefficient is calibrated against WC 2018 & 2022 data.</div>
+        <div style={{ background:"#0a1322", border:`1px solid ${BORDER}`, borderRadius:6, padding:"10px 12px", marginTop:10, fontSize:12 }}>
+          <b style={{ color:OR }}>Worked example — Spain vs Cape Verde (MD1):</b><br/>
+          oddsWin = 0.91 → csP = 0.91×0.72 + 0.09×0.28 = <MtO>0.681</MtO><br/>
+          Spain defenders project a 68% clean-sheet probability in MD1 — worth <MtO>+3.4</MtO> expected pts from the clean sheet alone.
+        </div>
+      </MtCollapse>
+      <MtCollapse title="2.4 — Role Shift Adjustment" sub="club role ≠ international role">
+        <div>Many players are priced on their club role but deployed differently for their country. We identify the gap and adjust:</div>
+        <MtTable head={["Role Shift","xG ×","xA ×","Rationale"]} rows={[
+          ["DEF_to_ATT","1.40","1.60","Attacking FB deployed as winger"],
+          ["MID_to_ATT","1.25","1.20","Deep mid given advanced freedom"],
+          ["WING_to_STRIKER","1.30","0.80","Winger used as false 9"],
+          ["MID_to_DEF","0.75","0.80","Creative mid in defensive role"],
+          ["ATT_to_DEF","0.60","0.70","Forward deployed deeper"],
+          ["SAME","1.00","1.00","Club role consistent"],
+        ]} />
+        <div><b style={{color:"#fff"}}>Example:</b> Kimmich plays DM/CM for Bayern but operates as an attacking RB for Germany. His club xA/90 understates his creative output — we apply <MtO>×1.60</MtO> to his xA.</div>
+      </MtCollapse>
+      <MtCollapse title="2.5 — Set Piece Bonuses" sub="undervalued dead-ball EV">
+        <ul style={{ margin:0, paddingLeft:18 }}>
+          <li>FK taker: <MtO>+0.4</MtO> pts/match (FK goal EV + bonus pt prob)</li>
+          <li>Corner taker: <MtO>+0.3</MtO> pts/match (indirect goal threat)</li>
+          <li>Penalty taker: <MtO>+0.5</MtO> pts/match (pen win EV + conversion)</li>
+        </ul>
+      </MtCollapse>
+      <MtCollapse title="2.6 — Tournament Scale" sub="points/match × expected matches">
+        <MtFormula>{`E[matches] = 3 + (advP/100) × 5
+             (min 3 group games, max 8 if team wins it)`}</MtFormula>
+        <div>A team at 85% advancement (e.g. France) → <MtO>7.25</MtO> expected matches; a 40% team → <MtO>5.0</MtO>. This 45% gap dominates most other variables.</div>
+      </MtCollapse>
+
+      {/* SECTION 3 — Regression */}
+      <MtH>Detecting mispricing with econometrics</MtH>
+      <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6, marginBottom:6 }}>Prices are set pre-tournament on club reputation and league form. International football differs — we use regression to quantify the gap.</div>
+      <MtCollapse title="3.1 — The Model" sub="8+ caps in last 24 months">
+        <MtFormula>{`intl_npxG_p90 = β₀ + β₁·club_npxG_p90 + β₂·league_tier
+              + β₃·role_shift + β₄·natl_team_elo + ε`}</MtFormula>
+        <div>The residual <MtO>ε</MtO> is the mispricing signal: positive → outperforms club stats internationally; negative → underperforms.</div>
+      </MtCollapse>
+      <MtCollapse title="3.2 — Interpretation" sub="z-score normalised">
+        <div>Residuals are normalised to a z-score: <MtO>+1.0σ</MtO> = one SD above expected international output.</div>
+        <ul style={{ margin:"8px 0", paddingLeft:18 }}>
+          <li>Above <MtO>+1.0σ</MtO> AND under 20% owned → <b style={{color:"#4ade80"}}>UNDERRATED</b></li>
+          <li>Below <MtO>−1.0σ</MtO> → <b style={{color:"#ff6b6b"}}>OVERRATED</b></li>
+        </ul>
+        <MtNote>With limited international data (WC is every 4 years), the regression uses qualifiers and friendlies as proxies. Competitive internationals (WC qualifying, Nations League, continental championships) are weighted 3× friendlies.</MtNote>
+      </MtCollapse>
+      <MtCollapse title="3.3 — Current flags" sub={`${under.length} under · ${over.length} over`} open={true}>
+        {under.length>0 ? <>
+          <div style={{ fontSize:11, letterSpacing:1, color:"#4ade80", marginBottom:4 }}>UNDERRATED</div>
+          <div style={{ marginBottom:10 }}>{under.map(p=><Pill key={p.id||p.name} name={p.name} s={sig(p)} col="#4ade80" />)}</div>
+        </> : <div style={{ color:DIM }}>No underrated flags in loaded analytics.</div>}
+        {over.length>0 && <>
+          <div style={{ fontSize:11, letterSpacing:1, color:"#ff6b6b", marginBottom:4 }}>OVERRATED</div>
+          <div>{over.map(p=><Pill key={p.id||p.name} name={p.name} s={sig(p)} col="#ff6b6b" />)}</div>
+        </>}
+        {!analytics && <div style={{ color:DIM }}>Run the R pipeline to populate analytics.json for live flags.</div>}
+      </MtCollapse>
+
+      {/* SECTION 4 — Causal */}
+      <MtH>Why some teams beat expectations</MtH>
+      <MtCollapse title="4.1 — The Two-Model Approach" sub="quality vs overperformance">
+        <div>We separate two questions most tools conflate: (1) how good is this team absolutely? (2) will it beat expectations? These have different predictors. France is strong but rarely massively overperforms — the market already prices them. <b>Overperformance is a property of underestimated teams.</b></div>
+      </MtCollapse>
+      <MtCollapse title="4.2 — Key Predictors" sub="WC 2006–2022 + continental panel">
+        <ol style={{ margin:0, paddingLeft:18, lineHeight:1.55 }}>
+          <li><b style={{color:"#4ade80"}}>Squad cohesion (shared caps) ↑</b> — Iceland 2016 averaged 47 caps/player, highest in the field.</li>
+          <li><b style={{color:"#4ade80"}}>Age profile (peak 26–29) ↑</b> — physical prime + experience; young squads overperform only with high cohesion.</li>
+          <li><b style={{color:OR}}>Foreign-league share (inverted-U)</b> — 60–80% is optimal; too low = limited exposure, too high = no shared tactical language.</li>
+          <li><b style={{color:"#4ade80"}}>Manager tenure ↑</b> — strongest in first 3 years, diminishing after.</li>
+          <li><b style={{color:"#4ade80"}}>Counter-defensive vs possession opponents ↑</b> — Morocco 2022, Iceland 2016, Greece 2004.</li>
+          <li><b style={{color:"#ff6b6b"}}>Narrative pressure ↓</b> — hosts / defending champions / heavily-hyped sides underperform; mechanism unclear.</li>
+        </ol>
+      </MtCollapse>
+      <MtCollapse title="4.3 — Historical Validation" sub="leave-one-out">
+        <MtTable head={["Team","Tournament","Pred OP","Actual OP","Verdict"]} rows={[
+          ["Iceland","Euro 2016","+1.8 rd","+2 rd","✓ Correct"],
+          ["Morocco","WC 2022","+1.5 rd","+2 rd","✓ Correct"],
+          ["Greece","Euro 2004","+2.1 rd","+3 rd","✓ Correct"],
+          ["Costa Rica","WC 2014","+1.2 rd","+2 rd","✓ Correct"],
+          ["Germany","WC 2018","−1.4 rd","−2 rd","✓ Correct"],
+        ]} />
+        <MtNote>Better calibrated for UEFA and CONMEBOL where more historical data exists. AFCON and AFC predictions carry lower confidence due to smaller samples.</MtNote>
+      </MtCollapse>
+
+      {/* SECTION 5 — LP */}
+      <MtH>Finding the mathematically optimal squad</MtH>
+      <MtCollapse title="5.1 — The Problem">
+        <div>Squad selection is a constrained optimisation: maximise predicted points subject to budget and structure constraints.</div>
+      </MtCollapse>
+      <MtCollapse title="5.2 — The Constraints">
+        <ul style={{ margin:0, paddingLeft:18 }}>
+          <li>Total price ≤ <MtO>$100m</MtO></li>
+          <li>Exactly <MtO>2 GK, 5 DEF, 5 MID, 3 FWD</MtO></li>
+          <li>Max <MtO>3 players per nation</MtO> (group stage)</li>
+          <li>All selections binary (0/1)</li>
+        </ul>
+      </MtCollapse>
+      <MtCollapse title="5.3 — Four Objective Functions" sub="same constraints, 4 objectives">
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Safe (Minutes Certainty)</b></div>
+        <MtFormula>{`max Σ(startProb × minsIfStarted × pts_per_min)
++ constraint: startProb ≥ 0.85 for all picks`}</MtFormula>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Balanced (Core + Edge)</b></div>
+        <MtFormula>{`max Σ(pts_mean)
++ constraint: ≥8 picks own>20%, ≥3 picks own<15%`}</MtFormula>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Differential (Value Hunt)</b></div>
+        <MtFormula>{`max Σ(pts_mean / price)
++ constraint: ≥6 picks own<15%`}</MtFormula>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Pure Differential (Ceiling × Scarcity)</b></div>
+        <MtFormula>{`max Σ(pts_p90 × (1 / (own + 1)))
++ constraint: max 2 picks own>30%`}</MtFormula>
+      </MtCollapse>
+      <MtCollapse title="5.4 — Why four squads?">
+        <div>Strategy depends on your mini-league position. Leading? Play <b>Safe</b> — protect the lead. 10 points behind? Go <b>Differential</b> — you need variance. Starting fresh? <b>Balanced</b> is optimal for overall rank.</div>
+      </MtCollapse>
+
+      {/* SECTION 6 — Tiers */}
+      <MtH>How players are ranked for gambling play</MtH>
+      <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6, marginBottom:6 }}>The tier list answers a different question than xPts: not "who scores most on average" but "who gives the best chance of <b>winning my mini-league</b>".</div>
+      <MtFormula>{`tier_score = pts_p90 × 0.45
+           + (pts_p90 − pts_median) × 0.20
+           + scouting_bonus_ev × 0.15
+           + intl_premium_score × 0.10
+           + captain_slot_bonus × 0.05
+           + set_piece_involvement × 0.05
+           − card_risk_penalty
+           − start_uncertainty_penalty
+           − early_exit_penalty`}</MtFormula>
+      <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6 }}>The heaviest weight (<MtO>0.45</MtO>) goes to ceiling (pts_p90), not mean. The variance premium (<MtO>0.20</MtO>) explicitly rewards boom-or-bust players — in a mini-league a 2-or-20 player beats a steady 8.</div>
+      <MtTable head={["Tier","Cutoff"]} rows={[["S","top 8%"],["A","next 17%"],["B","next 25%"],["C","next 25%"],["D","bottom 25%"]]} />
+      <MtNote>Hard rules: startProb &lt; 0.70 → cannot be S/A. advP &lt; 40% → cannot be S. own &gt; 55% → downgraded one tier (template players lose gambling value).</MtNote>
+
+      {/* SECTION 7 — Limitations */}
+      <MtH>What this model doesn't do well</MtH>
+      {[
+        ["1. In-tournament form is not yet incorporated","Pre-tournament stats are the only inputs. Once MD1 results are in, the model needs updating with actual tournament data. Live xG tracking is planned."],
+        ["2. Friendly data is low signal","We use competitive internationals only (weighted 3×). Friendlies are included but heavily discounted."],
+        ["3. Non-Big5 league coverage is weaker","Saudi Pro League, MLS, Liga MX, and African/Asian domestic leagues use manually estimated stats with lower confidence — flagged in player cards."],
+        ["4. Injury news is not real-time","The newsfeed provides updates, but the xPts model does not auto-adjust for confirmed injuries. If a key player is injured, manually check startProb."],
+        ["5. The regression has limited international data","WC qualification gives ~10 matches per team every 4 years. Individual residuals (mispricing flags) are directional signals, not precise estimates."],
+        ["6. Tactical changes mid-tournament","Managers adapt; a 4-3-3 may become 5-3-2 after a bad result. Role-shift flags are set pre-tournament and won't update mid-competition."],
+      ].map(([t,b])=> <MtCollapse key={t} title={t}>{b}</MtCollapse>)}
+
+      {/* SECTION 8 — Workflow */}
+      <MtH>Recommended workflow</MtH>
+      <ol style={{ paddingLeft:18, lineHeight:1.6, fontSize:13, color:"#cbd5e1" }}>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Set your risk profile</b> — In Players, set risk by mini-league position. Behind → Differential. Ahead → Safe.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check Intel first</b> — Find the weakest defences facing your matchday; these are captain targets.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Use smart filters</b> — "MD1 Captain Picks" surfaces late-kickoff players with easy fixtures.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check for mispricing</b> — "Role Arbitrage" finds players deployed more offensively internationally than their club price implies.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — Confirm key picks are in the predicted XI. If DOUBT, consider alternatives.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the News</b> — One late withdrawal can change your captain decision.</li>
+        <li><b style={{color:"#fff"}}>Use Optimal Squads for budget</b> — Start from the Balanced squad, then swap in your differentials.</li>
+      </ol>
+
+      {/* SECTION 9 — About */}
+      <MtH>tucheliban's WC26 SCOUT</MtH>
+      <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.65 }}>
+        Built for the 2026 FIFA World Cup. Combines fantasy football analytics with econometric methods usually reserved for academic research — regression analysis, causal inference, linear programming, and Monte Carlo simulation.
+        <div style={{ marginTop:8, color:"#fff", fontWeight:600 }}>The goal: make every pick defensible with data.</div>
+      </div>
+      <div style={{ fontSize:11, color:DIM, marginTop:14, lineHeight:1.7 }}>
+        Data: FBref · Understat · FIFA Fantasy API · The Odds API · OpenFootball<br/>
+        Model: R (worldfootballR, lpSolve, lme4, factoextra)<br/>
+        Frontend: React + Vite · Deployed on Cloudflare Pages
+      </div>
+      <div style={{ textAlign:"right", fontSize:11, fontStyle:"italic", color:"#475569", marginTop:18 }}>it's coming home 🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("table");
@@ -890,16 +1288,20 @@ export default function App() {
 
   const [rawPlayers, setRawPlayers] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [lineups, setLineups] = useState(null);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     Promise.all([
       fetch("/data/players.json").then(r => { if (!r.ok) throw new Error("players " + r.status); return r.json(); }),
       fetch("/data/analytics.json").then(r => r.ok ? r.json() : null).catch(() => null), // optional
+      fetch("/data/lineups.json").then(r => r.ok ? r.json() : null).catch(() => null), // optional
     ])
-      .then(([players, a]) => { setRawPlayers(players); setAnalytics(a); })
+      .then(([players, a, l]) => { setRawPlayers(players); setAnalytics(a); setLineups(l); })
       .catch(err => { console.error("Failed to load data:", err); setLoadError(true); });
   }, []);
+
+  const goToPlayer = (name) => { setSearch(name); setPosFilter("ALL"); setTab("table"); };
 
   const formById = useMemo(() => {
     const m = {}; (analytics?.form_log || []).forEach(r => { (m[r.id] = m[r.id] || []).push(r); }); return m;
@@ -930,7 +1332,7 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["lineups","📋 Lineups"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:13, fontVariantNumeric:"tabular-nums" }}>
       <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:"16px 20px 0" }}>
@@ -959,9 +1361,11 @@ export default function App() {
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} />}
+        {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
+        {tab==="method" && <MethodTab analytics={analytics} />}
 
         {analytics?.model_summary && (
           <div style={{ display:"flex", gap:16, marginTop:24, flexWrap:"wrap", fontSize:10, color:DIM, borderTop:`1px solid ${BORDER}`, paddingTop:12 }}>
