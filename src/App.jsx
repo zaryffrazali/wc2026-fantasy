@@ -61,8 +61,9 @@ function computePrediction(p, riskMode) {
 // ─── SMALL UI BITS ─────────────────────────────────────────────────────────────
 function OwnBar({ pct }) {
   const color = pct > 30 ? "#f97316" : pct > 10 ? "#eab308" : "#22c55e";
+  const tip = `Owned by ${pct}% of managers. ` + (pct>30 ? "Template pick — high ownership limits mini-league upside." : pct>=10 ? "Moderate ownership — balanced template/differential." : "Low ownership — scouting-bonus eligible, differential value.");
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+    <div title={tip} style={{ display:"flex", alignItems:"center", gap:6, cursor:"help" }}>
       <div style={{ width:46, height:6, background:"#1e293b", borderRadius:3, overflow:"hidden" }}>
         <div style={{ width:`${Math.min(pct,100)}%`, height:"100%", background:color }} />
       </div>
@@ -70,12 +71,24 @@ function OwnBar({ pct }) {
     </div>
   );
 }
-const Badge = ({ children, bg, fg, bd }) => (
-  <span style={{ background:bg, border:`1px solid ${bd}`, color:fg, fontSize:9, padding:"1px 5px",
-    borderRadius:4, fontWeight:700, letterSpacing:0.5, whiteSpace:"nowrap", fontFamily:MONO }}>{children}</span>
+const Badge = ({ children, bg, fg, bd, title }) => (
+  <span title={title} style={{ background:bg, border:`1px solid ${bd}`, color:fg, fontSize:9, padding:"1px 5px",
+    borderRadius:4, fontWeight:700, letterSpacing:0.5, whiteSpace:"nowrap", fontFamily:MONO, cursor: title?"help":"default" }}>{children}</span>
 );
-const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80">🎯 SCOUT</Badge>;
-const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc">PEN</Badge>;
+const POS_TIP = {
+  FWD:"Forward — 5pts per goal, 1pt per 2 shots on target",
+  MID:"Midfielder — 6pts per goal, 3pts assist, chances-created bonus",
+  DEF:"Defender — 7pts per goal, 5pts clean sheet",
+  GK:"Goalkeeper — 5pts clean sheet, 1pt per 3 saves, 9pts for a goal" };
+const CLUSTER_TIP = {
+  HIGH_PRESS_POSSESSION:"High press, possession-based — high-quality chances; attackers & creative mids thrive",
+  COUNTER_DEFENSIVE:"Counter-attacking, defensive-first — defenders valuable for clean sheets; attackers boom-or-bust",
+  DIRECT_PHYSICAL:"Direct, physical — target men & wide players benefit; set-piece threat",
+  TECHNICAL_LOWBLOCK:"Low block, technical — fewer goals, high clean-sheet prob; GKs & CBs valuable",
+  BALANCED_TRANSITIONAL:"Balanced, transitions both ways — creative mids & mobile forwards most valuable" };
+const TIER_TIP = { S:"S-Tier — top 8% by gambling score. Build-around pick.", A:"A-Tier — top 25%. Strong core piece.", B:"B-Tier — top 50%. Solid contributor.", C:"C-Tier — situational/fixture-dependent.", D:"D-Tier — avoid / bench fodder." };
+const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title="Scouting Bonus eligible — under 10% owned. +2 bonus pts when scoring >4 in a match. Mini-league swing pick.">🎯 SCOUT</Badge>;
+const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc" title="Confirmed penalty taker — adds +0.5 pts EV per game from penalties.">PEN</Badge>;
 function RoleArrow({ shift, note }) {
   if (!shift || shift === "SAME") return <span style={{ color:DIM }} title="Same as club role">—</span>;
   const up = /ATT|STRIKER/.test(shift);
@@ -192,27 +205,30 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div style={{ minWidth:0 }}>
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
                   <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{p.nat} {p.name}</span>
-                  <span style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
+                  <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
+                  {p.qualifyingForm==="EXCELLENT" && <Badge bg="#052e16" bd="#22c55e" fg="#86efac" title="Excellent qualifying form — 0.6+ goal contributions/game in recent competitive internationals.">QF ★★★</Badge>}
+                  {p.qualifyingForm==="GOOD" && <Badge bg="#0a1f1c" bd="#22c55e88" fg="#4ade80" title="Good qualifying form — 0.3–0.6 goal contributions/game in recent competitive internationals.">QF ★★</Badge>}
                   {p.scout && p.own<10 && <ScoutBadge/>}
-                  {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80">★ EDGE</Badge>}
+                  {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: outperforms club stats internationally by +${(p.intl_premium_score||0).toFixed(2)}σ. May be undervalued.`}>★ EDGE</Badge>}
                   {p.penTaker && <PenBadge/>}
-                  {p.data_tier && p.data_tier!=="curated" && <Badge bg="#1e293b" bd="#334155" fg="#64748b">prior</Badge>}
-                  {p.form_n>0 && <Badge bg="#0a1f1c" bd={p.form_mult>1.05?"#22c55e88":p.form_mult<0.95?"#ef444488":"#33415588"} fg={p.form_mult>1.05?"#4ade80":p.form_mult<0.95?"#ff6b6b":"#94a3b8"}>≈×{p.form_mult}</Badge>}
+                  {p.data_tier && p.data_tier!=="curated" && <Badge bg="#1e293b" bd="#334155" fg="#64748b" title="Prior-filled — stats from position/price priors (not hand-curated or FBref-matched). Lower confidence.">prior</Badge>}
+                  {p.form_n>0 && <Badge bg="#0a1f1c" bd={p.form_mult>1.05?"#22c55e88":p.form_mult<0.95?"#ef444488":"#33415588"} fg={p.form_mult>1.05?"#4ade80":p.form_mult<0.95?"#ff6b6b":"#94a3b8"} title={`International form ×${p.form_mult} vs club baseline (last ${p.form_n} match${p.form_n>1?"es":""}), applied to xG/xA.`}>≈×{p.form_mult}</Badge>}
                 </div>
                 <div style={{ display:"flex", gap:8, alignItems:"center", marginTop:3 }}>
                   <span style={{ fontSize:10, color:DIM }}>{p.team}</span>
-                  {p.team_cluster && <span style={{ fontSize:9, color:"#7b8cde" }}>{cleanCluster(p.team_cluster)}</span>}
+                  {p.team_cluster && <span title={CLUSTER_TIP[(p.team_cluster||"").replace(/_\d+$/,"")]} style={{ fontSize:9, color:"#7b8cde", cursor:"help" }}>{cleanCluster(p.team_cluster)}</span>}
                   <span style={{ fontSize:11 }}>{p.form}</span>
                 </div>
               </div>
               <div style={{ textAlign:"right", fontSize:15, color:"#94a3b8", fontWeight:600 }}>${p.price}m</div>
               <div style={{ textAlign:"right", fontSize:12, color:p.E_mins<60?"#eab308":"#94a3b8" }}>{Math.round(p.E_mins)}'</div>
               <div style={{ textAlign:"center" }}><RoleArrow shift={p.roleShift} note={p.roleShiftNote}/></div>
-              <div style={{ textAlign:"right", fontSize:18, fontWeight:800,
+              <div title={`Predicted ${p.displayPts.toFixed(1)} pts (${riskMode}). Floor ${p.pts_median?.toFixed(1)} · ceiling ${p.pts_p90?.toFixed(1)}`}
+                style={{ textAlign:"right", fontSize:18, fontWeight:800, cursor:"help",
                 color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT }}>{p.displayPts.toFixed(1)}</div>
               <div style={{ textAlign:"right" }}><MispriceTag flag={p.mispricing_flag} score={p.intl_premium_score}/></div>
               <div style={{ display:"flex", justifyContent:"flex-end" }}><OwnBar pct={p.own}/></div>
-              <div style={{ textAlign:"center", fontSize:13, fontWeight:800, fontFamily:MONO,
+              <div title={TIER_TIP[p.tier]||""} style={{ textAlign:"center", fontSize:13, fontWeight:800, fontFamily:MONO, cursor:"help",
                 color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</div>
               <div><MDDots fixtures={p.fixtures}/></div>
             </div>
