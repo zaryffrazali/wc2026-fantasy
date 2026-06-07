@@ -913,12 +913,8 @@ const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""
 const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
   : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
 
-function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow }) {
-  const [sel, setSel] = useState("Spain");
-  const [cmp, setCmp] = useState(null);
+function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cmp, setCmp }) {
   const [compareMode, setCompareMode] = useState(false);
-  const [search, setSearch] = useState("");
-  const [collapsed, setCollapsed] = useState({});
   if (!lineups) return <div style={{ color:DIM }}>Loading lineups… (run <code>npm run fetch-lineups</code> to populate)</div>;
   const teamsData = lineups.teams || {};
   const matchPool = (nm, team) => {
@@ -991,42 +987,70 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow }) {
     );
   };
 
-  const teamCard = (t) => {
-    const has = !!teamsData[t]; const isSel = compareMode ? (sel===t||cmp===t) : sel===t;
-    return (
-      <div key={t} onClick={()=>{ if(compareMode){ if(sel===t)setSel(null); else if(cmp===t)setCmp(null); else if(!sel)setSel(t); else setCmp(t);} else setSel(t); }}
-        style={{ background:CARD, border:`1px solid ${isSel?"#f97316":BORDER}`, borderRadius:8, padding:"7px 9px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-        <span style={{ fontSize:14, flex:"0 0 auto" }}>{teamsData[t]?.flag||"⚽"}</span>
-        <span style={{ flex:"1 1 auto", minWidth:0, fontSize:mobile?11:12, color:"#fff", fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{t}</span>
-        {!mobile && <span style={{ fontSize:9, color:DIM, fontFamily:MONO }}>{LU_GROUP_OF[t]}</span>}
-        {has && <span style={{ color:"#4ade80", fontSize:11, flex:"0 0 auto" }}>✓</span>}
-      </div>);
+  const QUICK = [["Spain","🇪🇸","ESP"],["France","🇫🇷","FRA"],["Brazil","🇧🇷","BRA"],["Argentina","🇦🇷","ARG"],["England","🏴󠁧󠁢󠁥󠁮󠁧󠁿","ENG"],["Germany","🇩🇪","GER"],["Portugal","🇵🇹","POR"],["Morocco","🇲🇦","MAR"]];
+  const selectStyle = { width:"100%", background:"#0d1829", border:`1px solid ${BORDER}`, color:"#e2e8f0", padding:"10px 36px 10px 14px", borderRadius:8, fontFamily:SANS, fontSize:14, minHeight:44, appearance:"none", WebkitAppearance:"none", MozAppearance:"none", cursor:"pointer", outline:"none" };
+  const teamSelect = (value, onChange, placeholder) => (
+    <div style={{ position:"relative", width: mobile?"100%":400, maxWidth:"100%" }}>
+      <select value={value||""} onChange={e=>onChange(e.target.value||null)} style={selectStyle}>
+        <option value="">{placeholder}</option>
+        {Object.entries(LU_CONF).map(([conf,ts])=>(
+          <optgroup key={conf} label={`── ${conf} (${ts.length}) ──`}>
+            {ts.map(t=><option key={t} value={t}>{(teamsData[t]?.flag?teamsData[t].flag+" ":"")}{t}</option>)}
+          </optgroup>
+        ))}
+      </select>
+      <span style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", color:"#f97316", pointerEvents:"none", fontSize:11 }}>▼</span>
+    </div>
+  );
+  const statusFor = (t) => {
+    if (!t) return null;
+    const L = teamsData[t];
+    if (!L) return { txt:"○ Not yet fetched", c:DIM };
+    if (L.confidence==="SEED_DATA") return { txt:"⚠ Seed data · run fetch-lineups for live", c:"#ff8c42" };
+    const ageH = lineups.generated_at ? Math.max(0, Math.round((Date.now()-new Date(lineups.generated_at).getTime())/3600000)) : null;
+    return { txt:`✓ Live data${ageH!=null?` · fetched ${ageH}h ago`:""}`, c:"#4ade80" };
   };
+  const status = statusFor(sel);
 
-  const allTeams = Object.values(LU_GROUPS).flat();
-  const filtered = t => t.toLowerCase().includes(search.toLowerCase());
   return (
     <div>
       <div style={{ marginBottom:4, fontSize:16, fontWeight:800, color:"#fff" }}>📋 Predicted Lineups — WC2026</div>
       <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI web-search based · latest press conferences & team news · updates daily at 3pm MYT</div>
-      <div style={{ fontSize:11, color:"#475569", marginBottom:10 }}>Last updated: {lineups.generated_at}</div>
-      <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
-        <input placeholder="Search team…" value={search} onChange={e=>setSearch(e.target.value)} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:6, padding:"7px 11px", color:TEXT, fontFamily:"inherit", fontSize:12, flex:"1 1 160px" }} />
-        <button onClick={()=>{setCompareMode(v=>!v); setCmp(null);}} style={{ padding:"7px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", border:`1px solid ${compareMode?"#f97316":BORDER}`, background:compareMode?"#f9731618":"transparent", color:compareMode?"#f97316":DIM }}>⇄ COMPARE</button>
-        <button onClick={()=>alert("To refresh lineups, run:  npm run fetch-lineups\nor trigger the 'Update Predicted Lineups' GitHub Action.")} style={{ padding:"7px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer", border:`1px solid ${BORDER}`, background:"transparent", color:DIM }}>↻ REFRESH</button>
+      <div style={{ fontSize:11, color:"#475569", marginBottom:12 }}>Last updated: {lineups.generated_at}</div>
+
+      {/* selector row */}
+      <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center", marginBottom:8 }}>
+        {teamSelect(sel, setSel, "🔍 Select a team…")}
+        <button onClick={()=>setCompareMode(v=>!v)} style={{ minHeight:44, padding:"9px 14px", borderRadius:8, fontFamily:"inherit", fontSize:13, cursor:"pointer", border:`1px solid ${compareMode?"#f97316":BORDER}`, background:compareMode?"#f9731618":"transparent", color:compareMode?"#f97316":DIM }}>⇄ COMPARE</button>
+        <button onClick={()=>alert("To refresh lineups, run:  npm run fetch-lineups\nor trigger the 'Update Predicted Lineups' GitHub Action.")} style={{ minHeight:44, padding:"9px 14px", borderRadius:8, fontFamily:"inherit", fontSize:13, cursor:"pointer", border:`1px solid ${BORDER}`, background:"transparent", color:DIM }}>↻ REFRESH</button>
+        {status && <span style={{ fontSize:11, color:status.c }}>{status.txt}</span>}
       </div>
-      {Object.entries(LU_CONF).map(([conf, ts])=>{ const show=ts.filter(filtered); if(!show.length) return null;
-        return (<div key={conf} style={{ marginBottom:10 }}>
-          <div onClick={()=>setCollapsed(c=>({...c,[conf]:!c[conf]}))} style={{ fontSize:11, color:DIM, letterSpacing:1, marginBottom:6, cursor:"pointer" }}>{collapsed[conf]?"▸":"▾"} {conf} ({show.length})</div>
-          {!collapsed[conf] && <div style={{ display:"grid", gridTemplateColumns: mobile ? "repeat(3,1fr)" : "repeat(auto-fill,minmax(150px,1fr))", gap:6 }}>{show.map(teamCard)}</div>}
-        </div>);
-      })}
-      {compareMode ? (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))", gap:12 }}>
-          {sel && renderLineup(sel)}{cmp && renderLineup(cmp)}
-          {!cmp && <div style={{ color:DIM, alignSelf:"center" }}>Pick a second team to compare…</div>}
+
+      {/* quick picks (desktop) */}
+      {!mobile && (
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", alignItems:"center", marginBottom:12 }}>
+          <span style={{ fontSize:10, letterSpacing:1, color:DIM, marginRight:2 }}>QUICK PICK</span>
+          {QUICK.map(([team,flag,code])=>(
+            <button key={code} onClick={()=>setSel(team)} style={{ display:"inline-flex", alignItems:"center", gap:5, minHeight:36, padding:"5px 10px", borderRadius:20, border:`1px solid ${sel===team?"#f97316":BORDER}`, background:sel===team?"#f9731618":CARD, color:sel===team?"#f97316":"#cbd5e1", cursor:"pointer", fontFamily:"inherit", fontSize:12 }}>{flag} {code}</button>
+          ))}
         </div>
-      ) : (sel && renderLineup(sel))}
+      )}
+
+      {/* compare second selector */}
+      {compareMode && (
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:10, letterSpacing:1, color:DIM, marginBottom:4 }}>COMPARE WITH</div>
+          {teamSelect(cmp, setCmp, "🔍 Compare with…")}
+        </div>
+      )}
+
+      {/* lineups */}
+      {compareMode ? (
+        <div style={{ display:"grid", gridTemplateColumns: mobile?"1fr":"repeat(auto-fit,minmax(300px,1fr))", gap:12 }}>
+          {sel ? renderLineup(sel) : <div style={{ color:DIM, padding:12 }}>Select a team above.</div>}
+          {cmp ? renderLineup(cmp) : <div style={{ color:DIM, padding:12, alignSelf:"center" }}>Pick a second team to compare…</div>}
+        </div>
+      ) : (sel ? renderLineup(sel) : <div style={{ color:DIM, padding:"24px 12px", textAlign:"center" }}>Select a team to view its predicted XI.</div>)}
     </div>
   );
 }
@@ -1478,6 +1502,8 @@ export default function App() {
   const [F, setF] = useState(FILTER_DEFAULT);
   const [tierPos, setTierPos] = useState("ALL");
   const [pureDiff, setPureDiff] = useState(false);
+  const [lineupSel, setLineupSel] = useState("Spain");
+  const [lineupCmp, setLineupCmp] = useState(null);
 
   const [rawPlayers, setRawPlayers] = useState(null);
   const [dataTimestamp, setDataTimestamp] = useState(null);
@@ -1573,7 +1599,7 @@ export default function App() {
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} mobile={mobile} />}
-        {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} />}
+        {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} sel={lineupSel} setSel={setLineupSel} cmp={lineupCmp} setCmp={setLineupCmp} />}
         {tab==="news" && <NewsTab news={news} mobile={mobile} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} mobile={mobile} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} mobile={mobile} />}
