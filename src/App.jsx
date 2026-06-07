@@ -345,15 +345,66 @@ function PlayerDetail({ p, riskMode, onClose }) {
 }
 
 // ─── TAB: STARTING XI (CSS pitch with positioned cards) ────────────────────────
-function StartingXITab({ xi }) {
+function StartingXITab({ pool }) {
   const [open, setOpen] = useState(null);
-  if (!xi) return <div style={{ color:DIM }}>No starting XI data — run the R pipeline.</div>;
+  const [md, setMd] = useState(0);
+  if (!pool || !pool.length) return <div style={{ color:DIM }}>No player data.</div>;
+
+  const ROW = n => n ? Array.from({length:n}, (_,i)=> n>1 ? 15+(i/(n-1))*70 : 50) : [];
+  const score = (p, mi) => {                                   // single-matchday xPts
+    const f = (p.fixtures||[])[mi]; if (!f) return { pts:0 };
+    const rm = ROLE_MULT[p.roleShift]||[1,1], fm = p.form_mult||1;
+    let xG=(p.xGp90||0)*rm[0]*fm, xA=(p.xAp90||0)*rm[1]*fm;
+    if (typeof p.intl_premium_xG==="number") xG*=1+p.intl_premium_xG*0.3;
+    const csP=f.oddsWin*0.72+f.oddsDraw*0.28, aMult=(f.oddsWin*1.6+f.oddsDraw*0.5)/1.1;
+    let r = p.pos==="GK" ? csP*5+((p.savesP90||3.2)/3)-(1-csP)*0.8
+      : p.pos==="DEF" ? csP*5+xG*7*aMult+xA*3-(1-csP)*0.5
+      : p.pos==="MID" ? xG*6*aMult+xA*3+csP+(xA*2.5/2)+0.4
+      : xG*5*aMult+xA*3+(p.SoTp90||0)/2;
+    if (p.penTaker) r+=0.5; if (p.fkTaker) r+=0.4; if (p.cornerTaker) r+=0.3;
+    r -= p.cardRisk==="high"?0.4:p.cardRisk==="medium"?0.2:0;
+    const mf=(p.startProb??0.85)*(p.minsIfStarted??90)/90;
+    return { pts:(p.startProb??0.85)*2 + r*mf, opp:f.opponent, win:f.oddsWin };
+  };
+  const buildXI = (mi) => {
+    const sc = pool.map(p=>{ const s=score(p,mi); return {...p, mdPts:s.pts, mdOpp:s.opp, mdWin:s.win}; });
+    const bp = k => sc.filter(p=>p.pos===k).sort((a,b)=>b.mdPts-a.mdPts);
+    let best=null;
+    for (const [d,m,f] of [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2]]) {
+      const g=bp("GK")[0], D=bp("DEF").slice(0,d), M=bp("MID").slice(0,m), F=bp("FWD").slice(0,f);
+      if (!g||D.length<d||M.length<m||F.length<f) continue;
+      const arr=[g,...D,...M,...F], tot=arr.reduce((s,p)=>s+p.mdPts,0);
+      if (!best||tot>best.tot) best={form:`${d}-${m}-${f}`, dims:[d,m,f], arr, tot};
+    }
+    const [d,m,f]=best.dims, xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[6,...Array(d).fill(28),...Array(m).fill(55),...Array(f).fill(82)];
+    const cap=best.arr.reduce((a,b)=>b.mdPts>a.mdPts?b:a);
+    const players=best.arr.map((p,i)=>({...p, x:xs[i], y:ys[i], pts_balanced:Math.round(p.mdPts*10)/10,
+      is_captain:p.id===cap.id, value:+(p.mdPts/p.price).toFixed(2),
+      model_signals:[`MD${mi+1} vs ${p.mdOpp} — ${Math.round(p.mdWin*100)}% win prob`,
+                     `xMins ${Math.round((p.startProb??0.85)*(p.minsIfStarted??90))}' · $${p.price}m`]}));
+    return { formation:best.form, total_pts:best.tot, players, captain:{...cap, opp:cap.mdOpp, win:cap.mdWin} };
+  };
+  const xis = [0,1,2].map(buildXI);
+  const idSets = xis.map(x=>new Set(x.players.map(p=>p.id)));
+  const allThree = id => idSets.every(s=>s.has(id));      // FIXTURE SHIFT = not in all 3 MD XIs
+  const xi = xis[md], cap = xi.captain;
+  const fixCtx = [...new Map(pool.filter(p=>(p.fixtures||[])[md]).map(p=>{const f=p.fixtures[md];return [p.team,{team:p.team,opp:f.opponent,win:f.oddsWin}];})).values()].sort((a,b)=>b.win-a.win).slice(0,5);
+  const MD_DATES=["Jun 11-15","Jun 16-21","Jun 22-27"];
+
   return (
     <div>
-      <div style={{ marginBottom:12 }}>
-        <span style={{ fontSize:16, fontWeight:800, color:"#fff" }}>Econometrics Predicts the XI</span>
-        <span style={{ marginLeft:10, fontSize:12, color:DIM }}>{xi.formation} · {Math.round(xi.total_pts)} predicted pts</span>
+      <div style={{ display:"flex", gap:4, marginBottom:12 }}>
+        {[0,1,2].map(i=>(
+          <button key={i} onClick={()=>setMd(i)} style={{ padding:"7px 16px", borderRadius:6, fontFamily:"inherit", fontSize:13, cursor:"pointer", fontWeight:md===i?700:400,
+            border:`1px solid ${md===i?"#f97316":BORDER}`, background:md===i?"#f9731618":"transparent", color:md===i?"#f97316":DIM }}>MD{i+1}</button>
+        ))}
       </div>
+      <div style={{ marginBottom:6 }}>
+        <span style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{xi.formation} · {Math.round(xi.total_pts)} pts</span>
+        <span style={{ marginLeft:10, fontSize:12, color:DIM }}>MD{md+1} — {MD_DATES[md]} | optimised for matchday {md+1} fixtures</span>
+      </div>
+      <div style={{ fontSize:12, color:"#fbbf24", marginBottom:4, fontWeight:600 }}>MD{md+1} CAPTAIN: {cap.name} vs {cap.opp} ({Math.round(cap.win*100)}% win prob)</div>
+      <div style={{ fontSize:11, color:DIM, marginBottom:12 }}>Easiest fixtures: {fixCtx.map(x=>`${x.team} v ${x.opp} (${Math.round(x.win*100)}%)`).join(" · ")}</div>
       <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
         background:"linear-gradient(#0a3d1f,#072d17)", border:`2px solid #1e6b3a`, borderRadius:10 }}>
         <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
@@ -378,8 +429,9 @@ function StartingXITab({ xi }) {
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
             style={{ background:CARD, border:`1px solid ${pl.is_captain?"#fbbf24":BORDER}`, borderRadius:8, padding:"10px 12px", cursor:"pointer" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{pl.name} {pl.is_captain && <span style={{color:"#fbbf24"}}>©</span>}</span>
-              <span style={{ fontSize:12, color:POS_COLOR[pl.pos] }}>{pl.pos}</span>
+              <span style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{pl.name} {pl.is_captain && <span style={{color:"#fbbf24"}}>©</span>}
+                {!allThree(pl.id) && <span style={{ fontSize:9, color:"#f97316", marginLeft:6, fontFamily:MONO }}>⇄ SHIFT</span>}</span>
+              <span style={{ fontSize:12, color:POS_COLOR[pl.pos], fontFamily:MONO }}>{pl.pos}</span>
             </div>
             <div style={{ fontSize:11, color:DIM, margin:"4px 0" }}>{pl.team} · ${pl.price}m · {pl.pts_balanced} xPts · {pl.value} val</div>
             <div style={{ fontSize:11, color:"#c8c8c8" }}>{(pl.model_signals||[])[0]}</div>
@@ -672,7 +724,7 @@ export default function App() {
       <div style={{ maxWidth:1100, margin:"0 auto", padding:"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly }} />}
-        {tab==="xi" && <StartingXITab xi={analytics?.starting_xi} />}
+        {tab==="xi" && <StartingXITab pool={rawPlayers} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
