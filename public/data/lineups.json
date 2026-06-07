@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-07T18:02:24.562Z",
+  "generated_at": "2026-06-07T22:02:16.399Z",
   "teams": {
     "Spain": {
       "team": "Spain",
@@ -1475,6 +1475,742 @@
       ],
       "tactical_note": "Senegal likely maintains possession-based approach with width from wing-backs and attacking midfielders.",
       "fantasy_note": "Mané and I. Sarr provide upside; Gueye offers defensive floor but limited fantasy returns.",
+      "confidence": "AI_PREDICTED"
+    },
+    "United States": {
+      "team": "United States",
+      "flag": "🇺🇸",
+      "formation": "4-3-3",
+      "manager": "Gregg",
+      "players": [
+        {
+          "name": "Steffen",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "A. Robinson",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Ream",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age/form",
+          "position": "DEF"
+        },
+        {
+          "name": "M. Richards",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Scally",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Adams",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Musah",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Reyna",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Pulisic",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Weah",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Folau-Fakatpou",
+          "slot": "RW",
+          "status": "DOUBT",
+          "doubt_reason": "Development/rotation",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Dest (injury prone)",
+        "McKenzie (depth)"
+      ],
+      "tactical_note": "Balanced 4-3-3 with Pulisic as creative left outlet. Adams anchors midfield. Attacking flexibility via Weah/wingers.",
+      "fantasy_note": "Pulisic and Adams are standouts. Monitor Reyna/Weah availability and form trajectory into summer.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Mexico": {
+      "team": "Mexico",
+      "flag": "🇲🇽",
+      "formation": "4-3-3",
+      "manager": "Javier Aguirre",
+      "players": [
+        {
+          "name": "Guillermo Ochoa",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Jesús Gallardo",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age, competition from younger LBs",
+          "position": "DEF"
+        },
+        {
+          "name": "César Montes",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Néstor Araujo",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Julio Domínguez",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition from emerging talent",
+          "position": "DEF"
+        },
+        {
+          "name": "Edson Álvarez",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Andrés Guardado",
+          "slot": "CM",
+          "status": "DOUBT",
+          "doubt_reason": "Age, likely phased out",
+          "position": "MID"
+        },
+        {
+          "name": "Hirving Lozano",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Alexis Vega",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Santiago Giménez",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Orbelín Pineda",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Andrés Guardado (age)",
+        "Raúl Jiménez (age/injury)"
+      ],
+      "tactical_note": "Mexico expected to rely on youthful attacking talent with Giménez leading the line. Defensive stability key with Álvarez anchoring midfield.",
+      "fantasy_note": "Giménez highest fantasy priority. Lozano and Vega provide creative outlet. Álvarez valuable for defensive stats.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Ecuador": {
+      "team": "Ecuador",
+      "flag": "🇪🇨",
+      "formation": "4-2-3-1",
+      "manager": "Sebastián Beccacece",
+      "players": [
+        {
+          "name": "Hernán Galíndez",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Piero Hincapié",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Félix Torres",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Carlos Gruezo",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Sebastián Córdova",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Moisés Caicedo",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Alfredo Moreno",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Jeremy Sarmiento",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Gonzalo Plata",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Enner Valencia",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Age & fitness concerns by 2026",
+          "position": "FWD"
+        },
+        {
+          "name": "Kendry Páez",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Christian Benavides (injury)",
+        "José Cifuentes (age/form)",
+        "Enner Valencia (potential retirement)"
+      ],
+      "tactical_note": "Ecuador relies on midfield control via Caicedo. Attacking width from wingers compensates for modest striker depth.",
+      "fantasy_note": "Caicedo is essential. Plata offers consistency. Monitor Valencia's status; likely replaced by younger talent like Páez.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Austria": {
+      "team": "Austria",
+      "flag": "🇦🇹",
+      "formation": "4-2-3-1",
+      "manager": "Ralf Rangnick",
+      "players": [
+        {
+          "name": "Patrick Pentz",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Philipp Mwene",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age, competition",
+          "position": "DEF"
+        },
+        {
+          "name": "Gernot Trauner",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age",
+          "position": "DEF"
+        },
+        {
+          "name": "Kevin Danso",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Pouria Ghanbarzadeh",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Florian Grillitsch",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Christoph Baumgartner",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Konrad Laimer",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury prone",
+          "position": "MID"
+        },
+        {
+          "name": "Alexandar Dragović",
+          "slot": "LM",
+          "status": "DOUBT",
+          "doubt_reason": "Age, form",
+          "position": "MID"
+        },
+        {
+          "name": "Marko Arnautović",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Age",
+          "position": "FWD"
+        },
+        {
+          "name": "Michael Gregoritsch",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "David Alaba (retirement)"
+      ],
+      "tactical_note": "Rangnick emphasizes pressing and midfield control. Baumgartner key to build-up.",
+      "fantasy_note": "Laimer and Baumgartner offer good upside. Arnautović set-piece threat but aging.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Norway": {
+      "team": "Norway",
+      "flag": "🇳🇴",
+      "formation": "4-2-3-1",
+      "manager": "Stale Solbakken",
+      "players": [
+        {
+          "name": "Ramsdale",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Osmajic",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Ajer",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Hanche-Olsen",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Ryerson",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Bissouma",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Rodríguez",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Sander Berge",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Sorloth",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Flo",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Braathen",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Haaland (retired from NT)",
+        "Odegaard (availability uncertain)"
+      ],
+      "tactical_note": "Norway likely plays compact 4-2-3-1 with emphasis on counter-attacking through Sorloth pace",
+      "fantasy_note": "Sorloth and Sander Berge are key attacking assets; midfield depth creates rotation risk",
+      "confidence": "AI_PREDICTED"
+    },
+    "Sweden": {
+      "team": "Sweden",
+      "flag": "🇸🇪",
+      "formation": "4-2-3-1",
+      "manager": "Jon Dahl Tomasson",
+      "players": [
+        {
+          "name": "Robin Olsen",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Jens Cajuste",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age & form",
+          "position": "DEF"
+        },
+        {
+          "name": "Victor Lindelöf",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Marcus Danielson",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Mikael Lustig",
+          "slot": "RB",
+          "status": "DOUBT",
+          "doubt_reason": "Age 36",
+          "position": "DEF"
+        },
+        {
+          "name": "Sander Berghuis",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition",
+          "position": "MID"
+        },
+        {
+          "name": "Sebastian Larsson",
+          "slot": "CDM",
+          "status": "DOUBT",
+          "doubt_reason": "Age 39",
+          "position": "MID"
+        },
+        {
+          "name": "Emil Forsberg",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Consistency",
+          "position": "MID"
+        },
+        {
+          "name": "Dejan Kulusevski",
+          "slot": "RM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Alexander Isak",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Mattias Svanberg",
+          "slot": "LM",
+          "status": "PROBABLE",
+          "doubt_reason": "Young depth",
+          "position": "MID"
+        }
+      ],
+      "key_absences": [
+        "Zlatan Ibrahimović (retired)",
+        "John Guidetti (age)"
+      ],
+      "tactical_note": "Sweden relies on Isak's physicality with Kulusevski's creativity. Likely narrow midfield with wing support.",
+      "fantasy_note": "Isak & Kulusevski are primary creators. Forsberg offers midfield attacking upside in deeper competitions.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Egypt": {
+      "team": "Egypt",
+      "flag": "🇪🇬",
+      "formation": "4-2-3-1",
+      "manager": "Carlos Queirós",
+      "players": [
+        {
+          "name": "El-Shenawy",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Abdel-Moneim",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Age & competition",
+          "position": "DEF"
+        },
+        {
+          "name": "El-Wensh",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Hegazy",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Emam",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "El-Solia",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Elneny",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Zaki",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Trezeguet",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Salah",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Mostafa Mohamed",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Form dependent",
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Kahraba (injury/contract)",
+        "Ramadan Sobhi (consistency)"
+      ],
+      "tactical_note": "Elneny-El-Solia pivot shields defense. Salah drifts inside; Trezeguet provides left-side width.",
+      "fantasy_note": "Salah is captain and primary playmaker. Elneny provides consistency. Mostafa Mohamed's form crucial for attacking threat.",
+      "confidence": "AI_PREDICTED"
+    },
+    "Ivory Coast": {
+      "team": "Ivory Coast",
+      "flag": "🇨🇮",
+      "formation": "4-2-3-1",
+      "manager": "Emerse Faé",
+      "players": [
+        {
+          "name": "Yahya Attiat-Allah",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Serge Aurier",
+          "slot": "RB",
+          "status": "DOUBT",
+          "doubt_reason": "Age, injury history",
+          "position": "DEF"
+        },
+        {
+          "name": "Ghislain Konan",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Eric Bailly",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Jeremie Frimpong",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Franck Kessié",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Yacine Adli",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Mohamed Diaby",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Wilfried Zaha",
+          "slot": "LW",
+          "status": "DOUBT",
+          "doubt_reason": "Age, form decline",
+          "position": "FWD"
+        },
+        {
+          "name": "Folarin Balogun",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Nicolas Pépé",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Serge Aurier (likely retired)",
+        "Wilfried Zaha (age)"
+      ],
+      "tactical_note": "Balanced midfield with attacking width. Balogun as focal point.",
+      "fantasy_note": "Kessié and Adli offer midfield stability. Balogun main attacking threat.",
       "confidence": "AI_PREDICTED"
     }
   }
