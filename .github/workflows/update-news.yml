@@ -18,18 +18,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Check if matchday period
         id: check_date
         run: |
-          TODAY=$(date +%Y-%m-%d)
-          if [[ "$TODAY" > "2026-06-10" && "$TODAY" < "2026-07-20" ]]; then
-            echo "is_tournament=true" >> $GITHUB_OUTPUT
+          TODAY=$(date -u +%Y%m%d)   # numeric YYYYMMDD — unambiguous integer comparison
+          if [ "$TODAY" -gt 20260610 ] && [ "$TODAY" -lt 20260720 ]; then
+            IS_TOURNAMENT=true
           else
-            echo "is_tournament=false" >> $GITHUB_OUTPUT
+            IS_TOURNAMENT=false
           fi
+          echo "is_tournament=$IS_TOURNAMENT" >> $GITHUB_OUTPUT
+          echo "Today is $TODAY, is_tournament=$IS_TOURNAMENT"
       - name: Fetch news
         if: steps.check_date.outputs.is_tournament == 'true'
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: npm run fetch-news
