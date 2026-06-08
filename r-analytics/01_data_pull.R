@@ -37,9 +37,13 @@ cat("SECTION A: seed_players =", nrow(seed_players), "\n")
 
 # ── SECTION B — FBref Big-5 club stats (GitHub-cached LOAD, no rate limit) ─────
 club_real <- tryCatch({
-  std <- load_fb_big5_advanced_season_stats(season_end_year = 2026, stat_type = "standard", team_or_player = "player") |> clean_names()
+  # season_end_year = 2025 (the COMPLETE 2024-25 season). The cache snapshot is dated
+  # 2025-09-18, so season 2026 (2025-26) holds only ~5 games (~1996 rows) → noisy per-90
+  # rates. 2025 is the freshest *complete* season (~2854 rows). Curated stars are guarded
+  # below (data_tier != "curated"), so this upgrades only the prior-filled pool.
+  std <- load_fb_big5_advanced_season_stats(season_end_year = 2025, stat_type = "standard", team_or_player = "player") |> clean_names()
   Sys.sleep(5)  # (2) be gentle even on cached loads
-  sht <- load_fb_big5_advanced_season_stats(season_end_year = 2026, stat_type = "shooting", team_or_player = "player") |> clean_names()
+  sht <- load_fb_big5_advanced_season_stats(season_end_year = 2025, stat_type = "shooting", team_or_player = "player") |> clean_names()
   sot_col <- intersect(c("sh_t_per_90_standard","s_o_t_per_90_standard","sot_per_90_standard"), names(sht))
   std |> transmute(player, squad,
       club_npxG_p90 = npx_g_per, club_xAG_p90 = x_ag_per, club_mins = min_playing) |>
@@ -54,7 +58,7 @@ understat_players <- tryCatch({
   leagues <- c("EPL","La liga","Bundesliga","Serie A","Ligue 1")
   shots <- map_dfr(leagues, function(lg) {
     s <- tryCatch(load_understat_league_shots(league = lg) |> clean_names(), error = function(e) NULL)
-    if (is.null(s)) return(tibble()); Sys.sleep(1); s |> filter(season == 2025)
+    if (is.null(s)) return(tibble()); Sys.sleep(1); s |> filter(season == 2024)  # Understat labels by start year: 2024 = 2024-25 season (matches FBref season_end_year 2025)
   })
   npx <- shots |> filter(situation != "Penalty") |> group_by(player) |>
     summarise(u_npxG = sum(x_g, na.rm = TRUE), u_shots = n(), .groups = "drop")
@@ -69,7 +73,7 @@ cat("SECTION C: Understat players =", if (is.null(understat_players)) 0 else nro
 # ~48×(5-30s) on guaranteed failures, then fall back. (Loop logic kept, gated.)
 intl_ok <- FALSE
 if (FBREF_AVAILABLE) {
-  test <- tryCatch({ Sys.sleep(5); fb_season_team_stats(country = "ENG", gender = "M", season_end_year = 2026, tier = "1st", stat_type = "standard") },
+  test <- tryCatch({ Sys.sleep(5); fb_season_team_stats(country = "ENG", gender = "M", season_end_year = 2025, tier = "1st", stat_type = "standard") },
                    error = function(e) { message("  FBref team-stats probe failed: ", conditionMessage(e)); NULL })
   intl_ok <- !is.null(test)
 }
@@ -129,8 +133,8 @@ saveRDS(master_players, file.path(DATA_DIR, "master_players.rds"))
 nf <- sum(real_stats$in_fbref); nu <- sum(real_stats$in_understat)
 nm <- sum(real_stats$data_source == "manual"); ns <- sum(real_stats$data_source == "seed_proxy")
 cat("\n── DATA QUALITY ──\n")
-cat("  matched in FBref big5 :", nf, "/ 58\n")
-cat("  matched in Understat  :", nu, "/ 58\n")
+cat("  matched in FBref big5 :", nf, "/", nrow(seed_players), "\n")
+cat("  matched in Understat  :", nu, "/", nrow(seed_players), "\n")
 cat("  manual fallback       :", nm, "\n")
 cat("  seed proxy (no match) :", ns, "\n")
 cat("  NOTE: Understat/FBref-load cover Big-5 club leagues only. Saudi Pro League\n")

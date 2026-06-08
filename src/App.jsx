@@ -157,11 +157,13 @@ const ROLE_PREDS = {
   captainViable:p=>p.captainSlot===3 && p.startProb>0.90,
   cardSafe:p=>p.cardRisk==="low", koThreat:p=>p.advP>75, overperfTeam,
   inForm:p=>p.qualifyingForm==="EXCELLENT"||p.qualifyingForm==="GOOD",
+  aerial:p=>p.aerial_threat===true,
 };
 const ROLE_DEFS = [["pen","🎯 PEN"],["fk","🦶 FK"],["corner","📐 CORNER"],["roleUp","⬆️ ROLE↑"],
   ["setCombo","🔫 SET-PIECE COMBO"],["csFort","🧤 CS FORT"],["scout","👁 SCOUT"],["budgetEnabler","📊 BUDGET ENABLER"],
   ["multiThreat","💥 MULTI THREAT"],["captainViable","⚡ CAPTAIN VIABLE"],["cardSafe","🃏 CARD SAFE"],
-  ["koThreat","🏆 KO THREAT"],["overperfTeam","⭐ OVERPERF TEAM"],["inForm","⭐ IN FORM"]];
+  ["koThreat","🏆 KO THREAT"],["overperfTeam","⭐ OVERPERF TEAM"],["inForm","⭐ IN FORM"],
+  ["aerial","🛩 AERIAL THREAT"]];
 const SMART_PREDS = {
   // attacking starters who contribute a lot; the auto-set MD + "easy fixture" filter adds the
   // high-win-probability-vs-weak-opponent half (switch MD via the Matchday dropdown).
@@ -387,7 +389,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         <div style={{ textAlign:"center", padding:"44px 20px", color:DIM }}>
           <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:78, filter:"drop-shadow(0 3px 6px #000a)" }} />
           <div style={{ fontSize:14, fontWeight:800, color:"#4ade80", marginTop:10, fontStyle:"italic" }}>Mak kau ijau — takde sapa 😤</div>
-          <div style={{ fontSize:12, marginTop:4 }}>No players match these filters.{posFilter!=="ALL" ? ` You're filtered to ${posFilter} — most role filters (set-pieces, scout, etc.) have few or no ${posFilter}s, so try ALL positions.` : " Loosen them or hit CLEAR ALL."}</div>
+          <div style={{ fontSize:12, marginTop:4 }}>{F.roles.aerial ? "Aerial-threat data isn't loaded yet — run r-analytics/aerial_pull.R to populate it (Big-5 league players only)." : <>No players match these filters.{posFilter!=="ALL" ? ` You're filtered to ${posFilter} — most role filters (set-pieces, scout, etc.) have few or no ${posFilter}s, so try ALL positions.` : " Loosen them or hit CLEAR ALL."}</>}</div>
         </div>
       ) : mobile ? (
         <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:4 }}>
@@ -964,6 +966,7 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
           {p.own<5 && <ScoutBadge/>}
           {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: +${(p.intl_premium_score||0).toFixed(2)}σ vs club stats`}>★ MODEL EDGE</Badge>}
           {p.roleShift && p.roleShift!=="SAME" && <Badge bg="#f9731618" bd="#f9731688" fg="#f97316" title={`Role shift: ${p.roleShiftNote||p.roleShift}`}>↑ ROLE SHIFT</Badge>}
+          {p.aerial_threat && <Badge bg="#0ea5e918" bd="#38bdf888" fg="#38bdf8" title={`Aerial threat — wins ${p.aerial_won_p90??"?"} aerials/90 at ${p.aerial_won_pct??"?"}% (club, FBref)`}>🛩 AERIAL</Badge>}
         </div>
         <OwnBar pct={p.own}/>
         <div style={{ fontSize:12, color:TEXT, marginTop:6 }}>{xptsOf(p)?.toFixed(1)} xPts <span style={{color:DIM,fontSize:10}}>({riskMode})</span></div>
