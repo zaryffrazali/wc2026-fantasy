@@ -389,15 +389,17 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : mobile ? (
         <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:4 }}>
-          {players.slice(0,200).map((p) => { const posCol = POS_COLOR[p.pos];
+          {players.slice(0,200).map((p) => { const posCol = POS_COLOR[p.pos]; const isOpen = selected?.id===p.id;
             return (
-              <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-                style={{ background:selected?.id===p.id?"#f9731610":CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"8px 11px", maxHeight:60, overflow:"hidden", cursor:"pointer" }}>
+              <div key={p.id}>
+              <div onClick={()=>setSelected(isOpen?null:p)}
+                style={{ background:isOpen?"#f9731610":CARD, border:`1px solid ${isOpen?"#f97316aa":BORDER}`, borderRadius: isOpen?"8px 8px 0 0":8, padding:"8px 11px", cursor:"pointer" }}>
                 <div style={{ display:"flex", flexWrap:"nowrap", alignItems:"center", gap:6, overflow:"hidden" }}>
                   <span onClick={e=>{e.stopPropagation(); toggleWatch&&toggleWatch(p.id);}} style={{ cursor:"pointer", color:(watch||[]).includes(p.id)?"#fbbf24":"#475569", fontSize:13, flex:"0 0 auto" }}>{(watch||[]).includes(p.id)?"★":"☆"}</span>
                   <span style={{ color:"#fff", fontWeight:700, fontSize:14, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", flex:"1 1 auto", minWidth:0 }}>{flagOf(p)} {p.name}</span>
                   <span title={POS_TIP[p.pos]} style={{ flex:"0 0 auto", fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
                   <span style={{ flex:"0 0 auto", fontSize:12, fontWeight:800, fontFamily:MONO, color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</span>
+                  <span style={{ flex:"0 0 auto", color: isOpen?"#f97316":DIM, fontSize:10 }}>{isOpen?"▲":"▼"}</span>
                 </div>
                 <div style={{ display:"flex", gap:8, fontSize:12, color:DIM, marginTop:3, whiteSpace:"nowrap", overflow:"hidden" }}>
                   <span style={{ color:"#94a3b8" }}>${p.price}m</span>
@@ -406,6 +408,10 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   <span style={{ color:"#7b8cde" }} title="MD1·MD2·MD3 xPts">MD {mdScore(p,0).pts.toFixed(0)}·{mdScore(p,1).pts.toFixed(0)}·{mdScore(p,2).pts.toFixed(0)}</span>
                   <span>Own {p.own}%</span>
                 </div>
+              </div>
+              {isOpen && <div style={{ border:"1px solid #f97316aa", borderTop:"none", borderRadius:"0 0 8px 8px", overflow:"hidden" }}>
+                <PlayerDetail p={p} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
+              </div>}
               </div>);
           })}
         </div>
@@ -492,14 +498,6 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       )}
       </div>{/* 2-col */}
-      {/* mobile: detail as a bottom sheet so it's never buried under a long list */}
-      {mobile && selected && (
-        <div onClick={()=>setSelected(null)} style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.55)", display:"flex", alignItems:"flex-end" }}>
-          <div onClick={e=>e.stopPropagation()} style={{ width:"100%", maxHeight:"86vh", overflowY:"auto", background:BG, borderTop:`2px solid ${BORDER}`, borderRadius:"14px 14px 0 0" }}>
-            <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
-          </div>
-        </div>
-      )}
     </>
   );
 }
