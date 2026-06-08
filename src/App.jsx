@@ -38,35 +38,30 @@ function computePrediction(p, riskMode) {
 
   const sp = p.startProb ?? 0.85;
   const E_mins = sp * (p.minsIfStarted ?? 90);
-  const minsFactor = E_mins / 90;            // scales per-90 returns for rotation/sub risk
 
-  let returns = 0;                            // per-match returns (minute-scaled below)
-  if (p.pos === "GK")      returns = csP * 5 + ((p.savesP90 || 3.2) / 3) - (1 - csP) * 0.8;
-  else if (p.pos === "DEF") returns = csP * 5 + xG * 7 * goalP + xA * 3 - (1 - csP) * 0.5;
-  else if (p.pos === "MID") returns = xG * 6 * goalP + xA * 3 + csP + (xA * 2.5 / 2) + 0.4;
-  else                      returns = xG * 5 * goalP + xA * 3 + (p.SoTp90 / 2);
+  // SINGLE ENGINE: group-stage base = sum of the three per-matchday projections (mdScore).
+  // This guarantees xPTS·GS === MD1 + MD2 + MD3 — no hidden adjustments baked into the headline.
+  let base = 0;
+  for (let mi = 0; mi < 3; mi++) base += mdScore(p, mi).pts;
 
-  if (p.penTaker) returns += 0.5;
-  if (p.fkTaker) returns += 0.4;
-  if (p.cornerTaker) returns += 0.3;
-  returns -= p.cardRisk === "high" ? 0.4 : p.cardRisk === "medium" ? 0.2 : 0;
-  const pts = sp * 2 + returns * minsFactor;  // appearance + minute-scaled returns
+  // surfaced SEPARATELY (flag/badge), not silently added to the displayed total
+  const scoutBonusEV = p.own < 5 ? 1.8 : 0;
+  const causalAdj = 0.5 * (p.causal_pts_adjustment || 0);
 
-  const E_MATCHES = 3;   // GROUP STAGE ONLY (MD1–3): same 3 games for every player so xPts is comparable.
-  // (Knockout matches are added matchday-by-matchday as teams actually advance — not pre-credited here.)
-  const scoutBonusEV = p.own < 5 ? 1.8 : 0;   // FIFA scouting bonus: +2 only when owned by <5%
-  const shiftDiff = /ATT|STRIKER/.test(p.roleShift || "") && p.own < 15 ? 1.4 : 1; // role arbitrage
+  // floor/ceiling from player PROFILE, not a flat ×0.88/×1.28 (forwards boom-or-bust; keepers steady)
+  const posVar = p.pos === "FWD" ? 0.42 : p.pos === "MID" ? 0.34 : p.pos === "DEF" ? 0.26 : 0.22;
+  const spLift = (p.penTaker ? 0.05 : 0) + (p.fkTaker ? 0.02 : 0);          // set-piece duty lifts the floor
+  const floorF = Math.max(0.55, 1 - posVar + spLift), ceilF = 1 + posVar;
+
+  const pts_mean = +base.toFixed(2);
+  const pts_median = +(base * floorF).toFixed(2);
+  const pts_p90 = +(base * ceilF).toFixed(2);
   const capMult = p.captainSlot === 3 ? 1.15 : p.captainSlot === 2 ? 1.08 : 1.0;
-  const causalAdj = 0.5 * (p.causal_pts_adjustment || 0);  // discounted causal nudge (matches R)
-
-  const pts_mean   = pts * E_MATCHES + scoutBonusEV * shiftDiff + causalAdj;
-  const pts_median = pts * E_MATCHES * 0.88 + causalAdj;
-  const pts_p90    = pts * E_MATCHES * 1.28 + scoutBonusEV * 1.5 * shiftDiff + causalAdj;
   const captainValue = pts_p90 * capMult;
 
   const displayPts = riskMode === "safe" ? pts_median : riskMode === "diff" ? pts_p90 : pts_mean;
   return { pts_median, pts_mean, pts_p90, displayPts, value: displayPts / p.price,
-           scoutBonusEV, captainValue, E_MATCHES, E_mins, csP, goalP, xGadj: xG, xAadj: xA };
+           scoutBonusEV, causalAdj, captainValue, E_MATCHES: 3, E_mins, csP, goalP, xGadj: xG, xAadj: xA };
 }
 
 // ─── PER-MATCHDAY xPts (shared by Fantasy XI, Players tab next-MD col, and Planner) ─
@@ -76,8 +71,10 @@ function mdScore(p, mi) {
   let xG = (p.xGp90 || 0) * rm[0] * fm, xA = (p.xAp90 || 0) * rm[1] * fm;
   if (typeof p.intl_premium_xG === "number") xG *= 1 + p.intl_premium_xG * 0.3;
   const csP = f.oddsWin * 0.72 + f.oddsDraw * 0.28, aMult = (f.oddsWin * 1.6 + f.oddsDraw * 0.5) / 1.1;
-  let r = p.pos === "GK" ? csP * 5 + ((p.savesP90 || 3.2) / 3) - (1 - csP) * 0.8
-    : p.pos === "DEF" ? csP * 5 + xG * 7 * aMult + xA * 3 - (1 - csP) * 0.5
+  // expected goals conceded after the 1st (−1 each) for GK/DEF — penalises leaky teams, not just rewards CS
+  const gcPen = Math.max(0, f.oddsLoss * 2.0 + f.oddsDraw * 0.8 - 1);
+  let r = p.pos === "GK" ? csP * 5 + ((p.savesP90 || 3.2) / 3) - gcPen
+    : p.pos === "DEF" ? csP * 5 + xG * 7 * aMult + xA * 3 - gcPen
     : p.pos === "MID" ? xG * 6 * aMult + xA * 3 + csP + (xA * 2.5 / 2) + 0.4
     : xG * 5 * aMult + xA * 3 + (p.SoTp90 || 0) / 2;
   if (p.penTaker) r += 0.5; if (p.fkTaker) r += 0.4; if (p.cornerTaker) r += 0.3;
@@ -355,8 +352,14 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       {/* last updated */}
       {refreshed && <div style={{ textAlign:"right", fontSize:11, color:"#64748b", margin:"6px 0" }}>Data refreshed: {refreshed} MYT · Auto-refreshes every 3h</div>}
 
-      {/* table — mobile: compact 2-line cards; desktop: full grid */}
-      {mobile ? (
+      {/* table — empty-state meme, else mobile cards / desktop grid */}
+      {players.length === 0 ? (
+        <div style={{ textAlign:"center", padding:"44px 20px", color:DIM }}>
+          <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:78, filter:"drop-shadow(0 3px 6px #000a)" }} />
+          <div style={{ fontSize:14, fontWeight:800, color:"#4ade80", marginTop:10, fontStyle:"italic" }}>Mak kau ijau — takde sapa 😤</div>
+          <div style={{ fontSize:12, marginTop:4 }}>No players match these filters. Loosen them or hit CLEAR ALL.</div>
+        </div>
+      ) : mobile ? (
         <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:4 }}>
           {players.slice(0,200).map((p) => { const posCol = POS_COLOR[p.pos];
             return (
@@ -580,21 +583,7 @@ function StartingXITab({ pool, mobile }) {
   if (!pool || !pool.length) return <div style={{ color:DIM }}>No player data.</div>;
 
   const ROW = n => n ? Array.from({length:n}, (_,i)=> n>1 ? 15+(i/(n-1))*70 : 50) : [];
-  const score = (p, mi) => {                                   // single-matchday xPts
-    const f = (p.fixtures||[])[mi]; if (!f) return { pts:0 };
-    const rm = ROLE_MULT[p.roleShift]||[1,1], fm = p.form_mult||1;
-    let xG=(p.xGp90||0)*rm[0]*fm, xA=(p.xAp90||0)*rm[1]*fm;
-    if (typeof p.intl_premium_xG==="number") xG*=1+p.intl_premium_xG*0.3;
-    const csP=f.oddsWin*0.72+f.oddsDraw*0.28, aMult=(f.oddsWin*1.6+f.oddsDraw*0.5)/1.1;
-    let r = p.pos==="GK" ? csP*5+((p.savesP90||3.2)/3)-(1-csP)*0.8
-      : p.pos==="DEF" ? csP*5+xG*7*aMult+xA*3-(1-csP)*0.5
-      : p.pos==="MID" ? xG*6*aMult+xA*3+csP+(xA*2.5/2)+0.4
-      : xG*5*aMult+xA*3+(p.SoTp90||0)/2;
-    if (p.penTaker) r+=0.5; if (p.fkTaker) r+=0.4; if (p.cornerTaker) r+=0.3;
-    r -= p.cardRisk==="high"?0.4:p.cardRisk==="medium"?0.2:0;
-    const mf=(p.startProb??0.85)*(p.minsIfStarted??90)/90;
-    return { pts:(p.startProb??0.85)*2 + r*mf, opp:f.opponent, win:f.oddsWin };
-  };
+  const score = (p, mi) => mdScore(p, mi);   // single shared per-matchday engine (no duplicate formula)
   const benchReason = (p, mi) => {
     const wins=(p.fixtures||[]).map(f=>f?.oddsWin||0), bestMd=wins.indexOf(Math.max(...wins));
     if (bestMd>mi) return `Tough MD${mi+1} fixture — key MD${bestMd+1} asset`;
@@ -2279,9 +2268,13 @@ export default function App() {
         });
         const roleOf = (p) => {
           const list = luByTeam[p.team]; if (!list) return null;            // team has no predicted lineup → keep prior
-          const toks = lutok(p.name), ps = toks[toks.length - 1] || "";
-          // require a SURNAME match — keying on any shared token wrongly matched "James" Trafford to Reece "James"
-          const cands = list.filter(e => e.surname === ps);                 // surname match only
+          const toks = lutok(p.name), ps = toks[toks.length - 1] || "", tset = new Set(toks);
+          // surname match, plus mononym handling: "Alisson" (lineup) ↔ "Alisson Becker" (pool).
+          // Still avoids "James" Trafford ↔ Reece "James" (neither side is a mononym there).
+          const cands = list.filter(e =>
+            e.surname === ps ||                                  // surname == surname
+            (e.set.size === 1 && tset.has(e.surname)) ||         // lineup mononym appears in the pool name
+            (toks.length === 1 && e.set.has(ps)));               // pool mononym appears in the lineup name
           if (!cands.length) return "OUT";                                  // in squad but not XI/bench → deep squad
           let best = cands[0], bestS = -1;                                  // disambiguate same-surname by full overlap
           cands.forEach(e => { const s = toks.filter(t => e.set.has(t)).length; if (s > bestS) { bestS = s; best = e; } });
@@ -2367,8 +2360,20 @@ export default function App() {
 
   const optimal = useMemo(() => buildOptimalSquads(rawPlayers || []), [rawPlayers]);
 
-  if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
-  if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
+  if (loadError) return (
+    <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, fontFamily:SANS }}>
+      <GlobalCSS />
+      <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:90, filter:"drop-shadow(0 3px 6px #000a)" }} />
+      <div style={{ fontSize:15, fontWeight:800, color:"#ff6b6b", fontStyle:"italic" }}>Mak kau ijau — data tak nak load 😤</div>
+      <div style={{ fontSize:12, color:DIM }}>Failed to load data. Try refreshing.</div>
+    </div>);
+  if (!rawPlayers) return (
+    <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, fontFamily:SANS }}>
+      <GlobalCSS />
+      <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:96, filter:"drop-shadow(0 3px 6px #000a)" }} />
+      <div style={{ fontSize:15, fontWeight:800, color:"#4ade80", fontStyle:"italic" }}>Mak kau ijau…</div>
+      <div style={{ fontSize:12, color:DIM }}>crunching the numbers</div>
+    </div>);
 
   const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["odds","🎲 Odds"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
