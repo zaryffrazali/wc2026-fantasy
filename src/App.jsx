@@ -633,7 +633,8 @@ function StartingXITab({ pool, mobile }) {
   const [showDesc, setShowDesc] = useState(true);
   if (!pool || !pool.length) return <div style={{ color:DIM }}>No player data.</div>;
 
-  const ROW = n => n ? Array.from({length:n}, (_,i)=> n>1 ? 15+(i/(n-1))*70 : 50) : [];
+  // centred spread: keeps lines balanced and puts a 2-man strikeforce central (≈39/61) not on the flanks
+  const ROW = n => { if (!n) return []; const step = n>1 ? Math.min(22, 76/(n-1)) : 0; return Array.from({length:n}, (_,i)=> 50 + (i-(n-1)/2)*step); };
   const score = (p, mi) => mdScore(p, mi);   // single shared per-matchday engine (no duplicate formula)
   const benchReason = (p, mi) => {
     const wins=(p.fixtures||[]).map(f=>f?.oddsWin||0), bestMd=wins.indexOf(Math.max(...wins));
@@ -720,24 +721,24 @@ function StartingXITab({ pool, mobile }) {
       <div style={{ fontSize:12, color:DIM, marginBottom:6 }}>MD{md+1} — {MD_DATES[md]} | optimised for matchday {md+1} fixtures</div>
       <div style={{ fontSize:12, color:"#fbbf24", marginBottom:4, fontWeight:600 }}>MD{md+1} CAPTAIN: {cap.name} vs {cap.opp} ({Math.round(cap.win*100)}% win prob)</div>
       <div style={{ fontSize:11, color:DIM, marginBottom:12 }}>Easiest fixtures: {fixCtx.map(x=>`${x.team} v ${x.opp} (${Math.round(x.win*100)}%)`).join(" · ")}</div>
-      {mobile && <div style={{ fontSize:11, color:DIM, marginBottom:10 }}>List view — tap a card for detail</div>}
-      {!mobile && <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
+      {mobile && <div style={{ fontSize:11, color:DIM, marginBottom:8 }}>Tap a player for detail · bench is below the pitch</div>}
+      {<div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
         background:"linear-gradient(#0a3d1f,#072d17)", border:`2px solid #1e6b3a`, borderRadius:10 }}>
         <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
         <div style={{ position:"absolute", left:"30%", right:"30%", bottom:0, height:"14%", border:"1px solid #2e7d4f", borderBottom:"none" }} />
         {xi.players.map(pl => (
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
             style={{ position:"absolute", left:`${pl.x}%`, top:`${pl.y}%`, transform:"translate(-50%,-50%)",
-              textAlign:"center", cursor:"pointer", width:84 }}>
-            <div style={{ width:52, height:52, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
-              alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff",
+              textAlign:"center", cursor:"pointer", width: mobile?58:84 }}>
+            <div style={{ width: mobile?40:52, height: mobile?40:52, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
+              alignItems:"center", justifyContent:"center", fontSize: mobile?11:13, fontWeight:800, color:"#fff",
               border: pl.is_captain ? "3px solid #fbbf24" : pl.is_vc ? "3px solid #cbd5e1" : "2px solid #ffffff55", position:"relative" }}>
               {pl.pts_balanced}
               {pl.is_captain && <span style={{ position:"absolute", top:-6, right:-6, width:18, height:18, fontSize:10, fontWeight:800, background:"#fbbf24", color:"#000", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>C</span>}
               {pl.is_vc && <span style={{ position:"absolute", top:-6, right:-6, width:18, height:18, fontSize:8, fontWeight:800, background:"#cbd5e1", color:"#000", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>VC</span>}
             </div>
-            <div style={{ fontSize:12, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000", maxWidth:80, marginLeft:"auto", marginRight:"auto", lineHeight:1.1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{pl.name}</div>
-            {pl.mdOpp && <div style={{ fontSize:9, color:"#9fb4c9", textShadow:"0 1px 3px #000", marginTop:1 }}>vs {pl.mdOpp}</div>}
+            <div style={{ fontSize: mobile?9:12, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000", maxWidth: mobile?56:80, marginLeft:"auto", marginRight:"auto", lineHeight:1.1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{pl.name}</div>
+            {pl.mdOpp && <div style={{ fontSize: mobile?8:9, color:"#9fb4c9", textShadow:"0 1px 3px #000", marginTop:1 }}>vs {pl.mdOpp}</div>}
             {pl.is_captain && <div style={{ fontSize:10, color:"#f97316", fontWeight:700 }}>2× pts</div>}
             {pl.is_vc && <div style={{ fontSize:10, color:"#f97316" }}>2× if C DNP</div>}
           </div>
