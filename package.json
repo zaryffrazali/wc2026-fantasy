@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "build-squads": "node r-analytics/build_squads.cjs",
     "fetch-lineups": "node r-analytics/lineups_fetch.cjs",
     "fetch-news": "node r-analytics/news_fetch.cjs"
   },
