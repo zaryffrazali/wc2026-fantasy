@@ -370,6 +370,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
 
       <div style={{ display:"flex", gap:14, alignItems:"flex-start", flexDirection: mobile?"column":"row" }}>
       <div style={{ flex:"1 1 0", minWidth:0 }}>
+      {mobile && <WatchlistBox players={allPlayers} watch={watch} toggleWatch={toggleWatch} onPick={(p)=>setSelected(p)} pickLabel="view" />}
       {/* sort hint + count (sorting now lives on the clickable column headers) */}
       <div style={{ display:"flex", alignItems:"center", borderBottom:`1px solid ${BORDER}`, padding:"6px 2px" }}>
         <span style={{ fontSize:11, color:DIM }}>Tip: click any column header (xPTS·GS, VAL, MD1–3, OWN, TIER…) to sort high → low</span>
@@ -483,12 +484,22 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       </div>
       )}
       </div>{/* left: table */}
-      <div style={{ flex: mobile?"1 1 auto":"0 0 320px", width: mobile?"100%":320, position: mobile?"static":"sticky", top:8, alignSelf:"flex-start", maxHeight: mobile?"none":"calc(100vh - 24px)", overflowY: mobile?"visible":"auto" }}>
-        <WatchlistBox players={allPlayers} watch={watch} toggleWatch={toggleWatch} onPick={(p)=>setSelected(p)} pickLabel="view" />
-        {selected ? <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
-          : <div style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:10, padding:"24px 16px", textAlign:"center", color:DIM, fontSize:12 }}>Click a player to see their full breakdown here.</div>}
-      </div>
+      {!mobile && (
+        <div style={{ flex:"0 0 320px", width:320, position:"sticky", top:8, alignSelf:"flex-start", maxHeight:"calc(100vh - 24px)", overflowY:"auto" }}>
+          <WatchlistBox players={allPlayers} watch={watch} toggleWatch={toggleWatch} onPick={(p)=>setSelected(p)} pickLabel="view" />
+          {selected ? <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
+            : <div style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:10, padding:"24px 16px", textAlign:"center", color:DIM, fontSize:12 }}>Click a player to see their full breakdown here.</div>}
+        </div>
+      )}
       </div>{/* 2-col */}
+      {/* mobile: detail as a bottom sheet so it's never buried under a long list */}
+      {mobile && selected && (
+        <div onClick={()=>setSelected(null)} style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.55)", display:"flex", alignItems:"flex-end" }}>
+          <div onClick={e=>e.stopPropagation()} style={{ width:"100%", maxHeight:"86vh", overflowY:"auto", background:BG, borderTop:`2px solid ${BORDER}`, borderRadius:"14px 14px 0 0" }}>
+            <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -2074,14 +2085,14 @@ function PlannerTab({ pool, mobile, watch, toggleWatch }) {
                 const x = n === 1 ? 50 : 50 + (i - (n - 1) / 2) * Math.min(22, 76 / (n - 1)), isC = captain === p.id, isVC = viceCaptain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
                 const bord = isC ? "3px solid #fbbf24" : isVC ? "3px solid #cbd5e1" : subbingId === p.id ? "3px dashed #f97316" : "2px solid #ffffff55";
                 return (
-                  <div key={p.id} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", width: 78, zIndex: menuId === p.id ? 30 : 1 }}>
+                  <div key={p.id} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", width: mobile?56:78, zIndex: menuId === p.id ? 30 : 1 }}>
                     <div onClick={(e) => { e.stopPropagation(); setSubbingId(null); setMenuId(menuId === p.id ? null : p.id); }} title="Tap for options"
-                      style={{ width: 46, height: 46, margin: "0 auto", borderRadius: "50%", background: POS_COLOR[p.pos], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff", border: bord, position: "relative", cursor: "pointer" }}>
+                      style={{ width: mobile?40:46, height: mobile?40:46, margin: "0 auto", borderRadius: "50%", background: POS_COLOR[p.pos], display: "flex", alignItems: "center", justifyContent: "center", fontSize: mobile?11:12, fontWeight: 800, color: "#fff", border: bord, position: "relative", cursor: "pointer" }}>
                       {pts}
                       {isC && <span style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, fontSize: 10, fontWeight: 800, background: "#fbbf24", color: "#000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>C</span>}
                       {isVC && <span style={{ position: "absolute", top: -7, right: -8, minWidth: 18, height: 16, padding: "0 3px", fontSize: 8, fontWeight: 800, background: "#cbd5e1", color: "#000", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>VC</span>}
                     </div>
-                    <div style={{ fontSize: 11, color: "#fff", fontWeight: 700, marginTop: 3, textShadow: "0 1px 3px #000", lineHeight: 1.1, maxWidth: 78, marginLeft: "auto", marginRight: "auto", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{p.name}</div>
+                    <div style={{ fontSize: mobile?9:11, color: "#fff", fontWeight: 700, marginTop: 3, textShadow: "0 1px 3px #000", lineHeight: 1.1, maxWidth: mobile?56:78, marginLeft: "auto", marginRight: "auto", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{p.name}</div>
                     {opp && <div style={{ fontSize: 9, color: "#9fb4c9", textShadow: "0 1px 3px #000" }}>vs {opp}</div>}
                     {menuId === p.id && (
                       <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", left: "50%", top: 48, transform: "translateX(-50%)", background: "#0d1829", border: `1px solid ${BORDER}`, borderRadius: 8, padding: 4, display: "flex", flexDirection: "column", gap: 3, width: 128, boxShadow: "0 6px 16px #000b" }}>
