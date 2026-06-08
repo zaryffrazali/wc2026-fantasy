@@ -58,6 +58,31 @@ function computePrediction(p, riskMode) {
            scoutBonusEV, captainValue, E_MATCHES, E_mins, csP, goalP, xGadj: xG, xAadj: xA };
 }
 
+// ─── PER-MATCHDAY xPts (shared by Fantasy XI, Players tab next-MD col, and Planner) ─
+function mdScore(p, mi) {
+  const f = (p.fixtures || [])[mi]; if (!f) return { pts: 0, opp: null, win: 0 };
+  const rm = ROLE_MULT[p.roleShift] || [1, 1], fm = p.form_mult || 1;
+  let xG = (p.xGp90 || 0) * rm[0] * fm, xA = (p.xAp90 || 0) * rm[1] * fm;
+  if (typeof p.intl_premium_xG === "number") xG *= 1 + p.intl_premium_xG * 0.3;
+  const csP = f.oddsWin * 0.72 + f.oddsDraw * 0.28, aMult = (f.oddsWin * 1.6 + f.oddsDraw * 0.5) / 1.1;
+  let r = p.pos === "GK" ? csP * 5 + ((p.savesP90 || 3.2) / 3) - (1 - csP) * 0.8
+    : p.pos === "DEF" ? csP * 5 + xG * 7 * aMult + xA * 3 - (1 - csP) * 0.5
+    : p.pos === "MID" ? xG * 6 * aMult + xA * 3 + csP + (xA * 2.5 / 2) + 0.4
+    : xG * 5 * aMult + xA * 3 + (p.SoTp90 || 0) / 2;
+  if (p.penTaker) r += 0.5; if (p.fkTaker) r += 0.4; if (p.cornerTaker) r += 0.3;
+  r -= p.cardRisk === "high" ? 0.4 : p.cardRisk === "medium" ? 0.2 : 0;
+  const mf = (p.startProb ?? 0.85) * (p.minsIfStarted ?? 90) / 90;
+  return { pts: (p.startProb ?? 0.85) * 2 + r * mf, opp: f.opponent, win: f.oddsWin };
+}
+// "Next matchday" index from today's date (MD1 Jun11-15, MD2 Jun16-21, MD3 Jun22-27).
+function currentNextMd() {
+  const t = new Date(), n = t.getFullYear() * 10000 + (t.getMonth() + 1) * 100 + t.getDate();
+  return n < 20260616 ? 0 : n < 20260622 ? 1 : 2;
+}
+const NEXT_MD = currentNextMd();
+// Scout-bonus eligibility: +2 pts when a player is owned by <5% and returns >4 pts.
+const scoutEligible = (p) => (p.own ?? 100) < 5;
+
 // ─── SMALL UI BITS ─────────────────────────────────────────────────────────────
 function OwnBar({ pct }) {
   const color = pct > 30 ? "#f97316" : pct > 10 ? "#eab308" : "#22c55e";
@@ -316,6 +341,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   <span style={{ color:"#94a3b8" }}>${p.price}m</span>
                   <span style={{ color:p.E_mins<60?"#eab308":"#94a3b8" }}>{Math.round(p.E_mins)}'</span>
                   <span style={{ color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT, fontWeight:700 }}>xPTS {p.displayPts.toFixed(1)}</span>
+                  <span style={{ color:"#7b8cde" }}>MD{NEXT_MD+1} {mdScore(p,NEXT_MD).pts.toFixed(1)}</span>
                   <span>Own {p.own}%</span>
                 </div>
               </div>);
@@ -323,11 +349,11 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 56px 44px 34px 56px",
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 50px 56px 44px 34px 56px",
           gap:0, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           <div>#</div><div>PLAYER</div><div style={{textAlign:"right"}}>£</div>
           <div style={{textAlign:"right"}}>xMIN</div><div style={{textAlign:"center"}}>ROLE</div>
-          <div style={{textAlign:"right"}}>xPTS</div><div style={{textAlign:"right"}}>PREM</div>
+          <div style={{textAlign:"right"}}>xPTS</div><div style={{textAlign:"right"}} title={`Projected xPts for the next matchday (MD${NEXT_MD+1})`}>MD{NEXT_MD+1}</div><div style={{textAlign:"right"}}>PREM</div>
           <div style={{textAlign:"right"}}>OWN</div><div style={{textAlign:"center"}}>TIER</div>
           <div style={{textAlign:"right"}}>FIX</div>
         </div>
@@ -335,7 +361,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 56px 44px 34px 56px",
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 50px 56px 44px 34px 56px",
                 gap:0, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
@@ -364,6 +390,9 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div title={`Predicted ${p.displayPts.toFixed(1)} pts (${riskMode}). Floor ${p.pts_median?.toFixed(1)} · ceiling ${p.pts_p90?.toFixed(1)}`}
                 style={{ textAlign:"right", fontSize:18, fontWeight:800, cursor:"help",
                 color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT }}>{p.displayPts.toFixed(1)}</div>
+              {(() => { const ms = mdScore(p, NEXT_MD); return (
+                <div title={`MD${NEXT_MD+1}${ms.opp?` vs ${ms.opp}`:""} — projected ${ms.pts.toFixed(1)} pts`} style={{ textAlign:"right", fontSize:13, fontWeight:700, cursor:"help", color: ms.pts>6?"#f97316":ms.pts>4?"#22c55e":DIM }}>{ms.pts.toFixed(1)}</div>
+              ); })()}
               <div style={{ textAlign:"right" }}><MispriceTag flag={p.mispricing_flag} score={p.intl_premium_score}/></div>
               <div style={{ display:"flex", justifyContent:"flex-end" }}><OwnBar pct={p.own}/></div>
               <div title={TIER_TIP[p.tier]||""} style={{ textAlign:"center", fontSize:13, fontWeight:800, fontFamily:MONO, cursor:"help",
@@ -598,6 +627,7 @@ function StartingXITab({ pool, mobile }) {
               {pl.is_vc && <span style={{ position:"absolute", top:-6, right:-6, width:18, height:18, fontSize:8, fontWeight:800, background:"#cbd5e1", color:"#000", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>VC</span>}
             </div>
             <div style={{ fontSize:12, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000", maxWidth:80, marginLeft:"auto", marginRight:"auto", lineHeight:1.1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{pl.name}</div>
+            {pl.mdOpp && <div style={{ fontSize:9, color:"#9fb4c9", textShadow:"0 1px 3px #000", marginTop:1 }}>vs {pl.mdOpp}</div>}
             {pl.is_captain && <div style={{ fontSize:10, color:"#f97316", fontWeight:700 }}>2× pts</div>}
             {pl.is_vc && <div style={{ fontSize:10, color:"#f97316" }}>2× if C DNP</div>}
           </div>
@@ -1572,6 +1602,241 @@ function NewsTab({ news, mobile }) {
   );
 }
 
+// ─── TAB: PLANNER (build 15-man squad, $100m cap, per-MD xP, transfers, PNG) ──────
+const PL_LIMITS = { GK: 2, DEF: 5, MID: 5, FWD: 3 };   // 15-man squad shape
+const PL_BUDGET = 100;
+const PL_FORMS = [[3, 4, 3], [3, 5, 2], [4, 3, 3], [4, 4, 2], [4, 5, 1], [5, 3, 2], [5, 4, 1]];
+const PL_KEY = "wc26_planner_v1";
+const PL_MD_DATES = ["Jun 11-15", "Jun 16-21", "Jun 22-27"];
+
+function PlannerTab({ pool, mobile }) {
+  const byId = useMemo(() => { const m = {}; (pool || []).forEach(p => { m[p.id] = p; }); return m; }, [pool]);
+  const load = () => { try { return JSON.parse(localStorage.getItem(PL_KEY)) || {}; } catch { return {}; } };
+  const init = load();
+  const [squad, setSquad] = useState(init.squad || []);
+  const [starters, setStarters] = useState(init.starters || []);
+  const [captain, setCaptain] = useState(init.captain ?? null);
+  const [transfers, setTransfers] = useState(init.transfers || 0);
+  const [pendingOut, setPendingOut] = useState(0);   // removals from a full squad awaiting a replacement
+  const [md, setMd] = useState(NEXT_MD);
+  const [pickPos, setPickPos] = useState(null);
+  const [pickQ, setPickQ] = useState("");
+  const [pngBusy, setPngBusy] = useState(false);
+
+  useEffect(() => {
+    try { localStorage.setItem(PL_KEY, JSON.stringify({ squad, starters, captain, transfers })); } catch { /* private mode */ }
+  }, [squad, starters, captain, transfers]);
+
+  const sp = squad.map(id => byId[id]).filter(Boolean);
+  const spent = +sp.reduce((s, p) => s + p.price, 0).toFixed(1);
+  const remaining = +(PL_BUDGET - spent).toFixed(1);
+  const countPos = (pos) => sp.filter(p => p.pos === pos).length;
+
+  // per-MD points incl. projected scout bonus (+2 if <5% owned and base > 4)
+  const ptsOf = (p, mi) => { const b = mdScore(p, mi).pts; return +(b + (scoutEligible(p) && b > 4 ? 2 : 0)).toFixed(1); };
+  const oppOf = (p, mi) => mdScore(p, mi).opp;
+
+  const addPlayer = (p) => {
+    if (squad.includes(p.id)) return;
+    if (countPos(p.pos) >= PL_LIMITS[p.pos]) return;
+    if (squad.length >= 15) return;
+    if (p.price > remaining + 1e-9) return;
+    setSquad([...squad, p.id]);
+    if (pendingOut > 0) { setPendingOut(pendingOut - 1); setTransfers(t => t + 1); }   // completing a swap on a full squad
+  };
+  const removePlayer = (id) => {
+    if (squad.length >= 15 || pendingOut > 0) setPendingOut(pendingOut + 1);            // removing from a full squad starts a transfer
+    setSquad(squad.filter(x => x !== id));
+    setStarters(starters.filter(x => x !== id));
+    if (captain === id) setCaptain(null);
+  };
+  const toggleStarter = (id) => {
+    if (starters.includes(id)) { setStarters(starters.filter(x => x !== id)); if (captain === id) setCaptain(null); }
+    else if (starters.length < 11) setStarters([...starters, id]);
+  };
+
+  const startersPos = (pos) => starters.map(id => byId[id]).filter(p => p && p.pos === pos);
+  const fCounts = { GK: startersPos("GK").length, DEF: startersPos("DEF").length, MID: startersPos("MID").length, FWD: startersPos("FWD").length };
+  const formationValid = starters.length === 11 && fCounts.GK === 1 && fCounts.DEF >= 3 && fCounts.DEF <= 5 && fCounts.MID >= 2 && fCounts.MID <= 5 && fCounts.FWD >= 1 && fCounts.FWD <= 3;
+  const formationStr = `${fCounts.DEF}-${fCounts.MID}-${fCounts.FWD}`;
+
+  const autoXI = (mi) => {
+    const byPos = (pos) => sp.filter(p => p.pos === pos).map(p => ({ id: p.id, s: ptsOf(p, mi) })).sort((a, b) => b.s - a.s);
+    const G = byPos("GK"), D = byPos("DEF"), M = byPos("MID"), F = byPos("FWD");
+    let best = null;
+    for (const [d, m, f] of PL_FORMS) {
+      if (!G[0] || D.length < d || M.length < m || F.length < f) continue;
+      const arr = [G[0], ...D.slice(0, d), ...M.slice(0, m), ...F.slice(0, f)];
+      const tot = arr.reduce((s, x) => s + x.s, 0);
+      if (!best || tot > best.tot) best = { ids: arr.map(x => x.id), tot };
+    }
+    if (best) { setStarters(best.ids); const capId = best.ids.reduce((a, b) => ptsOf(byId[b], mi) > ptsOf(byId[a], mi) ? b : a); setCaptain(capId); }
+  };
+
+  const mdTotal = (mi) => {
+    let t = starters.map(id => ptsOf(byId[id], mi)).reduce((s, x) => s + x, 0);
+    if (captain && starters.includes(captain)) t += ptsOf(byId[captain], mi);   // captain scores double
+    return Math.round(t * 10) / 10;
+  };
+
+  // suggested transfers for current MD: best same-position upgrade per squad player, within budget
+  const suggestions = useMemo(() => {
+    if (sp.length < 11) return [];
+    const out = [];
+    sp.forEach(o => {
+      const cand = (pool || []).filter(c => c.pos === o.pos && !squad.includes(c.id) && c.price <= remaining + o.price + 1e-9)
+        .map(c => ({ c, gain: +(ptsOf(c, md) - ptsOf(o, md)).toFixed(1) }))
+        .sort((a, b) => b.gain - a.gain)[0];
+      if (cand && cand.gain > 0.3) out.push({ outP: o, inP: cand.c, gain: cand.gain });
+    });
+    return out.sort((a, b) => b.gain - a.gain).slice(0, 5);
+  }, [squad, md, remaining, pool]); // eslint-disable-line
+
+  const applySwap = (outId, inId) => {
+    const inP = byId[inId]; if (!inP) return;
+    const wasStarter = starters.includes(outId), wasCap = captain === outId;
+    setSquad(squad.map(x => x === outId ? inId : x));
+    setStarters(prev => wasStarter ? prev.map(x => x === outId ? inId : x) : prev);
+    if (wasCap) setCaptain(inId);
+    setTransfers(t => t + 1);
+  };
+
+  const exportPng = async () => {
+    setPngBusy(true);
+    try {
+      const mod = await import(/* @vite-ignore */ "https://esm.sh/html2canvas@1.4.1");
+      const h2c = mod.default || mod;
+      const node = document.getElementById("planner-export");
+      const canvas = await h2c(node, { backgroundColor: "#0d1829", scale: 2 });
+      const a = document.createElement("a"); a.download = "wc26-planner-3mds.png"; a.href = canvas.toDataURL("image/png"); a.click();
+    } catch (e) { alert("PNG export needs an internet connection to load the renderer.\n(" + e.message + ")"); }
+    setPngBusy(false);
+  };
+
+  const transferHit = Math.max(0, transfers - 2) * 4;
+  const POS_ORDER = ["GK", "DEF", "MID", "FWD"];
+  const btn = (active) => ({ padding: "7px 12px", borderRadius: 6, fontFamily: "inherit", fontSize: 12, cursor: "pointer", border: `1px solid ${active ? "#f97316" : BORDER}`, background: active ? "#f9731618" : "transparent", color: active ? "#f97316" : DIM });
+
+  // ─ player chip used in squad list ─
+  const SquadCard = (p) => {
+    const isS = starters.includes(p.id), isC = captain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md), scout = scoutEligible(p);
+    return (
+      <div key={p.id} style={{ background: isS ? "#0f1c2d" : CARD, border: `1px solid ${isC ? "#fbbf24" : isS ? "#22c55e55" : BORDER}`, borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 10, color: POS_COLOR[p.pos], fontFamily: MONO, width: 26 }}>{p.pos}</span>
+        <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+          <div style={{ color: "#fff", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {isC && <span style={{ color: "#fbbf24" }}>©</span>} {scout && <span title="Scout-bonus eligible (<5% owned): +2 pts if returns >4">🔍</span>}</div>
+          <div style={{ fontSize: 10, color: DIM }}>{p.team} · ${p.price}m · {opp ? `MD${md + 1} vs ${opp}` : `no MD${md + 1} fixture`} · <b style={{ color: pts > 6 ? "#f97316" : pts > 4 ? "#22c55e" : DIM }}>{pts} xP</b></div>
+        </div>
+        <button onClick={() => toggleStarter(p.id)} title="Toggle starter" style={{ ...btn(isS), padding: "4px 8px" }}>{isS ? "XI" : "sub"}</button>
+        <button onClick={() => setCaptain(p.id)} disabled={!isS} title="Make captain" style={{ ...btn(isC), padding: "4px 8px", opacity: isS ? 1 : 0.4 }}>C</button>
+        <button onClick={() => removePlayer(p.id)} title="Remove" style={{ ...btn(false), padding: "4px 8px", color: "#ff6b6b", borderColor: "#ef444455" }}>✕</button>
+      </div>
+    );
+  };
+
+  // ─ off-screen export node: all 3 MDs ─
+  const ExportNode = () => (
+    <div id="planner-export" style={{ position: "absolute", left: -99999, top: 0, width: 520, background: "#0d1829", padding: 18, fontFamily: SANS, color: TEXT }}>
+      <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 2 }}>WC26 SCOUT — My Squad</div>
+      <div style={{ fontSize: 10, color: DIM, marginBottom: 10 }}>Budget ${spent}m/{PL_BUDGET}m · {formationValid ? formationStr : "XI incomplete"}</div>
+      {[0, 1, 2].map(mi => (
+        <div key={mi} style={{ marginBottom: 12, borderTop: `1px solid ${BORDER}`, paddingTop: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#f97316", marginBottom: 4 }}>MD{mi + 1} ({PL_MD_DATES[mi]}) — {mdTotal(mi)} xPts</div>
+          {starters.map(id => byId[id]).filter(Boolean).sort((a, b) => POS_ORDER.indexOf(a.pos) - POS_ORDER.indexOf(b.pos)).map(p => (
+            <div key={p.id} style={{ fontSize: 11, color: "#cbd5e1", display: "flex", justifyContent: "space-between" }}>
+              <span>{p.pos} · {p.name}{captain === p.id ? " ©" : ""} {oppOf(p, mi) ? `vs ${oppOf(p, mi)}` : ""}</span>
+              <span style={{ color: "#94a3b8" }}>{ptsOf(p, mi)}{captain === p.id ? " ×2" : ""}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div style={{ fontSize: 9, color: DIM, marginTop: 4 }}>makscouthijau.uk · xP = model projection incl. scout bonus</div>
+    </div>
+  );
+
+  return (
+    <div>
+      {ExportNode()}
+      <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 2 }}>🧑‍💼 Team Planner</div>
+      <div style={{ fontSize: 11, color: DIM, marginBottom: 12 }}>Build a 15-man squad under ${PL_BUDGET}m · pick your XI + captain · plan transfers across matchdays · saved in your browser</div>
+
+      {/* budget + squad status */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 12 }}>
+          <span>Budget: <b style={{ color: remaining < 0 ? "#ef4444" : "#fff" }}>${spent}m</b> / ${PL_BUDGET}m · <span style={{ color: remaining < 0 ? "#ef4444" : "#4ade80" }}>${remaining}m left</span></span>
+          <span>Squad: <b style={{ color: squad.length === 15 ? "#4ade80" : "#fff" }}>{squad.length}/15</b> · XI: <b style={{ color: formationValid ? "#4ade80" : "#eab308" }}>{starters.length}/11 {formationValid ? `(${formationStr})` : "(invalid)"}</b></span>
+        </div>
+        <div style={{ height: 6, background: "#0a121f", borderRadius: 4, marginTop: 8, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${Math.min(100, spent)}%`, background: remaining < 0 ? "#ef4444" : "linear-gradient(90deg,#22c55e,#f97316)" }} />
+        </div>
+        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+          <button onClick={() => autoXI(md)} disabled={squad.length < 11} style={btn(false)}>⚡ Auto-pick XI (MD{md + 1})</button>
+          <button onClick={exportPng} disabled={!starters.length || pngBusy} style={btn(false)}>{pngBusy ? "…rendering" : "📸 Save PNG (3 MDs)"}</button>
+          <button onClick={() => { if (confirm("Clear your whole squad?")) { setSquad([]); setStarters([]); setCaptain(null); setTransfers(0); setPendingOut(0); } }} style={{ ...btn(false), color: "#ff6b6b", borderColor: "#ef444455" }}>Clear</button>
+        </div>
+        {squad.length >= 15 && <div style={{ fontSize: 11, color: DIM, marginTop: 8 }}>Transfers made: <b style={{ color: "#fff" }}>{transfers}</b> · 2 free/MD, then −4 each → projected hit <b style={{ color: transferHit ? "#ef4444" : "#4ade80" }}>−{transferHit}</b> · <button onClick={() => setTransfers(0)} style={{ background: "none", border: "none", color: "#f97316", cursor: "pointer", fontSize: 11, padding: 0 }}>reset (new matchday)</button></div>}
+      </div>
+
+      {/* MD tabs + total */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 10, alignItems: "center", flexWrap: "wrap" }}>
+        {[0, 1, 2].map(i => <button key={i} onClick={() => setMd(i)} style={btn(md === i)}>MD{i + 1}</button>)}
+        <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 800, color: "#fff" }}>MD{md + 1} projected: <span style={{ color: "#f97316" }}>{mdTotal(md)} xPts</span></span>
+      </div>
+
+      {/* squad by position + add buttons */}
+      {POS_ORDER.map(pos => (
+        <div key={pos} style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 10, letterSpacing: 1, color: POS_COLOR[pos], fontFamily: MONO, marginBottom: 4 }}>{pos} ({countPos(pos)}/{PL_LIMITS[pos]})</div>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(300px,1fr))", gap: 6 }}>
+            {sp.filter(p => p.pos === pos).sort((a, b) => ptsOf(b, md) - ptsOf(a, md)).map(SquadCard)}
+            {countPos(pos) < PL_LIMITS[pos] && <button onClick={() => { setPickPos(pos); setPickQ(""); }} style={{ ...btn(pickPos === pos), padding: "10px", borderStyle: "dashed" }}>+ Add {pos}</button>}
+          </div>
+        </div>
+      ))}
+
+      {/* inline picker */}
+      {pickPos && (
+        <div style={{ background: CARD, border: `1px solid #f9731655`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <b style={{ color: "#fff", fontSize: 13 }}>Add a {pickPos} — sorted by MD{md + 1} xP (≤ ${remaining}m)</b>
+            <button onClick={() => setPickPos(null)} style={{ ...btn(false), padding: "4px 8px" }}>close</button>
+          </div>
+          <input autoFocus placeholder="Search player or team…" value={pickQ} onChange={e => setPickQ(e.target.value)} style={{ width: "100%", background: "#0a121f", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "8px 10px", color: TEXT, fontFamily: "inherit", fontSize: 13, marginBottom: 8 }} />
+          <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+            {(pool || []).filter(p => p.pos === pickPos && !squad.includes(p.id) && p.price <= remaining + 1e-9)
+              .filter(p => { const s = pickQ.toLowerCase(); return !s || p.name.toLowerCase().includes(s) || p.team.toLowerCase().includes(s); })
+              .map(p => ({ p, s: ptsOf(p, md) })).sort((a, b) => b.s - a.s).slice(0, 40)
+              .map(({ p, s }) => (
+                <div key={p.id} onClick={() => addPlayer(p)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", border: `1px solid ${BORDER}33` }}>
+                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, flex: "1 1 auto", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {scoutEligible(p) && "🔍"}</span>
+                  <span style={{ fontSize: 11, color: DIM }}>{p.team}</span>
+                  <span style={{ fontSize: 11, color: "#94a3b8" }}>${p.price}m</span>
+                  <span style={{ fontSize: 12, color: s > 6 ? "#f97316" : s > 4 ? "#22c55e" : DIM, fontWeight: 700, width: 34, textAlign: "right" }}>{s}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* suggested transfers */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 12, marginTop: 6 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", marginBottom: 6 }}>💡 Suggested transfers — MD{md + 1} (by xP gain · 🔍 = scout upgrade)</div>
+        {sp.length < 11 ? <div style={{ fontSize: 12, color: DIM }}>Fill your squad to see transfer suggestions.</div>
+          : suggestions.length === 0 ? <div style={{ fontSize: 12, color: DIM }}>No positive-value swaps within budget — your squad looks optimal for MD{md + 1}.</div>
+            : suggestions.map((sg, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderTop: i ? `1px solid ${BORDER}33` : "none", fontSize: 12, flexWrap: "wrap" }}>
+                <span style={{ color: "#ff8c42", flex: "1 1 120px" }}>OUT {sg.outP.name} <span style={{ color: DIM }}>({ptsOf(sg.outP, md)})</span></span>
+                <span style={{ color: "#4ade80", flex: "1 1 120px" }}>IN {sg.inP.name} {scoutEligible(sg.inP) && "🔍"} <span style={{ color: DIM }}>({ptsOf(sg.inP, md)}, ${sg.inP.price}m)</span></span>
+                <span style={{ color: "#f97316", fontWeight: 700 }}>+{sg.gain}</span>
+                <button onClick={() => applySwap(sg.outP.id, sg.inP.id)} style={{ ...btn(false), padding: "4px 8px" }}>apply</button>
+              </div>
+            ))}
+      </div>
+      <div style={{ fontSize: 10, color: "#475569", marginTop: 10, fontStyle: "italic" }}>xP projections reuse the dashboard model (per-MD fixture odds, role shift, minutes) and include a projected scout bonus (+2 if &lt;5% owned and &gt;4 pts). Plan only — verify against the AI Lineups and News tabs.</div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("table");
@@ -1645,7 +1910,7 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["lineups","📋 AI Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
@@ -1683,6 +1948,7 @@ export default function App() {
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} mobile={mobile} />}
+        {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} />}
         {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} sel={lineupSel} setSel={setLineupSel} cmp={lineupCmp} setCmp={setLineupCmp} />}
         {tab==="news" && <NewsTab news={news} mobile={mobile} />}
         {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} mobile={mobile} />}

@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "build-squads": "node r-analytics/build_squads.cjs",
     "fetch-lineups": "node r-analytics/lineups_fetch.cjs",
+    "fetch-apifootball-news": "node r-analytics/apifootball_news.cjs",
     "fetch-news": "node r-analytics/news_fetch.cjs"
   },
   "dependencies": {
