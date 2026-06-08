@@ -16,7 +16,16 @@ norm_name <- function(x) x |> tolower() |> stringi::stri_trans_general("Latin-AS
 last_tok  <- function(x) word(norm_name(x), -1)
 
 # ── SECTION A — seed crosswalk ────────────────────────────────────────────────
-raw <- fromJSON(file.path(PUBLIC_DATA_DIR, "players.json"))
+# IMMUTABLE prior source. 07 writes computed stats (xGp90/xAp90/SoTp90) back into
+# public/data/players.json, so reading THAT as the prior creates a feedback loop: a
+# bad value (e.g. a small-sample per-90 spike) becomes next run's "prior" and the
+# minutes-guard fallback can no longer recover the original. We therefore read priors
+# from r-analytics/data/players_seed.json, which the pipeline never writes to.
+# (Snapshot it once from a pristine players.json: see git HEAD before the first pull.)
+SEED_PATH <- file.path(DATA_DIR, "players_seed.json")
+if (!file.exists(SEED_PATH)) stop("Immutable seed missing: ", SEED_PATH,
+  "\n  Create it from a clean players.json, e.g.:  git show HEAD:public/data/players.json > ", SEED_PATH)
+raw <- fromJSON(SEED_PATH)
 # players.json may be a bare array (legacy) or { generated_at, players } (wrapped)
 if (is.list(raw) && !is.null(raw$players)) {
   seed_players <- raw$players
@@ -44,12 +53,19 @@ club_real <- tryCatch({
   std <- load_fb_big5_advanced_season_stats(season_end_year = 2025, stat_type = "standard", team_or_player = "player") |> clean_names()
   Sys.sleep(5)  # (2) be gentle even on cached loads
   sht <- load_fb_big5_advanced_season_stats(season_end_year = 2025, stat_type = "shooting", team_or_player = "player") |> clean_names()
-  sot_col <- intersect(c("sh_t_per_90_standard","s_o_t_per_90_standard","sot_per_90_standard"), names(sht))
+  sot_col <- intersect(c("so_t_per_90_standard","sh_t_per_90_standard","s_o_t_per_90_standard","sot_per_90_standard"), names(sht))
   std |> transmute(player, squad,
       club_npxG_p90 = npx_g_per, club_xAG_p90 = x_ag_per, club_mins = min_playing) |>
     left_join(sht |> transmute(player, squad,
       club_sot_p90 = if (length(sot_col)) .data[[sot_col[1]]] else NA_real_), by = c("player","squad")) |>
-    mutate(nname = norm_name(player), lname = last_tok(player))
+    mutate(nname = norm_name(player), lname = last_tok(player),
+      # SMALL-SAMPLE GUARD: per-90 rates from a handful of minutes explode. An injured
+      # defender with one shot in ~30 mins extrapolates to 2+ npxG/90 (e.g. Tomiyasu).
+      # Require >=450 club minutes (5 full matches) for a stable rate; below that, NA the
+      # per-90 stats so SECTION E's `!is.na` check falls back to the (stable) prior.
+      club_mins_n = suppressWarnings(as.numeric(str_remove_all(as.character(club_mins), ","))),
+      across(c(club_npxG_p90, club_xAG_p90, club_sot_p90),
+             ~ if_else(coalesce(club_mins_n, 0) >= 450, suppressWarnings(as.numeric(.x)), NA_real_)))
 }, error = function(e) { message("  FBref big5 load failed: ", conditionMessage(e)); NULL })
 cat("SECTION B: FBref big5 club rows =", if (is.null(club_real)) 0 else nrow(club_real), "\n")
 
@@ -85,12 +101,25 @@ wc_history <- tryCatch(load_match_comp_results(comp_name = "FIFA World Cup"),
 cat("SECTION D2: WC history rows =", nrow(wc_history), "\n")
 
 # ── SECTION E — match seed players to real data, layered fallback ─────────────
+# first names compatible? equal, or one shares the other's 3-letter prefix.
+# Accepts Mohammed/Mohamed, J./Jan; rejects Jiovany/Gonçalo, Viktor/Herman.
+fn_ok <- function(a, b) { a <- word(a, 1); b <- word(b, 1)
+  isTRUE(a == b || (nchar(a) >= 3 && nchar(b) >= 3 &&
+    (startsWith(a, substr(b, 1, 3)) || startsWith(b, substr(a, 1, 3))))) }
 match_one <- function(nm, src) {
   if (is.null(src)) return(NULL)
   n <- norm_name(nm); l <- last_tok(nm)
-  hit <- src |> filter(nname == n)
-  if (!nrow(hit)) hit <- src |> filter(str_detect(nname, fixed(n)) | str_detect(n, fixed(nname)))
-  if (!nrow(hit)) hit <- src |> filter(lname == l)
+  hit <- src |> filter(nname == n)                                  # 1. exact full name
+  if (!nrow(hit)) {                                                 # 2. substring, resolving to ONE compatible player
+    sub <- src |> filter(str_detect(nname, fixed(n)) | str_detect(n, fixed(nname)))
+    if (nrow(sub) == 1 && fn_ok(n, sub$nname[1])) hit <- sub
+  }
+  if (!nrow(hit)) {                                                 # 3. surname ONLY when unambiguous AND first name compatible
+    sn <- src |> filter(lname == l)
+    # unique surname (e.g. "Amoura") handles spelling variants; the fn_ok guard stops a
+    # lone same-surname Big-5 player (Gonçalo Ramos) being grafted onto a namesake (Jiovany Ramos).
+    if (nrow(sn) == 1 && fn_ok(n, sn$nname[1])) hit <- sn
+  }
   if (nrow(hit)) hit[1, ] else NULL
 }
 rows <- lapply(seq_len(nrow(seed_players)), function(i) {

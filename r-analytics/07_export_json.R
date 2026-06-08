@@ -70,8 +70,13 @@ if (is.list(raw) && !is.null(raw$players)) {
   seed <- raw
 }
 ana_cols <- setdiff(names(analytics_players), "id")          # all analytics outputs
-seed_base <- seed %>% select(-any_of(ana_cols))              # drop stale analytics, keep base schema
-merged <- seed_base %>% left_join(analytics_players, by="id")  # write FRESH analytics every run
+# Club-stat base columns are refreshed from the model pool (master_players → os$all_players → ply).
+# 01_data_pull overwrites xGp90/xAp90/SoTp90 with REAL FBref club values for matched players;
+# without this refresh, 07 would preserve the seed-file PRIORS and the displayed stats stay fake.
+stat_cols <- intersect(c("xGp90","xAp90","SoTp90"), names(ply))
+stat_refresh <- ply %>% transmute(id, across(all_of(stat_cols), ~ round(as.numeric(.), 3)))
+seed_base <- seed %>% select(-any_of(c(ana_cols, stat_cols)))  # drop stale analytics + stale club stats
+merged <- seed_base %>% left_join(analytics_players, by="id") %>% left_join(stat_refresh, by="id")  # FRESH analytics + real stats
 # write back in the wrapped { generated_at, players } shape so the dashboard's
 # "Data refreshed …" timestamp survives a pipeline run (the UI reads both shapes)
 payload <- list(generated_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"), players = merged)
