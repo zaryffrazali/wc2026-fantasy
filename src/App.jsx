@@ -961,8 +961,11 @@ const LU_GROUPS = {A:["Mexico","South Korea","South Africa","Czech Republic"],B:
 const LU_CONF = {UEFA:["Spain","France","England","Germany","Portugal","Netherlands","Belgium","Croatia","Switzerland","Austria","Norway","Scotland","Sweden","Czech Republic","Bosnia and Herzegovina","Turkey"],CONMEBOL:["Brazil","Argentina","Uruguay","Colombia","Ecuador","Paraguay"],CAF:["Morocco","Senegal","Egypt","Algeria","Tunisia","Ivory Coast","South Africa","DR Congo","Cape Verde","Ghana"],AFC:["Japan","South Korea","Iran","Saudi Arabia","Qatar","Australia","Iraq","Uzbekistan","Jordan"],CONCACAF:["Mexico","United States","Canada","Panama","Haiti","Curacao"],OFC:["New Zealand"]};
 const LU_GROUP_OF = {}; Object.entries(LU_GROUPS).forEach(([g,ts])=>ts.forEach(t=>LU_GROUP_OF[t]=g));
 const SLOT_XY = { GK:[50,88], LB:[16,68], LCB:[38,72], RCB:[62,72], CB:[50,72], RB:[84,68],
-  CDM:[50,58], LM:[20,50], CM:[50,50], LCM:[36,50], RCM:[64,50], RM:[80,50], CAM:[50,38],
-  LW:[20,20], ST:[50,14], RW:[80,20], LF:[32,17], RF:[68,17] };
+  LWB:[12,60], RWB:[88,60],
+  CDM:[50,60], LDM:[38,60], RDM:[62,60], LM:[18,50], CM:[50,50], LCM:[36,50], RCM:[64,50], RM:[82,50], CAM:[50,40],
+  LAM:[34,40], RAM:[66,40], LW:[18,22], ST:[50,14], CF:[50,20], RW:[82,22], LF:[32,17], RF:[68,17] };
+// band (vertical zone) for a slot — used to order players top→bottom when laying out a formation
+const SLOT_BAND = { GK:0, LB:1,LCB:1,CB:1,RCB:1,RB:1,LWB:1,RWB:1, CDM:2,LDM:2,RDM:2,LM:2,CM:2,LCM:2,RCM:2,RM:2,CAM:3,LAM:3,RAM:3, LW:4,RW:4,CF:4,ST:4,LF:4,RF:4 };
 const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ").trim();
 const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
   : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
@@ -1038,13 +1041,20 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
             <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
             {(() => {
               const players = L.players || [];
-              const midN = players.filter(p=>p.position==="MID").length, fwdN = players.filter(p=>p.position==="FWD").length;
-              const yOf = { GK:88, DEF:72, MID: midN>=5?48:50, FWD: fwdN<=2?20:22 };
+              // position each player by its SLOT coordinate (LB left, RB right, CDM deep, CAM high,
+              // LW/RW wide, ST central) — falling back to the slot's vertical band if a slot is unknown,
+              // and spreading any players that share the same slot (e.g. two CMs) horizontally so they don't stack.
+              const bandY = { 0:88, 1:72, 2:56, 3:40, 4:20 };
+              const posBand = { GK:0, DEF:1, MID:2, FWD:4 };
+              const groups = {};
+              players.forEach(pl => { (groups[pl.slot] = groups[pl.slot] || []).push(pl); });
               const positioned = [];
-              ["GK","DEF","MID","FWD"].forEach(ln => {
-                const arr = players.filter(p=>p.position===ln), n = arr.length; if (!n) return;
-                const width = Math.min(76, 18*(n-1));   // ≥18% apart, centred, capped to the pitch
-                arr.forEach((pl,i) => positioned.push({ pl, x: n===1 ? 50 : (50 - width/2) + i*(width/(n-1)), y: yOf[ln] }));
+              Object.entries(groups).forEach(([slot, arr]) => {
+                const base = SLOT_XY[slot] || [50, bandY[SLOT_BAND[slot] ?? posBand[arr[0].position] ?? 2]];
+                arr.forEach((pl, i) => {
+                  const off = arr.length === 1 ? 0 : (i - (arr.length - 1) / 2) * 15;   // spread shared slots ±
+                  positioned.push({ pl, x: Math.max(8, Math.min(92, base[0] + off)), y: base[1] });
+                });
               });
               return positioned.map(({pl,x,y},i)=>(
                 <div key={i} title={pl.doubt_reason||pl.status} style={{ position:"absolute", left:`${x}%`, top:`${y}%`, transform:"translate(-50%,-50%)", textAlign:"center", width:64 }}>
@@ -1626,6 +1636,7 @@ function NewsTab({ news, mobile }) {
 
 // ─── TAB: PLANNER (build 15-man squad, $100m cap, per-MD xP, transfers, PNG) ──────
 const PL_LIMITS = { GK: 2, DEF: 5, MID: 5, FWD: 3 };   // 15-man squad shape
+const PL_XI_MAX = { GK: 1, DEF: 5, MID: 5, FWD: 3 };   // max of each position in the starting XI
 const PL_BUDGET = 100;
 const PL_FORMS = [[3, 4, 3], [3, 5, 2], [4, 3, 3], [4, 4, 2], [4, 5, 1], [5, 3, 2], [5, 4, 1]];
 const PL_KEY = "wc26_planner_v1";
@@ -1638,16 +1649,19 @@ function PlannerTab({ pool, mobile }) {
   const [squad, setSquad] = useState(init.squad || []);
   const [starters, setStarters] = useState(init.starters || []);
   const [captain, setCaptain] = useState(init.captain ?? null);
+  const [viceCaptain, setViceCaptain] = useState(init.viceCaptain ?? null);
   const [transfers, setTransfers] = useState(init.transfers || 0);
   const [pendingOut, setPendingOut] = useState(0);   // removals from a full squad awaiting a replacement
   const [md, setMd] = useState(NEXT_MD);
   const [pickPos, setPickPos] = useState(null);
   const [pickQ, setPickQ] = useState("");
   const [pngBusy, setPngBusy] = useState(false);
+  const [menuId, setMenuId] = useState(null);        // pitch player whose action menu is open
+  const [subbingId, setSubbingId] = useState(null);  // starter being subbed out (awaiting bench pick)
 
   useEffect(() => {
-    try { localStorage.setItem(PL_KEY, JSON.stringify({ squad, starters, captain, transfers })); } catch { /* private mode */ }
-  }, [squad, starters, captain, transfers]);
+    try { localStorage.setItem(PL_KEY, JSON.stringify({ squad, starters, captain, viceCaptain, transfers })); } catch { /* private mode */ }
+  }, [squad, starters, captain, viceCaptain, transfers]);
 
   const sp = squad.map(id => byId[id]).filter(Boolean);
   const spent = +sp.reduce((s, p) => s + p.price, 0).toFixed(1);
@@ -1672,10 +1686,33 @@ function PlannerTab({ pool, mobile }) {
     setSquad(squad.filter(x => x !== id));
     setStarters(starters.filter(x => x !== id));
     if (captain === id) setCaptain(null);
+    if (viceCaptain === id) setViceCaptain(null);
+    if (subbingId === id) setSubbingId(null);
   };
   const toggleStarter = (id) => {
-    if (starters.includes(id)) { setStarters(starters.filter(x => x !== id)); if (captain === id) setCaptain(null); }
-    else if (starters.length < 11) setStarters([...starters, id]);
+    if (starters.includes(id)) {
+      setStarters(starters.filter(x => x !== id));
+      if (captain === id) setCaptain(null);
+      if (viceCaptain === id) setViceCaptain(null);
+    } else {
+      const p = byId[id]; if (!p || starters.length >= 11) return;
+      const inPos = starters.map(i => byId[i]).filter(x => x && x.pos === p.pos).length;
+      if (inPos >= PL_XI_MAX[p.pos]) return;   // blocks a 2nd GK, 6th DEF, etc.
+      setStarters([...starters, id]);
+    }
+  };
+  // a bench player is a valid replacement for a starter if the resulting XI is still a legal formation
+  const validReplacement = (outId, inId) => {
+    const next = starters.filter(x => x !== outId).concat(inId).map(i => byId[i]).filter(Boolean);
+    const c = (pos) => next.filter(p => p.pos === pos).length;
+    return next.length === 11 && c("GK") === 1 && c("DEF") >= 3 && c("DEF") <= 5 && c("MID") >= 2 && c("MID") <= 5 && c("FWD") >= 1 && c("FWD") <= 3;
+  };
+  const doSub = (outId, inId) => {
+    if (!validReplacement(outId, inId)) return;
+    setStarters(starters.map(x => x === outId ? inId : x));
+    if (captain === outId) setCaptain(inId);
+    if (viceCaptain === outId) setViceCaptain(inId);
+    setSubbingId(null);
   };
 
   const startersPos = (pos) => starters.map(id => byId[id]).filter(p => p && p.pos === pos);
@@ -1742,16 +1779,17 @@ function PlannerTab({ pool, mobile }) {
 
   // ─ player chip used in squad list ─
   const SquadCard = (p) => {
-    const isS = starters.includes(p.id), isC = captain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md), scout = scoutEligible(p);
+    const isS = starters.includes(p.id), isC = captain === p.id, isVC = viceCaptain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md), scout = scoutEligible(p);
     return (
-      <div key={p.id} style={{ background: isS ? "#0f1c2d" : CARD, border: `1px solid ${isC ? "#fbbf24" : isS ? "#22c55e55" : BORDER}`, borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div key={p.id} style={{ background: isS ? "#0f1c2d" : CARD, border: `1px solid ${isC ? "#fbbf24" : isVC ? "#cbd5e1" : isS ? "#22c55e55" : BORDER}`, borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: 10, color: POS_COLOR[p.pos], fontFamily: MONO, width: 26 }}>{p.pos}</span>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>
-          <div style={{ color: "#fff", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {isC && <span style={{ color: "#fbbf24" }}>©</span>} {scout && <span title="Scout-bonus eligible (<5% owned): +2 pts if returns >4">🔍</span>}</div>
+          <div style={{ color: "#fff", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {isC && <span style={{ color: "#fbbf24" }}>©</span>}{isVC && <span style={{ color: "#cbd5e1" }}>Ⓥ</span>} {scout && <span title="Scout-bonus eligible (<5% owned): +2 pts if returns >4">🔍</span>}</div>
           <div style={{ fontSize: 10, color: DIM }}>{p.team} · ${p.price}m · {opp ? `MD${md + 1} vs ${opp}` : `no MD${md + 1} fixture`} · <b style={{ color: pts > 6 ? "#f97316" : pts > 4 ? "#22c55e" : DIM }}>{pts} xP</b></div>
         </div>
-        <button onClick={() => toggleStarter(p.id)} title="Toggle starter" style={{ ...btn(isS), padding: "4px 8px" }}>{isS ? "XI" : "sub"}</button>
-        <button onClick={() => setCaptain(p.id)} disabled={!isS} title="Make captain" style={{ ...btn(isC), padding: "4px 8px", opacity: isS ? 1 : 0.4 }}>C</button>
+        <button onClick={() => toggleStarter(p.id)} title="Toggle starter / bench" style={{ ...btn(isS), padding: "4px 8px" }}>{isS ? "XI" : "sub"}</button>
+        <button onClick={() => { setCaptain(p.id); if (viceCaptain === p.id) setViceCaptain(null); }} disabled={!isS} title="Make captain" style={{ ...btn(isC), padding: "4px 8px", opacity: isS ? 1 : 0.4 }}>C</button>
+        <button onClick={() => { setViceCaptain(p.id); if (captain === p.id) setCaptain(null); }} disabled={!isS} title="Make vice-captain" style={{ ...btn(isVC), padding: "4px 8px", opacity: isS ? 1 : 0.4 }}>VC</button>
         <button onClick={() => removePlayer(p.id)} title="Remove" style={{ ...btn(false), padding: "4px 8px", color: "#ff6b6b", borderColor: "#ef444455" }}>✕</button>
       </div>
     );
@@ -1795,7 +1833,7 @@ function PlannerTab({ pool, mobile }) {
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           <button onClick={() => autoXI(md)} disabled={squad.length < 11} style={btn(false)}>⚡ Auto-pick XI (MD{md + 1})</button>
           <button onClick={exportPng} disabled={!starters.length || pngBusy} style={btn(false)}>{pngBusy ? "…rendering" : "📸 Save PNG (3 MDs)"}</button>
-          <button onClick={() => { if (confirm("Clear your whole squad?")) { setSquad([]); setStarters([]); setCaptain(null); setTransfers(0); setPendingOut(0); } }} style={{ ...btn(false), color: "#ff6b6b", borderColor: "#ef444455" }}>Clear</button>
+          <button onClick={() => { if (confirm("Clear your whole squad?")) { setSquad([]); setStarters([]); setCaptain(null); setViceCaptain(null); setTransfers(0); setPendingOut(0); setSubbingId(null); setMenuId(null); } }} style={{ ...btn(false), color: "#ff6b6b", borderColor: "#ef444455" }}>Clear</button>
         </div>
         {squad.length >= 15 && <div style={{ fontSize: 11, color: DIM, marginTop: 8 }}>Transfers made: <b style={{ color: "#fff" }}>{transfers}</b> · 2 free/MD, then −4 each → projected hit <b style={{ color: transferHit ? "#ef4444" : "#4ade80" }}>−{transferHit}</b> · <button onClick={() => setTransfers(0)} style={{ background: "none", border: "none", color: "#f97316", cursor: "pointer", fontSize: 11, padding: 0 }}>reset (new matchday)</button></div>}
       </div>
@@ -1813,22 +1851,31 @@ function PlannerTab({ pool, mobile }) {
             <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Starting XI {formationValid ? `· ${formationStr}` : `· ${starters.length}/11`} {!formationValid && <span style={{ color: "#eab308", fontWeight: 400, fontSize: 11 }}>(pick a valid XI: 1 GK, 3-5 DEF, 2-5 MID, 1-3 FWD)</span>}</span>
             <span style={{ fontSize: 11, color: DIM }}>tap a player = captain · MD{md + 1}: <b style={{ color: "#f97316" }}>{mdTotal(md)} xPts</b></span>
           </div>
-          <div style={{ position: "relative", width: "100%", maxWidth: 560, margin: "0 auto", aspectRatio: "3/4", background: "linear-gradient(#0a3d1f,#072d17)", border: "2px solid #1e6b3a", borderRadius: 10 }}>
+          <div onClick={() => setMenuId(null)} style={{ position: "relative", width: "100%", maxWidth: 560, margin: "0 auto", aspectRatio: "3/4", background: "linear-gradient(#0a3d1f,#072d17)", border: "2px solid #1e6b3a", borderRadius: 10 }}>
             <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "#2e7d4f" }} />
             <div style={{ position: "absolute", left: "30%", right: "30%", bottom: 0, height: "14%", border: "1px solid #2e7d4f", borderBottom: "none" }} />
             {[["GK", 88], ["DEF", 70], ["MID", 48], ["FWD", 24]].flatMap(([ln, y]) => {
               const arr = starters.map(id => byId[id]).filter(p => p && p.pos === ln), n = arr.length;
               return arr.map((p, i) => {
-                const x = n === 1 ? 50 : 15 + (i / (n - 1)) * 70, isC = captain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
+                const x = n === 1 ? 50 : 15 + (i / (n - 1)) * 70, isC = captain === p.id, isVC = viceCaptain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
+                const bord = isC ? "3px solid #fbbf24" : isVC ? "3px solid #cbd5e1" : subbingId === p.id ? "3px dashed #f97316" : "2px solid #ffffff55";
                 return (
-                  <div key={p.id} onClick={() => setCaptain(p.id)} title="Tap to make captain"
-                    style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", cursor: "pointer", width: 78 }}>
-                    <div style={{ width: 46, height: 46, margin: "0 auto", borderRadius: "50%", background: POS_COLOR[p.pos], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff", border: isC ? "3px solid #fbbf24" : "2px solid #ffffff55", position: "relative" }}>
+                  <div key={p.id} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", width: 78, zIndex: menuId === p.id ? 30 : 1 }}>
+                    <div onClick={(e) => { e.stopPropagation(); setSubbingId(null); setMenuId(menuId === p.id ? null : p.id); }} title="Tap for options"
+                      style={{ width: 46, height: 46, margin: "0 auto", borderRadius: "50%", background: POS_COLOR[p.pos], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff", border: bord, position: "relative", cursor: "pointer" }}>
                       {pts}
                       {isC && <span style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, fontSize: 10, fontWeight: 800, background: "#fbbf24", color: "#000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>C</span>}
+                      {isVC && <span style={{ position: "absolute", top: -7, right: -8, minWidth: 18, height: 16, padding: "0 3px", fontSize: 8, fontWeight: 800, background: "#cbd5e1", color: "#000", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center" }}>VC</span>}
                     </div>
                     <div style={{ fontSize: 11, color: "#fff", fontWeight: 700, marginTop: 3, textShadow: "0 1px 3px #000", lineHeight: 1.1, maxWidth: 78, marginLeft: "auto", marginRight: "auto", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{p.name}</div>
                     {opp && <div style={{ fontSize: 9, color: "#9fb4c9", textShadow: "0 1px 3px #000" }}>vs {opp}</div>}
+                    {menuId === p.id && (
+                      <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", left: "50%", top: 48, transform: "translateX(-50%)", background: "#0d1829", border: `1px solid ${BORDER}`, borderRadius: 8, padding: 4, display: "flex", flexDirection: "column", gap: 3, width: 128, boxShadow: "0 6px 16px #000b" }}>
+                        <button onClick={() => { setCaptain(p.id); if (viceCaptain === p.id) setViceCaptain(null); setMenuId(null); }} style={{ ...btn(isC), padding: "5px 8px", textAlign: "left" }}>© Captain</button>
+                        <button onClick={() => { setViceCaptain(p.id); if (captain === p.id) setCaptain(null); setMenuId(null); }} style={{ ...btn(isVC), padding: "5px 8px", textAlign: "left" }}>Ⓥ Vice-captain</button>
+                        <button onClick={() => { setSubbingId(p.id); setMenuId(null); }} style={{ ...btn(false), padding: "5px 8px", textAlign: "left" }}>⇄ Sub out</button>
+                      </div>
+                    )}
                   </div>
                 );
               });
@@ -1837,16 +1884,28 @@ function PlannerTab({ pool, mobile }) {
           </div>
           {/* bench */}
           <div style={{ marginTop: 10 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: DIM, fontFamily: MONO, marginBottom: 6 }}>BENCH ({benchPlayers.length}) — tap to move into XI</div>
+            {subbingId ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, color: "#fbbf24" }}>Subbing out <b>{byId[subbingId]?.name}</b> — tap a highlighted replacement:</span>
+                <button onClick={() => setSubbingId(null)} style={{ ...btn(false), padding: "3px 8px" }}>cancel</button>
+              </div>
+            ) : (
+              <div style={{ fontSize: 10, letterSpacing: 2, color: DIM, fontFamily: MONO, marginBottom: 6 }}>BENCH ({benchPlayers.length}) — tap to move into XI</div>
+            )}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {benchPlayers.length === 0 ? <span style={{ fontSize: 11, color: DIM }}>No substitutes yet.</span>
-                : benchPlayers.map(p => (
-                  <div key={p.id} onClick={() => toggleStarter(p.id)} title="Move into starting XI"
-                    style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", cursor: "pointer", minWidth: 130 }}>
-                    <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}><span style={{ color: POS_COLOR[p.pos], fontFamily: MONO, fontSize: 10 }}>{p.pos}</span> {p.nat} {p.name}</div>
-                    <div style={{ fontSize: 10, color: DIM }}>{ptsOf(p, md)} xP · ${p.price}m</div>
-                  </div>
-                ))}
+                : benchPlayers.map(p => {
+                  const canIn = subbingId ? validReplacement(subbingId, p.id) : false;
+                  const dim = subbingId && !canIn;
+                  return (
+                    <div key={p.id} onClick={() => { if (subbingId) { if (canIn) doSub(subbingId, p.id); } else toggleStarter(p.id); }}
+                      title={subbingId ? (canIn ? "Swap in" : "Can't swap — would break the formation") : "Move into starting XI"}
+                      style={{ background: CARD, border: `1px solid ${canIn ? "#22c55e" : BORDER}`, borderRadius: 8, padding: "6px 10px", cursor: dim ? "not-allowed" : "pointer", minWidth: 130, opacity: dim ? 0.4 : 1, boxShadow: canIn ? "0 0 8px #22c55e55" : "none" }}>
+                      <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}><span style={{ color: POS_COLOR[p.pos], fontFamily: MONO, fontSize: 10 }}>{p.pos}</span> {p.nat} {p.name}</div>
+                      <div style={{ fontSize: 10, color: DIM }}>{ptsOf(p, md)} xP · ${p.price}m</div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>
