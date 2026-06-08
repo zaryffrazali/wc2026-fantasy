@@ -15,6 +15,14 @@ const TEAM_FLAG = {
   "Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Senegal":"🇸🇳","South Africa":"🇿🇦","South Korea":"🇰🇷","Spain":"🇪🇸","Sweden":"🇸🇪","Switzerland":"🇨🇭",
   "Tunisia":"🇹🇳","Turkey":"🇹🇷","United States":"🇺🇸","Uruguay":"🇺🇾","Uzbekistan":"🇺🇿" };
 const flagOf = (p) => TEAM_FLAG[p.team] || p.nat || "🏳️";
+// FPL Fran's S-tier / best-by-position picks — paste his selections here (full names, any case/accents).
+// Players matched here get a 👍 badge in the table. (Empty until the picks are provided.)
+const FRAN_PICKS = [
+  // e.g. "Kylian Mbappé", "Bukayo Saka", ...
+];
+const _franNorm = s => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z ]/g, " ").trim();
+const _FRAN_SET = new Set(FRAN_PICKS.map(_franNorm));
+const isFranPick = (p) => _FRAN_SET.has(_franNorm(p.name));
 const ROLE_MULT = {
   SAME:[1,1], DEF_to_ATT:[1.40,1.60], ATT_to_DEF:[0.60,0.70],
   MID_to_ATT:[1.25,1.20], MID_to_DEF:[0.75,0.80], WING_to_STRIKER:[1.30,0.80],
@@ -113,7 +121,7 @@ function OwnBar({ pct }) {
   const tip = `Owned by ${pct}% of managers. ` + (pct>30 ? "Template pick — high ownership limits mini-league upside." : pct>=10 ? "Moderate ownership — balanced template/differential." : "Low ownership — scouting-bonus eligible, differential value.");
   return (
     <div title={tip} style={{ display:"flex", alignItems:"center", gap:6, cursor:"help" }}>
-      <div style={{ width:46, height:6, background:"#1e293b", borderRadius:3, overflow:"hidden" }}>
+      <div style={{ width:32, height:6, background:"#1e293b", borderRadius:3, overflow:"hidden", flex:"0 0 auto" }}>
         <div style={{ width:`${Math.min(pct,100)}%`, height:"100%", background:color }} />
       </div>
       <span style={{ fontSize:11, color }}>{pct}%</span>
@@ -402,7 +410,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 48px 76px 28px 40px",
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 50px 88px 28px 40px",
           gap:8, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           {(() => { const SH = (k, label, align="right", title) => (
             <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
@@ -427,7 +435,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 48px 76px 28px 40px",
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 50px 88px 28px 40px",
                 gap:8, padding:"9px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
@@ -443,6 +451,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   {p.qualifyingForm==="GOOD" && <Badge bg="#0a1f1c" bd="#22c55e88" fg="#4ade80" title="Good qualifying form — 0.3–0.6 goal contributions/game in recent competitive internationals.">QF ★★</Badge>}
                   {p.own<5 && <ScoutBadge/>}
                   {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: outperforms club stats internationally by +${(p.intl_premium_score||0).toFixed(2)}σ. May be undervalued.`}>★ EDGE</Badge>}
+                  {isFranPick(p) && <Badge bg="#1e3a8a44" bd="#3b82f6aa" fg="#93c5fd" title="FPL Fran's S-tier / best-by-position pick">👍 FRAN</Badge>}
                   {p.penTaker && <PenBadge/>}
                   {p.data_tier && p.data_tier!=="curated" && <Badge bg="#1e293b" bd="#334155" fg="#64748b" title="Prior-filled — stats from position/price priors (not hand-curated or FBref-matched). Lower confidence.">prior</Badge>}
                   {p.form_n>0 && <Badge bg="#0a1f1c" bd={p.form_mult>1.05?"#22c55e88":p.form_mult<0.95?"#ef444488":"#33415588"} fg={p.form_mult>1.05?"#4ade80":p.form_mult<0.95?"#ff6b6b":"#94a3b8"} title={`International form ×${p.form_mult} vs club baseline (last ${p.form_n} match${p.form_n>1?"es":""}), applied to xG/xA.`}>≈×{p.form_mult}</Badge>}
@@ -2288,6 +2297,8 @@ export default function App() {
   const [watch, setWatch] = useState(() => { try { return JSON.parse(localStorage.getItem("wc26_watch") || "[]"); } catch { return []; } });
   const toggleWatch = (id) => setWatch(w => w.includes(id) ? w.filter(x => x !== id) : [...w, id]);
   useEffect(() => { try { localStorage.setItem("wc26_watch", JSON.stringify(watch)); } catch { /* private mode */ } }, [watch]);
+  const [loading, setLoading] = useState(true);     // artificial 1s loader on open + every tab switch
+  const [loaderFrame, setLoaderFrame] = useState(0);
   const { mobile, narrow } = useIsMobile();
 
   useEffect(() => {
@@ -2379,6 +2390,11 @@ export default function App() {
       .catch(err => { console.error("Failed to load data:", err); setLoadError(true); });
   }, []);
 
+  // artificial 1-second loader on open/refresh and on every tab switch
+  useEffect(() => { setLoading(true); const id = setTimeout(() => setLoading(false), 1000); return () => clearTimeout(id); }, [tab]);
+  // while loading, flip through the loader images (kid calm → kid shouting → tucheliban)
+  useEffect(() => { if (!loading) return; const id = setInterval(() => setLoaderFrame(f => f + 1), 260); return () => clearInterval(id); }, [loading]);
+
   const goToPlayer = (name) => { setSearch(name); setPosFilter("ALL"); setTab("table"); };
 
   const formById = useMemo(() => {
@@ -2415,6 +2431,15 @@ export default function App() {
 
   const optimal = useMemo(() => buildOptimalSquads(rawPlayers || []), [rawPlayers]);
 
+  const LOADER_IMGS = ["/img/makkauijau.png", "/img/makkauijau_shout.png", "/img/tucheliban.png"];
+  const loaderOverlay = (
+    <div style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(6,13,26,0.97)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:14, fontFamily:SANS }}>
+      <GlobalCSS />
+      <img key={loaderFrame % LOADER_IMGS.length} src={LOADER_IMGS[loaderFrame % LOADER_IMGS.length]} alt="" className="mki-shake" style={{ height:100, width:100, objectFit:"contain", filter:"drop-shadow(0 3px 8px #000a)" }} />
+      <div style={{ fontSize:15, fontWeight:800, color:"#4ade80", fontStyle:"italic" }}>Mak kau ijau…</div>
+    </div>
+  );
+
   if (loadError) return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, fontFamily:SANS }}>
       <GlobalCSS />
@@ -2422,18 +2447,13 @@ export default function App() {
       <div style={{ fontSize:15, fontWeight:800, color:"#ff6b6b", fontStyle:"italic" }}>Mak kau ijau — data tak nak load 😤</div>
       <div style={{ fontSize:12, color:DIM }}>Failed to load data. Try refreshing.</div>
     </div>);
-  if (!rawPlayers) return (
-    <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, fontFamily:SANS }}>
-      <GlobalCSS />
-      <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:96, filter:"drop-shadow(0 3px 6px #000a)" }} />
-      <div style={{ fontSize:15, fontWeight:800, color:"#4ade80", fontStyle:"italic" }}>Mak kau ijau…</div>
-      <div style={{ fontSize:12, color:DIM }}>crunching the numbers</div>
-    </div>);
+  if (!rawPlayers) return loaderOverlay;
 
   const TABS = [["table","📊 Players"],["planner","🧑‍💼 Planner"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["odds","🎲 Odds"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
+      {loading && loaderOverlay}
       <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:mobile?"12px 12px 0":"16px 20px 0" }}>
         <div style={{ maxWidth:1240, margin:"0 auto" }}>
           {!mobile && <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>}
