@@ -351,11 +351,21 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
         <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 50px 56px 44px 34px 56px",
           gap:0, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
-          <div>#</div><div>PLAYER</div><div style={{textAlign:"right"}}>£</div>
-          <div style={{textAlign:"right"}}>xMIN</div><div style={{textAlign:"center"}}>ROLE</div>
-          <div style={{textAlign:"right"}}>xPTS</div><div style={{textAlign:"right"}} title={`Projected xPts for the next matchday (MD${NEXT_MD+1})`}>MD{NEXT_MD+1}</div><div style={{textAlign:"right"}}>PREM</div>
-          <div style={{textAlign:"right"}}>OWN</div><div style={{textAlign:"center"}}>TIER</div>
+          {(() => { const SH = (k, label, align="right", title) => (
+            <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
+              style={{ textAlign:align, cursor:"pointer", color:sortBy===k?"#f97316":DIM, fontWeight:sortBy===k?800:400 }}>
+              {label}{sortBy===k?" ▼":""}</div>); return (<>
+          <div>#</div><div>PLAYER</div>
+          {SH("price","£")}
+          {SH("xmins","xMIN")}
+          <div style={{textAlign:"center"}}>ROLE</div>
+          {SH("displayPts","xPTS")}
+          {SH("mdnext",`MD${NEXT_MD+1}`,"right",`Sort by next-matchday (MD${NEXT_MD+1}) xPts`)}
+          <div style={{textAlign:"right"}}>PREM</div>
+          {SH("own","OWN")}
+          {SH("tier","TIER","center")}
           <div style={{textAlign:"right"}}>FIX</div>
+          </>); })()}
         </div>
         {players.slice(0,200).map((p,i) => {
           const posCol = POS_COLOR[p.pos];
@@ -779,19 +789,31 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
     <div>
       {/* BEST VALUE BY BAND */}
       <div style={{ fontSize:13, fontWeight:900, color:"#fff", letterSpacing:1, marginBottom:10 }}>BEST VALUE BY BAND</div>
-      <div style={{ display:"grid", gridTemplateColumns: mobile ? "repeat(2,1fr)" : "repeat(auto-fill,minmax(180px,1fr))", gap:8, marginBottom:24 }}>
-        {BANDS.flatMap(b=>POSES.map(pos=>{
-          const best=pool.filter(p=>p.pos===pos&&bandOf(p.pos,p.price)===b).sort((a,c)=>(c.tier_score||0)-(a.tier_score||0))[0];
-          if(!best) return null; const tc=TIER_COLOR[best.tier]||DIM; const n=narr[best.id]||{};
-          return (
-            <div key={b+pos} style={{ background:CARD, border:`2px solid ${tc}`, borderRadius:8, padding:"9px 11px" }}>
-              <div style={{ fontSize:9, color:DIM, letterSpacing:1, marginBottom:3 }}>BEST {b} {pos}</div>
-              <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{best.nat} {best.name}</div>
-              <div style={{ fontSize:11, color:DIM, marginTop:2 }}><b style={{color:tc}}>{best.tier}</b> · {xptsOf(best)?.toFixed(1)} xPts · ${best.price}m</div>
-              <div style={{ fontSize:10, color:"#94a3b8", marginTop:3, fontStyle:"italic" }}>{(n.one_line_verdict||n.headline||"").slice(0,70)}</div>
+      <div style={{ marginBottom:24 }}>
+        {BANDS.map(b=>(
+          <div key={b} style={{ marginBottom:12 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"#f97316", letterSpacing:1, marginBottom:6 }}>{b}</div>
+            <div style={{ display:"grid", gridTemplateColumns: mobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap:8 }}>
+              {POSES.map(pos=>{
+                const best=pool.filter(p=>p.pos===pos&&bandOf(p.pos,p.price)===b).sort((a,c)=>(c.tier_score||0)-(a.tier_score||0))[0];
+                if(!best) return (
+                  <div key={b+pos} style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:8, padding:"9px 11px", opacity:0.5 }}>
+                    <div style={{ fontSize:9, color:DIM, letterSpacing:1 }}>BEST {b} {pos}</div>
+                    <div style={{ fontSize:11, color:DIM, marginTop:6 }}>—</div>
+                  </div>);
+                const tc=TIER_COLOR[best.tier]||DIM; const n=narr[best.id]||{};
+                return (
+                  <div key={b+pos} style={{ background:CARD, border:`2px solid ${tc}`, borderRadius:8, padding:"9px 11px" }}>
+                    <div style={{ fontSize:9, color:DIM, letterSpacing:1, marginBottom:3 }}>BEST {b} {pos}</div>
+                    <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{best.nat} {best.name}</div>
+                    <div style={{ fontSize:11, color:DIM, marginTop:2 }}><b style={{color:tc}}>{best.tier}</b> · {xptsOf(best)?.toFixed(1)} xPts · ${best.price}m</div>
+                    <div style={{ fontSize:10, color:"#94a3b8", marginTop:3, fontStyle:"italic" }}>{(n.one_line_verdict||n.headline||"").slice(0,70)}</div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        }))}
+          </div>
+        ))}
       </div>
 
       {/* tier tabs + filters */}
@@ -1631,6 +1653,7 @@ function PlannerTab({ pool, mobile }) {
   const spent = +sp.reduce((s, p) => s + p.price, 0).toFixed(1);
   const remaining = +(PL_BUDGET - spent).toFixed(1);
   const countPos = (pos) => sp.filter(p => p.pos === pos).length;
+  const benchPlayers = sp.filter(p => !starters.includes(p.id));
 
   // per-MD points incl. projected scout bonus (+2 if <5% owned and base > 4)
   const ptsOf = (p, mi) => { const b = mdScore(p, mi).pts; return +(b + (scoutEligible(p) && b > 4 ? 2 : 0)).toFixed(1); };
@@ -1783,6 +1806,52 @@ function PlannerTab({ pool, mobile }) {
         <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 800, color: "#fff" }}>MD{md + 1} projected: <span style={{ color: "#f97316" }}>{mdTotal(md)} xPts</span></span>
       </div>
 
+      {/* PITCH — selected starting XI in auto-formation + bench */}
+      {!mobile && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Starting XI {formationValid ? `· ${formationStr}` : `· ${starters.length}/11`} {!formationValid && <span style={{ color: "#eab308", fontWeight: 400, fontSize: 11 }}>(pick a valid XI: 1 GK, 3-5 DEF, 2-5 MID, 1-3 FWD)</span>}</span>
+            <span style={{ fontSize: 11, color: DIM }}>tap a player = captain · MD{md + 1}: <b style={{ color: "#f97316" }}>{mdTotal(md)} xPts</b></span>
+          </div>
+          <div style={{ position: "relative", width: "100%", maxWidth: 560, margin: "0 auto", aspectRatio: "3/4", background: "linear-gradient(#0a3d1f,#072d17)", border: "2px solid #1e6b3a", borderRadius: 10 }}>
+            <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "#2e7d4f" }} />
+            <div style={{ position: "absolute", left: "30%", right: "30%", bottom: 0, height: "14%", border: "1px solid #2e7d4f", borderBottom: "none" }} />
+            {[["GK", 88], ["DEF", 70], ["MID", 48], ["FWD", 24]].flatMap(([ln, y]) => {
+              const arr = starters.map(id => byId[id]).filter(p => p && p.pos === ln), n = arr.length;
+              return arr.map((p, i) => {
+                const x = n === 1 ? 50 : 15 + (i / (n - 1)) * 70, isC = captain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
+                return (
+                  <div key={p.id} onClick={() => setCaptain(p.id)} title="Tap to make captain"
+                    style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", cursor: "pointer", width: 78 }}>
+                    <div style={{ width: 46, height: 46, margin: "0 auto", borderRadius: "50%", background: POS_COLOR[p.pos], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff", border: isC ? "3px solid #fbbf24" : "2px solid #ffffff55", position: "relative" }}>
+                      {pts}
+                      {isC && <span style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, fontSize: 10, fontWeight: 800, background: "#fbbf24", color: "#000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>C</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#fff", fontWeight: 700, marginTop: 3, textShadow: "0 1px 3px #000", lineHeight: 1.1, maxWidth: 78, marginLeft: "auto", marginRight: "auto", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{p.name}</div>
+                    {opp && <div style={{ fontSize: 9, color: "#9fb4c9", textShadow: "0 1px 3px #000" }}>vs {opp}</div>}
+                  </div>
+                );
+              });
+            })}
+            {starters.length === 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#cbd5e1", fontSize: 13, textAlign: "center", padding: 24 }}>Add players below and tap <b>&nbsp;sub→XI&nbsp;</b> to build your XI — or hit <b>&nbsp;Auto-pick XI</b>.</div>}
+          </div>
+          {/* bench */}
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: DIM, fontFamily: MONO, marginBottom: 6 }}>BENCH ({benchPlayers.length}) — tap to move into XI</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {benchPlayers.length === 0 ? <span style={{ fontSize: 11, color: DIM }}>No substitutes yet.</span>
+                : benchPlayers.map(p => (
+                  <div key={p.id} onClick={() => toggleStarter(p.id)} title="Move into starting XI"
+                    style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "6px 10px", cursor: "pointer", minWidth: 130 }}>
+                    <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}><span style={{ color: POS_COLOR[p.pos], fontFamily: MONO, fontSize: 10 }}>{p.pos}</span> {p.nat} {p.name}</div>
+                    <div style={{ fontSize: 10, color: DIM }}>{ptsOf(p, md)} xP · ${p.price}m</div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* squad by position + add buttons */}
       {POS_ORDER.map(pos => (
         <div key={pos} style={{ marginBottom: 10 }}>
@@ -1872,7 +1941,12 @@ export default function App() {
       .then(([players, a, l, nw]) => {
         // players.json may be a bare array (legacy) or { generated_at, players }
         const arr = Array.isArray(players) ? players : players.players;
-        setRawPlayers(arr);
+        // merge R-model outputs (tier, tier_score, pts_safe/balanced/diff, intl_premium_*,
+        // causal_pts_adjustment, form_mult, …) from analytics.player_analytics by id — without
+        // this merge the Tiers tab and tier badges are empty and the model loses its adjustments
+        const paById = {}; (a?.player_analytics || []).forEach(r => { if (r && r.id != null) paById[r.id] = r; });
+        const merged = arr.map(p => paById[p.id] ? { ...p, ...paById[p.id], id: p.id } : p);
+        setRawPlayers(merged);
         setDataTimestamp(Array.isArray(players) ? null : players.generated_at);
         setAnalytics(a); setLineups(l); setNews(nw);
       })
@@ -1903,6 +1977,8 @@ export default function App() {
         if (sortBy === "price")      return b.price - a.price;
         if (sortBy === "own")        return b.own - a.own;
         if (sortBy === "tier")       return (b.tier_score||0) - (a.tier_score||0);
+        if (sortBy === "mdnext")     return mdScore(b, NEXT_MD).pts - mdScore(a, NEXT_MD).pts;
+        if (sortBy === "xmins")      return (b.E_mins||0) - (a.E_mins||0);
         return 0;
       });
   }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
