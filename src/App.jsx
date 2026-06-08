@@ -383,7 +383,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           <div style={{textAlign:"center"}}>ROLE</div>
           {SH("displayPts","xPTS·GS","right","Group-stage xPts (sum of MD1–3) — same 3 games for every player")}
           {SH("mdnext",`MD${NEXT_MD+1}`,"right",`Sort by next-matchday (MD${NEXT_MD+1}) xPts`)}
-          <div title="International premium (σ): how much a player out- or under-performs their CLUB output when playing for their COUNTRY — the model's mispricing signal. Positive (green) = underrated vs price; negative (red) = overrated. Shown in standard deviations." style={{textAlign:"right", cursor:"help"}}>INTL σ</div>
+          {SH("intl","INTL σ","right","International premium (σ): how much a player out- or under-performs their CLUB output when playing for their COUNTRY — the model's mispricing signal. Positive = underrated vs price, negative = overrated. Click to sort high → low.")}
           {SH("own","OWN")}
           {SH("tier","TIER","center")}
           <div style={{textAlign:"right"}}>FIX</div>
@@ -2340,6 +2340,7 @@ export default function App() {
         if (sortBy === "tier")       return (b.tier_score||0) - (a.tier_score||0);
         if (sortBy === "mdnext")     return mdScore(b, NEXT_MD).pts - mdScore(a, NEXT_MD).pts;
         if (sortBy === "xmins")      return (b.E_mins||0) - (a.E_mins||0);
+        if (sortBy === "intl")       return (b.intl_premium_score||0) - (a.intl_premium_score||0);
         return 0;
       });
   }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
