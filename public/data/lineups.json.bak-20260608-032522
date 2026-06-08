@@ -1,0 +1,1286 @@
+{
+  "generated_at": "2026-06-08T01:53:51.822Z",
+  "teams": {
+    "Spain": {
+      "team": "Spain",
+      "flag": "🇪🇸",
+      "formation": "4-3-3",
+      "manager": "Luis de la Fuente",
+      "players": [
+        {
+          "name": "Unai Simón",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Marc Cucurella",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Pau Cubarsí",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Robin Le Normand",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Pedro Porro",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Rodri",
+          "slot": "CDM",
+          "status": "DOUBT",
+          "doubt_reason": "Serious ACL injury suffered September 2024; full recovery and match fitness for June 2026 remains highly uncertain",
+          "position": "MID"
+        },
+        {
+          "name": "Pedri",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Fabián Ruiz",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Lamine Yamal",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Ayoze Pérez",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition from other emerging forwards",
+          "position": "FWD"
+        },
+        {
+          "name": "Nico Williams",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "David Raya",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Dani Olmo",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Mikel Merino",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ayoze Pérez",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [],
+      "tactical_note": "Spain likely to maintain their fluid 4-3-3 with Yamal and Nico Williams as wide threats. Rodri's fitness is the key concern; if fully recovered he anchors the midfield. Morata leads the line but faces pressure from emerging forwards.",
+      "fantasy_note": "Lamine Yamal is the standout fantasy pick — high involvement, direct goal contributions and set-piece delivery. Nico Williams offers strong assist potential.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": false,
+        "errors_found": [
+          {
+            "type": "RETIRED_PLAYER",
+            "description": "Sergio Ramos retired from international football in 2023 and is not in the squad — however he is not listed here, so no issue. Flagging instead: Álvaro Morata announced his retirement from international football with Spain after Euro 2024, citing personal reasons. He should not be listed in the 2026 World Cup squad.",
+            "player_affected": "Álvaro Morata",
+            "correction": "Remove Morata from the lineup; replace ST with an active Spain striker such as Ayoze Pérez, Joselu, or another available forward from the 2026 qualifying squad."
+          },
+          {
+            "type": "INJURY_STATUS",
+            "description": "Rodri suffered a serious ACL injury in September 2024 and faced a lengthy recovery. While his status as PROBABLE with a doubt_reason is noted, listing him at all for June 2026 carries significant uncertainty — his return timeline was highly questionable for the tournament. Status should reflect higher doubt or DOUBT rather than PROBABLE.",
+            "player_affected": "Rodri",
+            "correction": "Downgrade status from PROBABLE to DOUBT and strengthen the doubt_reason to reflect the severity of the ACL injury and uncertain full recovery by June 2026."
+          },
+          {
+            "type": "WRONG_SQUAD",
+            "description": "Aymeric Laporte switched international allegiance to play for Spain but has had limited involvement in the 2026 qualifying cycle due to his move to Al-Nassr and reduced European football profile. His inclusion is uncertain and may not reflect the actual 2026 squad selection under De la Fuente, who has favored domestically active players.",
+            "player_affected": "Aymeric Laporte",
+            "correction": "Consider replacing with Pau Cubarsí or Dani Vivian, who were prominent in Spain's 2026 qualifying campaign and more likely starters."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Ayoze Pérez",
+            "slot": "ST",
+            "status": "PROBABLE",
+            "doubt_reason": "Competition from other emerging forwards",
+            "position": "FWD"
+          },
+          {
+            "name": "Rodri",
+            "slot": "CDM",
+            "status": "DOUBT",
+            "doubt_reason": "Serious ACL injury suffered September 2024; full recovery and match fitness for June 2026 remains highly uncertain",
+            "position": "MID"
+          },
+          {
+            "name": "Pau Cubarsí",
+            "slot": "LCB",
+            "status": "PROBABLE",
+            "doubt_reason": null,
+            "position": "DEF"
+          }
+        ],
+        "reviewer_note": "The most significant error is the inclusion of Álvaro Morata, who retired from international football after Euro 2024; Rodri's injury status is understated and Laporte's place in the 2026 squad is uncertain given reduced European football exposure.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:51:30.058Z"
+      }
+    },
+    "Argentina": {
+      "team": "Argentina",
+      "flag": "🇦🇷",
+      "formation": "4-3-3",
+      "manager": "Lionel Scaloni",
+      "players": [
+        {
+          "name": "Emiliano Martínez",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Nahuel Molina",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Cristian Romero",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Lisandro Martínez",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history at Man Utd",
+          "position": "DEF"
+        },
+        {
+          "name": "Nicolás Tagliafico",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Enzo Fernández",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury concerns during 2025-26 club season at Chelsea",
+          "position": "MID"
+        },
+        {
+          "name": "Enzo Fernández",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Alexis Mac Allister",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Lionel Messi",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Pre-tournament muscular injury raised fitness concerns entering June 2026",
+          "position": "FWD"
+        },
+        {
+          "name": "Julián Álvarez",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Nicolás González",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Gerónimo Rulli",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Thiago Almada",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Lautaro Martínez",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Nicolás González",
+          "slot": "LW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [],
+      "tactical_note": "Scaloni likely retains his 4-3-3 with Messi operating as a false winger drifting infield. Mac Allister anchors midfield with De Paul and Enzo providing box-to-box energy. Julián Álvarez leads the line. Di María's inclusion depends on fitness at 38.",
+      "fantasy_note": "Messi is a must-own captain pick. Julián Álvarez offers strong goal and assist upside. Enzo Fernández is a reliable midfield option with set-piece involvement.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": false,
+        "errors_found": [
+          {
+            "type": "INJURY_STATUS",
+            "description": "Lionel Messi entered the 2026 World Cup with a significant injury concern — he suffered a muscular injury in early 2026 that raised doubts about his availability and fitness for the tournament. Listing him as CERTAIN with no doubt reason is optimistic and potentially misleading.",
+            "player_affected": "Lionel Messi",
+            "correction": "Status should be PROBABLE or DOUBT with a doubt_reason referencing his pre-tournament injury concerns."
+          },
+          {
+            "type": "INJURY_STATUS",
+            "description": "Lisandro Martínez had a serious and recurring injury record at Manchester United through 2024-25 and into 2026, making PROBABLE a reasonable status — this is acceptable and already flagged, so no change needed. However, Enzo Fernández also had injury concerns in the 2025-26 Chelsea season. Marking him CERTAIN with no caveat may be slightly optimistic.",
+            "player_affected": "Enzo Fernández",
+            "correction": "Consider downgrading to PROBABLE with a doubt_reason noting injury concerns during the 2025-26 club season."
+          },
+          {
+            "type": "WRONG_SQUAD",
+            "description": "Ángel Di María announced his retirement from international football after the 2024 Copa América, meaning he would not be part of Argentina's 2026 World Cup squad.",
+            "player_affected": "Ángel Di María",
+            "correction": "Remove Di María from the lineup. Replace LW with an active Argentine winger such as Alejandro Garnacho or Nicolás González (already on bench)."
+          },
+          {
+            "type": "FORMATION_MISMATCH",
+            "description": "With Di María removed, the starting XI drops to 10 outfield players plus GK — only 10 players total in the forward line (2 FWD instead of 3). A replacement LW must be named to maintain the 4-3-3 structure.",
+            "player_affected": null,
+            "correction": "Promote Nicolás González from bench to starting LW, or name Alejandro Garnacho as the starting LW to complete the 4-3-3."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Lionel Messi",
+            "slot": "RW",
+            "status": "PROBABLE",
+            "doubt_reason": "Pre-tournament muscular injury raised fitness concerns entering June 2026",
+            "position": "FWD"
+          },
+          {
+            "name": "Enzo Fernández",
+            "slot": "CM",
+            "status": "PROBABLE",
+            "doubt_reason": "Injury concerns during 2025-26 club season at Chelsea",
+            "position": "MID"
+          },
+          {
+            "name": "Nicolás González",
+            "slot": "LW",
+            "status": "PROBABLE",
+            "doubt_reason": null,
+            "position": "FWD"
+          }
+        ],
+        "reviewer_note": "The lineup contains a confirmed squad error (Di María retired from internationals after Copa América 2024), a resulting formation gap at LW, and two players whose CERTAIN status understates known pre-tournament injury concerns including Messi himself.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:50:35.082Z"
+      }
+    },
+    "France": {
+      "team": "France",
+      "flag": "🇫🇷",
+      "formation": "4-3-3",
+      "manager": "Didier Deschamps",
+      "players": [
+        {
+          "name": "Mike Maignan",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Jules Koundé",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Dayot Upamecano",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "William Saliba",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Theo Hernandez",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "N'Golo Kanté",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Age and fitness management at 35",
+          "position": "MID"
+        },
+        {
+          "name": "Aurélien Tchouaméni",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Recovering from serious foot injury sustained in 2024; fitness and match sharpness entering the tournament uncertain",
+          "position": "MID"
+        },
+        {
+          "name": "Adrien Rabiot",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Club form consistency",
+          "position": "MID"
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Kylian Mbappé",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Marcus Thuram",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Randal Kolo Muani",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Eduardo Camavinga",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Matteo Guendouzi",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ibrahima Konaté",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        }
+      ],
+      "key_absences": [
+        "Karim Benzema (retired from intl)",
+        "Raphaël Varane (retired from intl)"
+      ],
+      "tactical_note": "Deschamps likely retains his pragmatic 4-3-3 with Mbappé as central striker. Kanté used as impact sub or rotated to protect fitness. Tchouaméni anchors midfield with license to press.",
+      "fantasy_note": "Mbappé is the standout captain pick. Dembélé and Thuram offer strong attacking returns from wide positions. Maignan is a reliable GK option.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": true,
+        "errors_found": [
+          {
+            "type": "INJURY_STATUS",
+            "description": "Aurélien Tchouaméni suffered a serious foot injury in mid-2024 and had a prolonged recovery timeline. His availability and fitness status entering the 2026 tournament carries notable uncertainty that is not reflected by a CERTAIN tag.",
+            "player_affected": "Aurélien Tchouaméni",
+            "correction": "Status should be downgraded to PROBABLE with a doubt_reason noting his prior injury history and fitness concerns"
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Aurélien Tchouaméni",
+            "slot": "CM",
+            "status": "PROBABLE",
+            "doubt_reason": "Recovering from serious foot injury sustained in 2024; fitness and match sharpness entering the tournament uncertain",
+            "position": "MID"
+          }
+        ],
+        "reviewer_note": "The France lineup is broadly credible and well-structured for a 4-3-3 with 11 players correctly distributed, though Tchouaméni's CERTAIN status overstates his availability given his significant injury history entering 2026; all other selections, absences, and formation details appear sound.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:51:00.273Z"
+      }
+    },
+    "England": {
+      "team": "England",
+      "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+      "formation": "4-3-3",
+      "manager": "Thomas Tuchel",
+      "players": [
+        {
+          "name": "Jordan Pickford",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Trent Alexander-Arnold",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "John Stones",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Recurring muscle injuries throughout 2024-25 season raised serious doubts over his availability and match fitness.",
+          "position": "DEF"
+        },
+        {
+          "name": "Marc Guehi",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Kieran Trippier",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury and loss of form at club level in 2024-25; place in squad not guaranteed under Tuchel.",
+          "position": "DEF"
+        },
+        {
+          "name": "Declan Rice",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Jude Bellingham",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Kobbie Mainoo",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Bukayo Saka",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": "Significant hamstring injury in 2024-25; fitness and availability entering the tournament carries risk.",
+          "position": "FWD"
+        },
+        {
+          "name": "Harry Kane",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Phil Foden",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Dean Henderson",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Cole Palmer",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Ollie Watkins",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Levi Colwill",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        }
+      ],
+      "key_absences": [],
+      "tactical_note": "Tuchel likely deploys a high-press 4-3-3 with Bellingham roaming ahead of Rice. Alexander-Arnold given license to invert from RB, with Trippier providing width on the left.",
+      "fantasy_note": "Kane and Saka are the standout captaincy options. Bellingham offers premium midfield value with goal and assist potential. Rice is near-certain starter and reliable for clean sheet points.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": false,
+        "errors_found": [
+          {
+            "type": "INJURY_STATUS",
+            "description": "Bukayo Saka suffered a significant hamstring injury in late 2024/early 2025 and had ongoing fitness concerns entering the 2026 tournament cycle. Listing him as CERTAIN without any doubt_reason may be premature depending on his recovery status.",
+            "player_affected": "Bukayo Saka",
+            "correction": "Consider downgrading status to PROBABLE and adding a doubt_reason noting his injury history entering the tournament."
+          },
+          {
+            "type": "INJURY_STATUS",
+            "description": "John Stones has had a persistent injury-plagued 2024-25 season with recurring muscle issues, making CERTAIN status questionable for a player with significant availability concerns heading into the tournament.",
+            "player_affected": "John Stones",
+            "correction": "Consider downgrading status to PROBABLE and noting his recurring injury record as a doubt_reason."
+          },
+          {
+            "type": "INJURY_STATUS",
+            "description": "Kieran Trippier experienced a difficult 2024-25 season with injury and loss of form at Newcastle, and his status as a reliable starter for England under Tuchel is uncertain. However, PROBABLE rating is already applied, so no change needed to status — but a doubt_reason should be added.",
+            "player_affected": "Kieran Trippier",
+            "correction": "Add doubt_reason noting injury and form concerns in the 2024-25 club season."
+          },
+          {
+            "type": "FORMATION_MISMATCH",
+            "description": "No formation mismatch detected — 1 GK, 4 DEF, 3 MID, 3 FWD = 11 players. Formation is correctly represented.",
+            "player_affected": null,
+            "correction": "No correction needed."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Bukayo Saka",
+            "slot": "RW",
+            "status": "PROBABLE",
+            "doubt_reason": "Significant hamstring injury in 2024-25; fitness and availability entering the tournament carries risk.",
+            "position": "FWD"
+          },
+          {
+            "name": "John Stones",
+            "slot": "RCB",
+            "status": "PROBABLE",
+            "doubt_reason": "Recurring muscle injuries throughout 2024-25 season raised serious doubts over his availability and match fitness.",
+            "position": "DEF"
+          },
+          {
+            "name": "Kieran Trippier",
+            "slot": "LB",
+            "status": "PROBABLE",
+            "doubt_reason": "Injury and loss of form at club level in 2024-25; place in squad not guaranteed under Tuchel.",
+            "position": "DEF"
+          }
+        ],
+        "reviewer_note": "The lineup is broadly credible with no confirmed retired players or obvious omissions, but Saka and Stones should not be listed as CERTAIN given significant injury histories entering the 2026 tournament, and Trippier's doubt_reason should be populated.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:51:59.127Z"
+      }
+    },
+    "Brazil": {
+      "team": "Brazil",
+      "flag": "🇧🇷",
+      "formation": "4-3-3",
+      "manager": "Dorival Júnior",
+      "players": [
+        {
+          "name": "Alisson Becker",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Danilo",
+          "slot": "RB",
+          "status": "DOUBT",
+          "doubt_reason": "Injury history, age and form concerns entering 2026",
+          "position": "DEF"
+        },
+        {
+          "name": "Marquinhos",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Gabriel Magalhães",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Guilherme Arana",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Competition from Wendell",
+          "position": "DEF"
+        },
+        {
+          "name": "Bruno Guimarães",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Lucas Paquetá",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Ongoing FA betting investigation",
+          "position": "MID"
+        },
+        {
+          "name": "Rodrygo",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Raphinha",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Vinicius Jr",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Neymar",
+          "slot": "ST",
+          "status": "DOUBT",
+          "doubt_reason": "Post-ACL fitness, lack of competitive minutes, and match sharpness — tournament participation uncertain",
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Endrick",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Savinho",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "André",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Weverton",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        }
+      ],
+      "key_absences": [
+        "Neymar (doubtful fitness)",
+        "Militão (ACL recovery uncertain)"
+      ],
+      "tactical_note": "Dorival favours a high-press 4-3-3 with Vinicius and Raphinha stretching wide. If Neymar is unfit, Endrick leads the line with Rodrygo pushing forward.",
+      "fantasy_note": "Vinicius Jr and Raphinha are the standout fantasy assets — both guaranteed starters with high attacking involvement. Endrick is a strong super-sub pick.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": false,
+        "errors_found": [
+          {
+            "type": "INJURY_STATUS",
+            "description": "Neymar suffered a serious ACL tear in October 2023 and has had an extremely lengthy and troubled recovery. While the prompt states he is NOT retired and returned to qualifying, listing him even as DOUBT for a starting ST role at the tournament is optimistic — his match sharpness and fitness for a full tournament campaign remained a significant concern entering June 2026. The DOUBT status and doubt_reason are appropriate, but he should arguably not be listed as a starting XI player at all; a bench or absence listing would be more accurate.",
+            "player_affected": "Neymar",
+            "correction": "Move Neymar to key_absences or bench with status DOUBT. Start Endrick at ST in the XI, with Rodrygo or another option filling the third midfield/forward slot."
+          },
+          {
+            "type": "INJURY_STATUS",
+            "description": "Danilo had a serious knee injury in late 2023/early 2024 and his form and availability for the 2026 tournament are genuinely uncertain. PROBABLE status may be slightly generous; flagging as DOUBT would be more accurate given his fitness history.",
+            "player_affected": "Danilo",
+            "correction": "Change Danilo's status from PROBABLE to DOUBT, or note injury history in doubt_reason alongside age and form concerns."
+          },
+          {
+            "type": "FORMATION_MISMATCH",
+            "description": "No formation mismatch detected — the lineup contains exactly 1 GK, 4 DEF, 3 MID, 3 FWD = 11 players, consistent with a 4-3-3.",
+            "player_affected": null,
+            "correction": "No correction needed for formation count."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Endrick",
+            "slot": "ST",
+            "status": "CERTAIN",
+            "doubt_reason": null,
+            "position": "FWD"
+          },
+          {
+            "name": "Neymar",
+            "slot": "ST",
+            "status": "DOUBT",
+            "doubt_reason": "Post-ACL fitness, lack of competitive minutes, and match sharpness — tournament participation uncertain",
+            "position": "FWD"
+          },
+          {
+            "name": "Danilo",
+            "slot": "RB",
+            "status": "DOUBT",
+            "doubt_reason": "Injury history, age and form concerns entering 2026",
+            "position": "DEF"
+          }
+        ],
+        "reviewer_note": "The lineup is broadly plausible for Brazil under Dorival Júnior, but Neymar's inclusion as a starting XI player (even at DOUBT) overstates his readiness — Endrick should lead the line, with Neymar listed as a bench/absence uncertainty; Danilo's status should also be downgraded to DOUBT given his injury history.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:52:30.616Z"
+      }
+    },
+    "Portugal": {
+      "team": "Portugal",
+      "flag": "🇵🇹",
+      "formation": "4-3-3",
+      "manager": "Roberto Martínez",
+      "players": [
+        {
+          "name": "Diogo Costa",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "João Cancelo",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Rúben Dias",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "António Silva",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Pedro Porro",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "João Palhinha",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Vitinha",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Bruno Fernandes",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Rafael Leão",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Cristiano Ronaldo",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 41, form and fitness monitored",
+          "position": "FWD"
+        },
+        {
+          "name": "Bernardo Silva",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "José Sá",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Nuno Mendes",
+          "slot": "LB",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history monitored",
+          "position": "DEF"
+        },
+        {
+          "name": "Francisco Conceição",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Gonçalo Ramos",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "key_absences": [
+        "Pepe (retired)",
+        "João Moutinho (retired)"
+      ],
+      "tactical_note": "Martínez favours a high-press 4-3-3 with Bernardo Silva cutting inside and Cancelo pushing high on the left. Ronaldo leads the line but Gonçalo Ramos provides a dynamic alternative if form dips.",
+      "fantasy_note": "Bruno Fernandes is the primary creative hub and set-piece taker — premium differential. Bernardo Silva offers consistent returns from midfield-right. Ronaldo carries penalty and free-kick upside but minutes risk is real.",
+      "confidence": "HIGH",
+      "review": {
+        "approved": true,
+        "errors_found": [
+          {
+            "type": "RETIRED_PLAYER",
+            "description": "Pepe confirmed retired from international football in 2024 and is correctly listed under key_absences. No issue with the playing squad.",
+            "player_affected": null,
+            "correction": "No correction needed — Pepe is already excluded from the playing squad and correctly noted as retired."
+          }
+        ],
+        "corrected_players": [],
+        "reviewer_note": "The Portugal lineup is clean: formation is a valid 4-3-3 (1 GK + 4 DEF + 3 MID + 3 FWD = 11), Pepe's retirement is correctly acknowledged in key_absences rather than in the squad, all other players are credible Portugal internationals for 2026, and Ronaldo's PROBABLE status with an age/fitness caveat is appropriately cautious.",
+        "confidence": "HIGH",
+        "reviewed_at": "2026-06-08T01:52:52.572Z"
+      }
+    },
+    "Netherlands": {
+      "team": "Netherlands",
+      "flag": "🇳🇱",
+      "formation": "4-3-3",
+      "manager": "Ronald Koeman",
+      "players": [
+        {
+          "name": "Bart Verbruggen",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Denzel Dumfries",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Stefan de Vrij",
+          "slot": "RCB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Virgil van Dijk",
+          "slot": "LCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Nathan Aké",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Tijjani Reijnders",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Frenkie de Jong",
+          "slot": "CDM",
+          "status": "PROBABLE",
+          "doubt_reason": "Recurring muscle and ankle injuries throughout 2024-25 severely limited appearances; fitness entering tournament is a genuine concern",
+          "position": "MID"
+        },
+        {
+          "name": "Teun Koopmeiners",
+          "slot": "CM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Cody Gakpo",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Memphis Depay",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": "Fitness and form questions",
+          "position": "FWD"
+        },
+        {
+          "name": "Donyell Malen",
+          "slot": "RW",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Justin Bijlow",
+          "slot": "GK",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Xavi Simons",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Wout Weghorst",
+          "slot": "ST",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Ryan Gravenberch",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        }
+      ],
+      "key_absences": [],
+      "tactical_note": "Koeman favours a high-pressing 4-3-3 with Reijnders and Koopmeiners driving forward. Van Dijk marshals a deep defensive line. Gakpo provides creativity from the left with license to cut inside.",
+      "fantasy_note": "Gakpo and Reijnders are top fantasy picks; both involved in goals regularly. Dumfries offers attacking returns from right-back.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": true,
+        "errors_found": [
+          {
+            "type": "INJURY_STATUS",
+            "description": "Frenkie de Jong has had significant and prolonged injury concerns through 2024-25 and into 2026 qualifying, with recurring muscle and ankle issues limiting his Barcelona appearances. Listing him as PROBABLE with only a vague 'Injury history concerns' note is appropriate, but his availability should be flagged as genuinely uncertain rather than a routine doubt.",
+            "player_affected": "Frenkie de Jong",
+            "correction": "Status should remain PROBABLE but doubt_reason should be strengthened to reflect ongoing fitness concerns entering the tournament; consider listing as DOUBTFUL if injury recurred close to tournament start."
+          },
+          {
+            "type": "OBVIOUS_OMISSION",
+            "description": "Xavi Simons is listed only on the bench with a CAM slot. Given his outstanding 2024-25 season and importance to the Netherlands squad under Koeman, he would be a strong candidate for the starting XI ahead of Donyell Malen or even in a modified role. His absence from the starting lineup is not flagged or explained.",
+            "player_affected": "Xavi Simons",
+            "correction": "Consider starting Xavi Simons on the right wing ahead of Malen, or note in key_absences/tactical_note why he is benched."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Frenkie de Jong",
+            "slot": "CDM",
+            "status": "PROBABLE",
+            "doubt_reason": "Recurring muscle and ankle injuries throughout 2024-25 severely limited appearances; fitness entering tournament is a genuine concern",
+            "position": "MID"
+          }
+        ],
+        "reviewer_note": "The Netherlands lineup is broadly credible and formation-compliant (1 GK + 4 DEF + 3 MID + 3 FWD), with no retired players or wrong-squad picks identified, but Frenkie de Jong's doubt reason understates his injury concerns and Xavi Simons' benching deserves an explanatory note given his current form.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:53:19.224Z"
+      }
+    },
+    "Belgium": {
+      "team": "Belgium",
+      "flag": "🇧🇪",
+      "formation": "4-3-3",
+      "manager": "Domenico Tedesco",
+      "players": [
+        {
+          "name": "Koen Casteels",
+          "slot": "GK",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "GK"
+        },
+        {
+          "name": "Timothy Castagne",
+          "slot": "RB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Wout Faes",
+          "slot": "RCB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Zeno Debast",
+          "slot": "LCB",
+          "status": "PROBABLE",
+          "doubt_reason": "Young but established in qualifying; replaces retired Vertonghen",
+          "position": "DEF"
+        },
+        {
+          "name": "Arthur Theate",
+          "slot": "LB",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "DEF"
+        },
+        {
+          "name": "Amadou Onana",
+          "slot": "CDM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Kevin De Bruyne",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history, age 34",
+          "position": "MID"
+        },
+        {
+          "name": "Kevin De Bruyne",
+          "slot": "CAM",
+          "status": "PROBABLE",
+          "doubt_reason": "Injury history, age 34",
+          "position": "MID"
+        },
+        {
+          "name": "Leandro Trossard",
+          "slot": "LW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Romelu Lukaku",
+          "slot": "ST",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Lois Openda",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        }
+      ],
+      "bench": [
+        {
+          "name": "Axel Witsel",
+          "slot": "CM",
+          "status": "PROBABLE",
+          "doubt_reason": "Age 37, squad role",
+          "position": "MID"
+        },
+        {
+          "name": "Charles De Ketelaere",
+          "slot": "CAM",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "MID"
+        },
+        {
+          "name": "Dodi Lukebakio",
+          "slot": "RW",
+          "status": "CERTAIN",
+          "doubt_reason": null,
+          "position": "FWD"
+        },
+        {
+          "name": "Thomas Meunier",
+          "slot": "RB",
+          "status": "PROBABLE",
+          "doubt_reason": null,
+          "position": "DEF"
+        }
+      ],
+      "key_absences": [
+        "Eden Hazard (retired)",
+        "Toby Alderweireld (retired)"
+      ],
+      "tactical_note": "Tedesco deploys a high-press 4-3-3 with De Bruyne as advanced playmaker behind Lukaku. Onana anchors midfield. Belgium's golden generation fading but Openda and De Ketelaere provide next-gen thrust.",
+      "fantasy_note": "Lukaku remains the primary goal threat and penalty taker. Openda offers strong differential upside on the right. De Bruyne has high assist ceiling if fit.",
+      "confidence": "MEDIUM",
+      "review": {
+        "approved": false,
+        "errors_found": [
+          {
+            "type": "RETIRED_PLAYER",
+            "description": "Jan Vertonghen announced his retirement from international football in 2024 after a long career with Belgium. He should not be listed in the 2026 squad.",
+            "player_affected": "Jan Vertonghen",
+            "correction": "Replace with an active Belgian centre-back such as Zeno Debast or Brandon Mechele."
+          },
+          {
+            "type": "RETIRED_PLAYER",
+            "description": "Axel Witsel retired from international football with Belgium after the 2022 World Cup and would not be part of the 2026 squad.",
+            "player_affected": "Axel Witsel",
+            "correction": "Replace with an active Belgian midfielder such as Maxim De Cuyper or Hans Vanaken."
+          },
+          {
+            "type": "FORMATION_MISMATCH",
+            "description": "Formation is stated as 4-3-3 but Kevin De Bruyne is listed in a CAM slot. A pure 4-3-3 does not have a CAM; it uses three central midfielders. This is a positional label inconsistency rather than a player count error — there are still 11 players — but the slot label 'CAM' does not exist in a 4-3-3.",
+            "player_affected": "Kevin De Bruyne",
+            "correction": "Relabel De Bruyne's slot as 'CM' or change the formation to 4-2-3-1 to accurately reflect the CAM role described in the tactical note."
+          }
+        ],
+        "corrected_players": [
+          {
+            "name": "Zeno Debast",
+            "slot": "LCB",
+            "status": "PROBABLE",
+            "doubt_reason": "Young but established in qualifying; replaces retired Vertonghen",
+            "position": "DEF"
+          },
+          {
+            "name": "Kevin De Bruyne",
+            "slot": "CM",
+            "status": "PROBABLE",
+            "doubt_reason": "Injury history, age 34",
+            "position": "MID"
+          }
+        ],
+        "reviewer_note": "The lineup contains two confirmed retirees (Vertonghen and Witsel) who should be removed from the squad, and a formation label inconsistency with De Bruyne listed as CAM in a declared 4-3-3.",
+        "confidence": "MEDIUM",
+        "reviewed_at": "2026-06-08T01:53:51.822Z"
+      }
+    }
+  }
+}

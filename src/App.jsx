@@ -747,11 +747,18 @@ function StartingXITab({ pool, mobile }) {
 // Squad builder (client-side). Optimises the STARTING XI's points and fills the 4 bench slots with the
 // CHEAPEST valid players — so it never wastes budget stacking 8 premium attackers (only 7 can start) and
 // it spends on a real starting keeper. 2/5/5/3, $100m, ≤3 per team; always returns a valid, complete 15.
-function buildBalancedSquad(pool, scoreFn, spMin) {
-  const elig = pool.filter(p => p.price > 0);
+function buildBalancedSquad(pool, scoreFn, spMin, opts = {}) {
+  const benchSp = opts.benchSpMin ?? 0.70, benchMinPts = opts.benchMinPts ?? 8;
+  const restricted = pool.filter(p => p.price > 0 && (!opts.candFilter || opts.candFilter(p)));
+  const elig = restricted.length >= 18 ? restricted : pool.filter(p => p.price > 0);  // never over-restrict
   const byScore = pos => elig.filter(p => p.pos === pos && (!spMin || (p.startProb || 0) >= spMin)).sort((a, b) => scoreFn(b) - scoreFn(a));
-  const byCheap = pos => elig.filter(p => p.pos === pos).sort((a, b) => a.price - b.price);
+  // BENCH = cheapest DEPENDABLE starters (real minutes + decent points), not budget passengers
+  const benchPool = pos => {
+    const good = elig.filter(p => p.pos === pos && (p.startProb || 0) >= benchSp && (p.pts_balanced || 0) >= benchMinPts).sort((a, b) => a.price - b.price);
+    return good.length ? good : elig.filter(p => p.pos === pos).sort((a, b) => a.price - b.price);
+  };
   const minP = elig.reduce((m, p) => Math.min(m, p.price), 99) || 3.8;
+  const benchMinP = 4.2;   // reserve enough that the 4 bench slots can be real starters, not $3.5 scrubs
   const FORMS = [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2],[5,4,1]];
   const BUDGET = 100, ORDER = ["GK","DEF","MID","FWD"];
   let best = null;
@@ -759,7 +766,7 @@ function buildBalancedSquad(pool, scoreFn, spMin) {
     const chosen = [], team = {}; let cost = 0, ok = true;
     const need = { GK:1, DEF:d, MID:m, FWD:f };
     const benchNeed = { GK:1, DEF:5-d, MID:5-m, FWD:3-f };
-    const benchReserve = (1 + (5-d) + (5-m) + (3-f)) * minP;   // keep cheap money for the 4 bench slots
+    const benchReserve = (1 + (5-d) + (5-m) + (3-f)) * benchMinP;   // reserve for DECENT bench
     let slotsLeft = 1 + d + m + f;
     for (const pos of ORDER) {                                  // STARTERS — best score, budget-aware
       let got = 0;
@@ -775,9 +782,9 @@ function buildBalancedSquad(pool, scoreFn, spMin) {
     if (!ok) continue;
     const xiPts = chosen.reduce((s, p) => s + scoreFn(p), 0);
     const starterIds = new Set(chosen.map(p => p.id));
-    for (const pos of ORDER) {                                  // BENCH — cheapest to complete 2/5/5/3
+    for (const pos of ORDER) {                                  // BENCH — cheapest dependable starter
       let got = 0;
-      for (const p of byCheap(pos)) {
+      for (const p of benchPool(pos)) {
         if (got >= benchNeed[pos]) break;
         if (chosen.includes(p) || (team[p.team] || 0) >= 3) continue;
         if (cost + p.price > BUDGET + 1e-9) continue;
@@ -788,20 +795,21 @@ function buildBalancedSquad(pool, scoreFn, spMin) {
     if (!ok || chosen.length !== 15) continue;
     if (!best || xiPts > best.xiPts) best = { chosen, starterIds, xiPts, form: `${d}-${m}-${f}`, cost };
   }
-  if (!best && spMin) return buildBalancedSquad(pool, scoreFn, 0);   // relax the minutes floor if infeasible
+  if (!best && (spMin || opts.candFilter)) return buildBalancedSquad(pool, scoreFn, spMin ? Math.max(0, spMin - 0.1) : 0, { ...opts, candFilter: null });
   return best;
 }
 function buildOptimalSquads(pool) {
   if (!pool || !pool.length) return { squads: null, meta: {} };
+  const scoutB = p => (p.own < 5 ? 3 : p.own < 10 ? 1.5 : 0);   // scout-bonus EV tilt
   const defs = {
-    safe:     { label: "Safe — Minutes Certainty", description: "Strong XI of nailed starters (start prob ≥ 0.80) + cheap bench. Maximises the starting XI's guaranteed group-stage points.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
-    balanced: { label: "Balanced — Core + Edge", description: "Best expected group-stage points from the starting XI; bench are budget enablers.", objective: "max XI Σ pts_balanced", score: p => p.pts_balanced || 0 },
-    diff:     { label: "Differential — Value Hunt", description: "Best points-per-$ starting XI — underpriced group-stage scorers; cheap bench.", objective: "max XI Σ (pts_balanced ÷ price)", score: p => (p.pts_balanced || 0) / p.price },
-    pure:     { label: "Pure Differential — Ceiling × Scarcity", description: "Explosive, low-owned starting XI ceiling; cheap bench.", objective: "max XI Σ pts_diff × 1/(own+1)", score: p => (p.pts_diff || 0) * (1 / ((p.own || 0) + 1)) },
+    safe:      { label: "Safe — Minutes Certainty", description: "Nailed-on starters only (start prob ≥ 0.80). Bench are the cheapest dependable starters, not passengers.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
+    balanced:  { label: "Balanced — Core + Edge", description: "Best expected group-stage points; every pick (incl. bench) is a real starter.", objective: "max XI Σ pts_balanced", score: p => p.pts_balanced || 0, sp: 0.75 },
+    diff:      { label: "Differential — Value Hunt", description: "Low-owned starters (<25%) with decent minutes & points, tilted toward scout-bonus picks.", objective: "max XI Σ (pts_balanced + scout-bonus EV) · own < 25%", score: p => (p.pts_balanced || 0) + scoutB(p), sp: 0.70, opts: { candFilter: p => p.own < 25, benchMinPts: 8 } },
+    psychopath:{ label: "Psychopath — Giant-Killers", description: "Starters at underdog / giant-killer sides (Morocco, Japan, NZ…) who could pull an upset — high ceiling, barely owned. For the brave.", objective: "max XI Σ pts_diff × giant-killer × scarcity", score: p => (p.pts_diff || 0) * (p.giant_killer_flag ? 2.2 : 1) * (p.own < 10 ? 1.3 : 1) * ((p.pos === "MID" || p.pos === "FWD") ? 1.15 : 1), sp: 0.70, opts: { candFilter: p => p.own < 35, benchMinPts: 7 } },
   };
   const squads = {}, meta = {};
   Object.entries(defs).forEach(([k, d]) => {
-    const r = buildBalancedSquad(pool, d.score, d.sp);
+    const r = buildBalancedSquad(pool, d.score, d.sp, d.opts);
     if (!r) { squads[k] = []; meta[k] = { label: d.label, description: d.description, objective: d.objective }; return; }
     const sq = r.chosen.map(p => ({ id: p.id, name: p.name, pos: p.pos, price: p.price, pts: Math.round((p.pts_balanced || 0) * 10) / 10, own: p.own, start: r.starterIds.has(p.id) }));
     squads[k] = sq;
@@ -1611,6 +1619,8 @@ function GlobalCSS() {
     html, body, #root { width: 100%; max-width: 100vw; margin: 0; overflow-x: hidden; }
     @keyframes dlPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
     @keyframes dlFlash { 0%,100%{background:#991b1b} 50%{background:#5c0f0f} }
+    @keyframes mkiShake { 0%{transform:translate(0,0) rotate(-4deg)} 20%{transform:translate(-1.5px,1px) rotate(3deg)} 40%{transform:translate(1.5px,-1px) rotate(-3deg)} 60%{transform:translate(-1px,-1px) rotate(4deg)} 80%{transform:translate(1px,1.5px) rotate(-2deg)} 100%{transform:translate(0,0) rotate(-4deg)} }
+    .mki-shake { animation: mkiShake .42s infinite; transform-origin:center; }
     .tabbar { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scroll-behavior: smooth; }
     .tabbar::-webkit-scrollbar { height: 3px; }
     .tabbar::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
@@ -2253,7 +2263,11 @@ export default function App() {
       <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:mobile?"12px 12px 0":"16px 20px 0" }}>
         <div style={{ maxWidth:1100, margin:"0 auto" }}>
           {!mobile && <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>}
-          <div style={{ display:"flex", alignItems:"baseline", gap:12, flexWrap:"wrap" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+            <div title="Mak kau ijau" style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:"0 0 auto" }}>
+              <img src="/img/makkauijau.png" alt="Mak kau ijau" className="mki-shake" style={{ height:mobile?40:52, width:"auto", display:"block", filter:"drop-shadow(0 2px 5px #000a)" }} />
+              <span style={{ fontSize:mobile?8:9, fontWeight:800, color:"#4ade80", marginTop:2, whiteSpace:"nowrap", fontStyle:"italic", letterSpacing:0.3 }}>Mak kau ijau</span>
+            </div>
             <div style={{ fontSize:mobile?20:24, fontWeight:900, letterSpacing:-1, color:"#fff" }}>
               <span style={{ fontSize:mobile?15:17, fontWeight:400, fontStyle:"italic", color:"#fff" }}>tucheliban's </span>
               WC26 <span style={{ color:"#f97316" }}>SCOUT</span>
