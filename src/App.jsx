@@ -355,7 +355,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 52px 46px 40px 58px 50px 60px 48px 34px 50px",
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 44px 38px 56px 48px 56px 84px 34px 48px",
           gap:8, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           {(() => { const SH = (k, label, align="right", title) => (
             <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
@@ -377,7 +377,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 52px 46px 40px 58px 50px 60px 48px 34px 50px",
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 44px 38px 56px 48px 56px 84px 34px 48px",
                 gap:8, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
@@ -567,38 +567,64 @@ function StartingXITab({ pool, mobile }) {
     const mf=(p.startProb??0.85)*(p.minsIfStarted??90)/90;
     return { pts:(p.startProb??0.85)*2 + r*mf, opp:f.opponent, win:f.oddsWin };
   };
+  const benchReason = (p, mi) => {
+    const wins=(p.fixtures||[]).map(f=>f?.oddsWin||0), bestMd=wins.indexOf(Math.max(...wins));
+    if (bestMd>mi) return `Tough MD${mi+1} fixture — key MD${bestMd+1} asset`;
+    if ((p.startProb||1)<0.88) return "Rotation risk — monitor";
+    if (p.own<10) return "Differential option — activate for easy fixtures";
+    if (p.price<5.0) return "Budget enabler — quality backup";
+    return `Strong backup — covers ${p.pos} injury risk`;
+  };
   const buildXI = (mi) => {
+    // budget-aware: optimise the 11 starters while RESERVING money for 4 cheap bench, so the
+    // whole 15-man squad fits $100m (the old version ignored budget and overspent on the bench too)
     const sc = pool.map(p=>{ const s=score(p,mi); return {...p, mdPts:s.pts, mdOpp:s.opp, mdWin:s.win}; });
-    const bp = k => sc.filter(p=>p.pos===k).sort((a,b)=>b.mdPts-a.mdPts);
+    const byScore = pos => sc.filter(p=>p.pos===pos).sort((a,b)=>b.mdPts-a.mdPts);
+    const byCheap = pos => sc.filter(p=>p.pos===pos).sort((a,b)=>a.price-b.price);
+    const minP = sc.reduce((mn,p)=>Math.min(mn,p.price),99)||3.8;
+    const BUDGET=100, ORDER=["GK","DEF","MID","FWD"];
     let best=null;
-    for (const [d,m,f] of [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2]]) {
-      const g=bp("GK")[0], D=bp("DEF").slice(0,d), M=bp("MID").slice(0,m), F=bp("FWD").slice(0,f);
-      if (!g||D.length<d||M.length<m||F.length<f) continue;
-      const arr=[g,...D,...M,...F], tot=arr.reduce((s,p)=>s+p.mdPts,0);
-      if (!best||tot>best.tot) best={form:`${d}-${m}-${f}`, dims:[d,m,f], arr, tot};
+    for (const [d,m,f] of [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2],[5,4,1]]) {
+      const chosen=[], team={}; let cost=0, ok=true;
+      const need={GK:1,DEF:d,MID:m,FWD:f};
+      const br=(1+(5-d)+(5-m)+(3-f))*minP; let sl=1+d+m+f;
+      for (const pos of ORDER) {
+        let got=0;
+        for (const p of byScore(pos)) {
+          if (got>=need[pos]) break;
+          if (chosen.includes(p)||(team[p.team]||0)>=3) continue;
+          const rs=(sl-1)*minP+br;
+          if (cost+p.price>BUDGET-rs+1e-9) continue;
+          chosen.push(p); cost+=p.price; team[p.team]=(team[p.team]||0)+1; got++; sl--;
+        }
+        if (got<need[pos]) { ok=false; break; }
+      }
+      if (!ok) continue;
+      const tot=chosen.reduce((s,p)=>s+p.mdPts,0);
+      if (!best||tot>best.tot) best={form:`${d}-${m}-${f}`, dims:[d,m,f], arr:chosen.slice(), tot, team:{...team}, cost};
     }
-    const [d,m,f]=best.dims, xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[88,...Array(d).fill(72),...Array(m).fill(50),...Array(f).fill(22)];
+    const [d,m,f]=best.dims;
+    // bench: cheapest players to complete 2/5/5/3, respecting team cap + remaining budget
+    const bn={GK:1,DEF:5-d,MID:5-m,FWD:3-f}, team={...best.team}; let cost=best.cost; const benchArr=[];
+    const xiIds=new Set(best.arr.map(p=>p.id));
+    for (const pos of ORDER) {
+      let got=0;
+      for (const p of byCheap(pos)) {
+        if (got>=bn[pos]) break;
+        if (xiIds.has(p.id)||benchArr.includes(p)||(team[p.team]||0)>=3) continue;
+        if (cost+p.price>BUDGET+1e-9) continue;
+        benchArr.push(p); cost+=p.price; team[p.team]=(team[p.team]||0)+1; got++;
+      }
+    }
+    const xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[88,...Array(d).fill(72),...Array(m).fill(50),...Array(f).fill(22)];
     const cap=best.arr.reduce((a,b)=>b.mdPts>a.mdPts?b:a);
     const cap2 = best.arr.filter(p=>p.id!==cap.id).reduce((a,b)=>((b.pts_diff||b.mdPts)>(a.pts_diff||a.mdPts)?b:a));
     const players=best.arr.map((p,i)=>({...p, x:xs[i], y:ys[i], pts_balanced:Math.round(p.mdPts*10)/10,
       is_captain:p.id===cap.id, is_vc:p.id===cap2.id, value:+(p.mdPts/p.price).toFixed(2)}));
-    // bench: best non-XI GK + next 3 outfield by this MD's pts
-    const xiIds = new Set(best.arr.map(p=>p.id));
-    const bGK = sc.filter(p=>p.pos==="GK" && !xiIds.has(p.id)).sort((a,b)=>b.mdPts-a.mdPts)[0];
-    const bOut = sc.filter(p=>p.pos!=="GK" && !xiIds.has(p.id)).sort((a,b)=>b.mdPts-a.mdPts).slice(0,3);
-    const benchReason = p => {
-      const wins=(p.fixtures||[]).map(f=>f?.oddsWin||0), bestMd=wins.indexOf(Math.max(...wins));
-      if (bestMd>mi) return `Tough MD${mi+1} fixture — key MD${bestMd+1} asset`;
-      if ((p.startProb||1)<0.88) return "Rotation risk — monitor";
-      if (p.own<10) return "Differential option — activate for easy fixtures";
-      if (p.price<5.0) return "Budget enabler — quality backup";
-      return `Strong backup — covers ${p.pos} injury risk`;
-    };
-    const bench = [...bOut, bGK].filter(Boolean).map((p,i)=>({...p, benchOrder:i+1,
-      benchPts:+((p.pts_balanced||0)*0.3).toFixed(1), benchReason:benchReason(p)}));
+    const bench = benchArr.map((p,i)=>({...p, benchOrder:i+1, pts_balanced:Math.round(p.mdPts*10)/10,
+      benchPts:+((p.mdPts||0)*0.3).toFixed(1), benchReason:benchReason(p,mi)}));
     return { formation:best.form, total_pts:best.tot, players, bench,
-      budget:+best.arr.reduce((s,p)=>s+p.price,0).toFixed(1),
-      captain:{...cap, opp:cap.mdOpp, win:cap.mdWin} };
+      budget:+cost.toFixed(1), captain:{...cap, opp:cap.mdOpp, win:cap.mdWin} };
   };
   const xis = [0,1,2].map(buildXI);
   const idSets = xis.map(x=>new Set(x.players.map(p=>p.id)));
@@ -649,6 +675,20 @@ function StartingXITab({ pool, mobile }) {
           </div>
         ))}
       </div>}
+      {!mobile && (
+        <div style={{ width:"100%", maxWidth:560, margin:"4px auto 0", background:"#06210f", border:`2px solid #1e6b3a`, borderRadius:10, padding:"8px 10px" }}>
+          <div style={{ fontSize:9, letterSpacing:2, color:"#7fa890", fontFamily:MONO, marginBottom:6 }}>BENCH (auto-sub order)</div>
+          <div style={{ display:"flex", gap:8 }}>
+            {(xi.bench||[]).map(b=>(
+              <div key={b.id} onClick={()=>setOpen(open===b.id?null:b.id)} style={{ textAlign:"center", cursor:"pointer", flex:"1 1 0", minWidth:0 }}>
+                <div style={{ width:40, height:40, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[b.pos], display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:"#fff", border:"2px solid #ffffff44" }}>{b.pts_balanced}</div>
+                <div style={{ fontSize:10, color:"#fff", fontWeight:600, marginTop:2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{b.name}</div>
+                <div style={{ fontSize:9, color:"#7fa890" }}>{b.pos} · ${b.price}m</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(260px,1fr))", gap:10, marginTop:16 }}>
         {xi.players.map(pl => (
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
@@ -704,42 +744,71 @@ function StartingXITab({ pool, mobile }) {
 }
 
 // ─── TAB: OPTIMAL SQUADS ─────────────────────────────────────────────────────────
-// greedy squad builder (client-side) — 2/5/5/3, $100m, ≤3 per team, budget-reserved so it always fills 15
-function pickGreedySquad(pool, scoreFn, startProbMin) {
-  const NEED = { GK: 2, DEF: 5, MID: 5, FWD: 3 };
-  const elig = pool.filter(p => p.price > 0 && (!startProbMin || (p.startProb || 0) >= startProbMin));
-  const minPrice = elig.reduce((m, p) => Math.min(m, p.price), 99) || 3.8;
-  const ranked = elig.slice().sort((a, b) => scoreFn(b) - scoreFn(a));
-  const chosen = [], teamCnt = {}; let spent = 0;
-  const cnt = pos => chosen.filter(p => p.pos === pos).length;
-  for (let pass = 0; pass < 6 && chosen.length < 15; pass++) {
-    for (const p of ranked) {
-      if (chosen.length >= 15) break;
-      if (chosen.indexOf(p) >= 0) continue;
-      if (cnt(p.pos) >= NEED[p.pos]) continue;
-      if ((teamCnt[p.team] || 0) >= 3) continue;
-      const reserve = (15 - chosen.length - 1) * minPrice;
-      if (spent + p.price > 100 - reserve + 1e-9) continue;
-      chosen.push(p); spent += p.price; teamCnt[p.team] = (teamCnt[p.team] || 0) + 1;
+// Squad builder (client-side). Optimises the STARTING XI's points and fills the 4 bench slots with the
+// CHEAPEST valid players — so it never wastes budget stacking 8 premium attackers (only 7 can start) and
+// it spends on a real starting keeper. 2/5/5/3, $100m, ≤3 per team; always returns a valid, complete 15.
+function buildBalancedSquad(pool, scoreFn, spMin) {
+  const elig = pool.filter(p => p.price > 0);
+  const byScore = pos => elig.filter(p => p.pos === pos && (!spMin || (p.startProb || 0) >= spMin)).sort((a, b) => scoreFn(b) - scoreFn(a));
+  const byCheap = pos => elig.filter(p => p.pos === pos).sort((a, b) => a.price - b.price);
+  const minP = elig.reduce((m, p) => Math.min(m, p.price), 99) || 3.8;
+  const FORMS = [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2],[5,4,1]];
+  const BUDGET = 100, ORDER = ["GK","DEF","MID","FWD"];
+  let best = null;
+  for (const [d, m, f] of FORMS) {
+    const chosen = [], team = {}; let cost = 0, ok = true;
+    const need = { GK:1, DEF:d, MID:m, FWD:f };
+    const benchNeed = { GK:1, DEF:5-d, MID:5-m, FWD:3-f };
+    const benchReserve = (1 + (5-d) + (5-m) + (3-f)) * minP;   // keep cheap money for the 4 bench slots
+    let slotsLeft = 1 + d + m + f;
+    for (const pos of ORDER) {                                  // STARTERS — best score, budget-aware
+      let got = 0;
+      for (const p of byScore(pos)) {
+        if (got >= need[pos]) break;
+        if (chosen.includes(p) || (team[p.team] || 0) >= 3) continue;
+        const reserve = (slotsLeft - 1) * minP + benchReserve;
+        if (cost + p.price > BUDGET - reserve + 1e-9) continue;
+        chosen.push(p); cost += p.price; team[p.team] = (team[p.team] || 0) + 1; got++; slotsLeft--;
+      }
+      if (got < need[pos]) { ok = false; break; }
     }
+    if (!ok) continue;
+    const xiPts = chosen.reduce((s, p) => s + scoreFn(p), 0);
+    const starterIds = new Set(chosen.map(p => p.id));
+    for (const pos of ORDER) {                                  // BENCH — cheapest to complete 2/5/5/3
+      let got = 0;
+      for (const p of byCheap(pos)) {
+        if (got >= benchNeed[pos]) break;
+        if (chosen.includes(p) || (team[p.team] || 0) >= 3) continue;
+        if (cost + p.price > BUDGET + 1e-9) continue;
+        chosen.push(p); cost += p.price; team[p.team] = (team[p.team] || 0) + 1; got++;
+      }
+      if (got < benchNeed[pos]) { ok = false; break; }
+    }
+    if (!ok || chosen.length !== 15) continue;
+    if (!best || xiPts > best.xiPts) best = { chosen, starterIds, xiPts, form: `${d}-${m}-${f}`, cost };
   }
-  return chosen;
+  if (!best && spMin) return buildBalancedSquad(pool, scoreFn, 0);   // relax the minutes floor if infeasible
+  return best;
 }
 function buildOptimalSquads(pool) {
   if (!pool || !pool.length) return { squads: null, meta: {} };
   const defs = {
-    safe:     { label: "Safe — Minutes Certainty", description: "Nailed starters only (start prob ≥ 0.80). Maximises guaranteed group-stage minutes.", objective: "max Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
-    balanced: { label: "Balanced — Core + Edge", description: "Best expected group-stage points across a $100m squad.", objective: "max Σ pts_balanced", score: p => p.pts_balanced || 0 },
-    diff:     { label: "Differential — Value Hunt", description: "Best points per $ — targets underpriced group-stage scorers.", objective: "max Σ (pts_balanced ÷ price)", score: p => (p.pts_balanced || 0) / p.price },
-    pure:     { label: "Pure Differential — Ceiling × Scarcity", description: "Explosive ceiling concentrated in low-owned players.", objective: "max Σ pts_diff × 1/(own+1)", score: p => (p.pts_diff || 0) * (1 / ((p.own || 0) + 1)) },
+    safe:     { label: "Safe — Minutes Certainty", description: "Strong XI of nailed starters (start prob ≥ 0.80) + cheap bench. Maximises the starting XI's guaranteed group-stage points.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
+    balanced: { label: "Balanced — Core + Edge", description: "Best expected group-stage points from the starting XI; bench are budget enablers.", objective: "max XI Σ pts_balanced", score: p => p.pts_balanced || 0 },
+    diff:     { label: "Differential — Value Hunt", description: "Best points-per-$ starting XI — underpriced group-stage scorers; cheap bench.", objective: "max XI Σ (pts_balanced ÷ price)", score: p => (p.pts_balanced || 0) / p.price },
+    pure:     { label: "Pure Differential — Ceiling × Scarcity", description: "Explosive, low-owned starting XI ceiling; cheap bench.", objective: "max XI Σ pts_diff × 1/(own+1)", score: p => (p.pts_diff || 0) * (1 / ((p.own || 0) + 1)) },
   };
   const squads = {}, meta = {};
   Object.entries(defs).forEach(([k, d]) => {
-    const sq = pickGreedySquad(pool, d.score, d.sp).map(p => ({ id: p.id, name: p.name, pos: p.pos, price: p.price, pts: Math.round((p.pts_balanced || 0) * 10) / 10, own: p.own }));
+    const r = buildBalancedSquad(pool, d.score, d.sp);
+    if (!r) { squads[k] = []; meta[k] = { label: d.label, description: d.description, objective: d.objective }; return; }
+    const sq = r.chosen.map(p => ({ id: p.id, name: p.name, pos: p.pos, price: p.price, pts: Math.round((p.pts_balanced || 0) * 10) / 10, own: p.own, start: r.starterIds.has(p.id) }));
     squads[k] = sq;
-    const tot = sq.reduce((s, p) => s + p.pts, 0), bud = sq.reduce((s, p) => s + p.price, 0);
+    const xi = sq.filter(p => p.start);
+    const tot = xi.reduce((s, p) => s + p.pts, 0), bud = sq.reduce((s, p) => s + p.price, 0);
     const own = sq.length ? sq.reduce((s, p) => s + (p.own || 0), 0) / sq.length : 0;
-    meta[k] = { label: d.label, description: d.description + " · client-side greedy on group-stage xPts", objective: d.objective,
+    meta[k] = { label: d.label, description: d.description + ` · ${r.form} · client-side, group-stage xPts`, objective: d.objective,
       total_pts: Math.round(tot), budget: Math.round(bud * 10) / 10, avg_own: Math.round(own * 10) / 10,
       n_scout: sq.filter(p => (p.own || 0) < 10).length, template_overlap_pct: Math.round(sq.filter(p => (p.own || 0) > 20).length / (sq.length || 1) * 100) };
   });
@@ -759,7 +828,7 @@ function OptimalSquadsTab({ squads, meta, mobile }) {
             <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, lineHeight:1.45 }}>{m.description||""}</div>
             <div style={{ fontSize:mobile?11:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:10, fontSize:11, color:DIM, marginBottom:10, borderBottom:`1px solid ${BORDER}`, paddingBottom:8 }}>
-              <span><b style={{color:TEXT}}>{m.total_pts??"—"}</b> pts</span>
+              <span><b style={{color:TEXT}}>{m.total_pts??"—"}</b> XI pts</span>
               <span><b style={{color:TEXT}}>${m.budget??"—"}m</b></span>
               <span>own <b style={{color:TEXT}}>{m.avg_own??"—"}%</b></span>
               <span>scout <b style={{color:"#4ade80"}}>{m.n_scout??0}</b></span>
@@ -768,9 +837,9 @@ function OptimalSquadsTab({ squads, meta, mobile }) {
             {["GK","DEF","MID","FWD"].map(pos => (
               <div key={pos} style={{ marginBottom:6 }}>
                 <div style={{ fontSize:9, color:POS_COLOR[pos], letterSpacing:1, marginBottom:2 }}>{pos}</div>
-                {sq.filter(p=>p.pos===pos).map(p => (
-                  <div key={p.id} style={{ display:"flex", justifyContent:"space-between", fontSize:11, padding:"2px 0" }}>
-                    <span style={{ color:"#e2e8f0" }}>{p.name}</span>
+                {sq.filter(p=>p.pos===pos).sort((a,b)=>(b.start?1:0)-(a.start?1:0)).map(p => (
+                  <div key={p.id} style={{ display:"flex", justifyContent:"space-between", fontSize:11, padding:"2px 0", opacity:p.start===false?0.5:1 }}>
+                    <span style={{ color:"#e2e8f0" }}>{p.name}{p.start===false && <span style={{ color:DIM, fontSize:9 }}> · bench</span>}</span>
                     <span style={{ color:DIM }}>${p.price} · {p.pts}</span>
                   </div>
                 ))}
@@ -1916,8 +1985,8 @@ function PlannerTab({ pool, mobile }) {
         <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 800, color: "#fff" }}>MD{md + 1} projected: <span style={{ color: "#f97316" }}>{mdTotal(md)} xPts</span></span>
       </div>
 
-      {/* PITCH — selected starting XI in auto-formation + bench */}
-      {!mobile && (
+      {/* PITCH — selected starting XI in auto-formation + bench (shown on mobile too) */}
+      {(
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Starting XI {formationValid ? `· ${formationStr}` : `· ${starters.length}/11`} {!formationValid && <span style={{ color: "#eab308", fontWeight: 400, fontSize: 11 }}>(pick a valid XI: 1 GK, 3-5 DEF, 2-5 MID, 1-3 FWD)</span>}</span>
@@ -2110,6 +2179,31 @@ export default function App() {
           q.pts_safe = +cp.pts_median.toFixed(1); q.pts_balanced = +cp.pts_mean.toFixed(1); q.pts_diff = +cp.pts_p90.toFixed(1);
           return q;
         });
+        // re-derive tier_score + tier letters (S/A/B/C/D) on the group-stage numbers, replacing the
+        // R pipeline's full-tournament tiers so the Tiers tab matches the rest of the dashboard
+        const tierScoreOf = q => {
+          const scoutEV = q.own < 5 ? 1.8 : q.own < 10 ? 0.6 : 0;
+          const capB = q.captainSlot === 3 ? 1 : q.captainSlot === 2 ? 0.5 : 0;
+          const setP = (q.penTaker ? 1 : 0) + (q.fkTaker ? 0.6 : 0) + (q.cornerTaker ? 0.4 : 0);
+          const cardPen = q.cardRisk === "high" ? 1.5 : q.cardRisk === "medium" ? 0.6 : 0;
+          const startPen = (1 - (q.startProb ?? 0.5)) * 4;          // rotation risk
+          const exitPen = (1 - ((q.advP ?? 50) / 100)) * 2;          // early-exit risk
+          return (q.pts_diff || 0) * 0.45 + ((q.pts_diff || 0) - (q.pts_safe || 0)) * 0.20 + scoutEV * 0.15 + ((q.intl_premium_score || 0)) * 0.10 + capB * 0.5 + setP * 0.4 - cardPen - startPen - exitPen;
+        };
+        merged.forEach(q => { q.tier_score = +tierScoreOf(q).toFixed(1); });
+        const ORD = ["S", "A", "B", "C", "D"];
+        const rankedT = merged.slice().sort((x, y) => y.tier_score - x.tier_score);
+        const NT = rankedT.length || 1;
+        rankedT.forEach((q, i) => {
+          const pct = i / NT;
+          let t = pct < 0.08 ? "S" : pct < 0.25 ? "A" : pct < 0.50 ? "B" : pct < 0.75 ? "C" : "D";
+          if ((q.startProb ?? 1) < 0.70 && (t === "S" || t === "A")) t = "B";        // not a nailed starter → cap at B
+          if ((q.advP ?? 100) < 40 && t === "S") t = "A";                              // unlikely to advance → no S
+          let idx = ORD.indexOf(t);
+          if (q.own > 55) idx = Math.min(4, idx + 1);                                   // heavy template → down one
+          if ((q.intl_premium_score || 0) > 1.5 && q.own < 10) idx = Math.max(0, idx - 1); // hidden edge → up one
+          q.tier = ORD[idx];
+        });
         setRawPlayers(merged);
         setDataTimestamp(Array.isArray(players) ? null : players.generated_at);
         setAnalytics(a); setLineups(l); setNews(nw);
@@ -2152,7 +2246,7 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Optimal Squads"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
