@@ -5,6 +5,16 @@ const BG = "#060d1a", CARD = "#0d1829", BORDER = "#1e2d42", TEXT = "#e2e8f0", DI
 const SANS = "'Inter','DM Sans',system-ui,sans-serif";
 const MONO = "'DM Mono','Fira Code','Courier New',monospace";  // badges / tier codes / pos tags only
 const POS_COLOR = { FWD:"#f97316", MID:"#22c55e", DEF:"#3b82f6", GK:"#a855f7" };
+// team → flag (players.json only carries `nat` for the 56 seed players, so derive from team)
+const TEAM_FLAG = {
+  "Algeria":"🇩🇿","Argentina":"🇦🇷","Australia":"🇦🇺","Austria":"🇦🇹","Belgium":"🇧🇪","Bosnia and Herzegovina":"🇧🇦",
+  "Brazil":"🇧🇷","Canada":"🇨🇦","Cape Verde":"🇨🇻","Colombia":"🇨🇴","Croatia":"🇭🇷","Curacao":"🇨🇼","Czech Republic":"🇨🇿",
+  "DR Congo":"🇨🇩","Ecuador":"🇪🇨","Egypt":"🇪🇬","England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","France":"🇫🇷","Germany":"🇩🇪","Ghana":"🇬🇭","Haiti":"🇭🇹",
+  "Iran":"🇮🇷","Iraq":"🇮🇶","Ivory Coast":"🇨🇮","Japan":"🇯🇵","Jordan":"🇯🇴","Mexico":"🇲🇽","Morocco":"🇲🇦","Netherlands":"🇳🇱",
+  "New Zealand":"🇳🇿","Norway":"🇳🇴","Panama":"🇵🇦","Paraguay":"🇵🇾","Portugal":"🇵🇹","Qatar":"🇶🇦","Saudi Arabia":"🇸🇦",
+  "Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Senegal":"🇸🇳","South Africa":"🇿🇦","South Korea":"🇰🇷","Spain":"🇪🇸","Sweden":"🇸🇪","Switzerland":"🇨🇭",
+  "Tunisia":"🇹🇳","Turkey":"🇹🇷","United States":"🇺🇸","Uruguay":"🇺🇾","Uzbekistan":"🇺🇿" };
+const flagOf = (p) => TEAM_FLAG[p.team] || p.nat || "🏳️";
 const ROLE_MULT = {
   SAME:[1,1], DEF_to_ATT:[1.40,1.60], ATT_to_DEF:[0.60,0.70],
   MID_to_ATT:[1.25,1.20], MID_to_DEF:[0.75,0.80], WING_to_STRIKER:[1.30,0.80],
@@ -336,14 +346,10 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       {/* filter panel */}
       <FilterPanel F={F} setF={setF} show={showFilters} setShow={setShowFilters} pool={allPlayers||[]} />
 
-      {/* sort tabs */}
-      <div style={{ display:"flex", gap:2, borderBottom:`1px solid ${BORDER}` }}>
-        {[["displayPts","xPts (Group Stage)"],["value","Value/£"],["price","Price"],["own","Own"],["tier","Tier"]].map(([k,l])=>(
-          <button key={k} className="sort-tab" onClick={()=>setSortBy(k)} style={{ padding:"6px 12px", border:"none",
-            borderBottom:`2px solid ${sortBy===k?"#f97316":"transparent"}`, background:"transparent",
-            color:sortBy===k?"#f97316":DIM, cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>{l}</button>
-        ))}
-        <span style={{ marginLeft:"auto", fontSize:10, color:DIM, alignSelf:"center", paddingRight:4 }}>{players.length>200?`top 200 of ${players.length}`:`${players.length} players`}</span>
+      {/* sort hint + count (sorting now lives on the clickable column headers) */}
+      <div style={{ display:"flex", alignItems:"center", borderBottom:`1px solid ${BORDER}`, padding:"6px 2px" }}>
+        <span style={{ fontSize:11, color:DIM }}>Tip: click any column header (xPTS·GS, VAL, MD1–3, OWN, TIER…) to sort high → low</span>
+        <span style={{ marginLeft:"auto", fontSize:10, color:DIM, paddingRight:4 }}>{players.length>200?`top 200 of ${players.length}`:`${players.length} players`}</span>
       </div>
 
       {/* last updated */}
@@ -357,7 +363,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
                 style={{ background:selected?.id===p.id?"#f9731610":CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"8px 11px", maxHeight:60, overflow:"hidden", cursor:"pointer" }}>
                 <div style={{ display:"flex", flexWrap:"nowrap", alignItems:"center", gap:6, overflow:"hidden" }}>
-                  <span style={{ color:"#fff", fontWeight:700, fontSize:14, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", flex:"1 1 auto", minWidth:0 }}>{p.nat} {p.name}</span>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:14, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", flex:"1 1 auto", minWidth:0 }}>{flagOf(p)} {p.name}</span>
                   <span title={POS_TIP[p.pos]} style={{ flex:"0 0 auto", fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
                   <span style={{ flex:"0 0 auto", fontSize:12, fontWeight:800, fontFamily:MONO, color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</span>
                 </div>
@@ -373,7 +379,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 48px 42px 36px 50px 34px 34px 34px 50px 80px 30px 42px",
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 48px 76px 28px 40px",
           gap:8, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           {(() => { const SH = (k, label, align="right", title) => (
             <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
@@ -384,6 +390,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           {SH("xmins","xMIN")}
           {SH("role","ROLE","center","Role shift vs club role: attacking shifts (↑, e.g. DEF→ATT) rank first, defensive shifts (↓) last. Click to sort high → low.")}
           {SH("displayPts","xPTS·GS","right","Group-stage xPts (sum of MD1–3) — same 3 games for every player")}
+          {SH("value","VAL","right","Value = group-stage xPts ÷ price ($m). Click to sort high → low.")}
           {SH("md0","MD1","right","Projected xPts in Matchday 1")}
           {SH("md1","MD2","right","Projected xPts in Matchday 2")}
           {SH("md2","MD3","right","Projected xPts in Matchday 3")}
@@ -397,14 +404,14 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 48px 42px 36px 50px 34px 34px 34px 50px 80px 30px 42px",
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 48px 76px 28px 40px",
                 gap:8, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
               <div style={{ fontSize:10, color:i<3?"#f97316":DIM }}>{i+1}</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-                  <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{p.nat} {p.name}</span>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{flagOf(p)} {p.name}</span>
                   <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
                   {p.qualifyingForm==="EXCELLENT" && <Badge bg="#052e16" bd="#22c55e" fg="#86efac" title="Excellent qualifying form — 0.6+ goal contributions/game in recent competitive internationals.">QF ★★★</Badge>}
                   {p.qualifyingForm==="GOOD" && <Badge bg="#0a1f1c" bd="#22c55e88" fg="#4ade80" title="Good qualifying form — 0.3–0.6 goal contributions/game in recent competitive internationals.">QF ★★</Badge>}
@@ -426,6 +433,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div title={`Predicted ${p.displayPts.toFixed(1)} pts (${riskMode}). Floor ${p.pts_median?.toFixed(1)} · ceiling ${p.pts_p90?.toFixed(1)}`}
                 style={{ textAlign:"right", fontSize:18, fontWeight:800, cursor:"help",
                 color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT }}>{p.displayPts.toFixed(1)}</div>
+              <div title={`${(p.value||0).toFixed(2)} group-stage xPts per $m`} style={{ textAlign:"right", fontSize:12, fontWeight:700, cursor:"help", color:p.value>3?"#f97316":p.value>2?"#22c55e":DIM }}>{(p.value||0).toFixed(1)}</div>
               {[0,1,2].map(mi => { const ms = mdScore(p, mi); return (
                 <div key={mi} title={`MD${mi+1}${ms.opp?` vs ${ms.opp}`:""} — projected ${ms.pts.toFixed(1)} pts`} style={{ textAlign:"right", fontSize:12, fontWeight:700, cursor:"help", color: ms.pts>6?"#f97316":ms.pts>4?"#22c55e":DIM }}>{ms.pts.toFixed(1)}</div>
               ); })}
@@ -455,7 +463,7 @@ function PlayerDetail({ p, riskMode, onClose }) {
       marginTop:10, boxShadow:`0 0 30px ${posCol}18` }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14, flexWrap:"wrap", gap:10 }}>
         <div>
-          <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{p.nat} {p.name}</div>
+          <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{flagOf(p)} {p.name}</div>
           <div style={{ fontSize:12, color:DIM, marginTop:3 }}>{p.team} · {p.pos} · ${p.price}m · {p.own}% owned · {cleanCluster(p.team_cluster)}</div>
         </div>
         <button onClick={onClose} style={{ background:"transparent", border:`1px solid ${BORDER}`, color:DIM,
@@ -902,7 +910,7 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
       <div key={p.id} onClick={()=>setOpen(open===p.id?null:p.id)}
         style={{ background:CARD, border:`1.5px solid ${tc}`, borderRadius:10, padding:"11px 13px", cursor:"pointer", marginBottom:8, boxShadow:p.tier==="S"?"0 0 12px #fbbf2422":"none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-          <span style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{p.nat} {p.name}</span>
+          <span style={{ color:"#fff", fontWeight:700, fontSize:14 }}>{flagOf(p)} {p.name}</span>
           <span style={{ fontSize:12, color:tc, fontWeight:800 }} title={TIER_TIP[p.tier]}>{(p.tier_score||0).toFixed(0)}</span>
         </div>
         <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:6, flexWrap:"wrap" }}>
@@ -950,7 +958,7 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
                 return (
                   <div key={b+pos} style={{ background:CARD, border:`2px solid ${tc}`, borderRadius:8, padding:"9px 11px" }}>
                     <div style={{ fontSize:9, color:DIM, letterSpacing:1, marginBottom:3 }}>BEST {b} {pos}</div>
-                    <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{best.nat} {best.name}</div>
+                    <div style={{ color:"#fff", fontWeight:700, fontSize:13 }}>{TEAM_FLAG[best.team]||best.nat||"🏳️"} {best.name}</div>
                     <div style={{ fontSize:11, color:DIM, marginTop:2 }}><b style={{color:tc}}>{best.tier}</b> · {xptsOf(best)?.toFixed(1)} xPts · ${best.price}m</div>
                     <div style={{ fontSize:10, color:"#94a3b8", marginTop:3, fontStyle:"italic" }}>{(n.one_line_verdict||n.headline||"").slice(0,70)}</div>
                   </div>
@@ -1954,7 +1962,7 @@ function PlannerTab({ pool, mobile }) {
       <div key={p.id} style={{ background: isS ? "#0f1c2d" : CARD, border: `1px solid ${isC ? "#fbbf24" : isVC ? "#cbd5e1" : isS ? "#22c55e55" : BORDER}`, borderRadius: 8, padding: "8px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: 10, color: POS_COLOR[p.pos], fontFamily: MONO, width: 26 }}>{p.pos}</span>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>
-          <div style={{ color: "#fff", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {isC && <span style={{ color: "#fbbf24" }}>©</span>}{isVC && <span style={{ color: "#cbd5e1" }}>Ⓥ</span>} {scout && <span title="Scout-bonus eligible (<5% owned): +2 pts if returns >4">🔍</span>}</div>
+          <div style={{ color: "#fff", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{flagOf(p)} {p.name} {isC && <span style={{ color: "#fbbf24" }}>©</span>}{isVC && <span style={{ color: "#cbd5e1" }}>Ⓥ</span>} {scout && <span title="Scout-bonus eligible (<5% owned): +2 pts if returns >4">🔍</span>}</div>
           <div style={{ fontSize: 10, color: DIM }}>{p.team} · ${p.price}m · {opp ? `MD${md + 1} vs ${opp}` : `no MD${md + 1} fixture`} · <b style={{ color: pts > 6 ? "#f97316" : pts > 4 ? "#22c55e" : DIM }}>{pts} xP</b></div>
         </div>
         <button onClick={() => toggleStarter(p.id)} title="Toggle starter / bench" style={{ ...btn(isS), padding: "4px 8px" }}>{isS ? "XI" : "sub"}</button>
@@ -2072,7 +2080,7 @@ function PlannerTab({ pool, mobile }) {
                     <div key={p.id} onClick={() => { if (subbingId) { if (canIn) doSub(subbingId, p.id); } else toggleStarter(p.id); }}
                       title={subbingId ? (canIn ? "Swap in" : "Can't swap — would break the formation") : "Move into starting XI"}
                       style={{ background: CARD, border: `1px solid ${canIn ? "#22c55e" : BORDER}`, borderRadius: 8, padding: "6px 10px", cursor: dim ? "not-allowed" : "pointer", minWidth: 130, opacity: dim ? 0.4 : 1, boxShadow: canIn ? "0 0 8px #22c55e55" : "none" }}>
-                      <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}><span style={{ color: POS_COLOR[p.pos], fontFamily: MONO, fontSize: 10 }}>{p.pos}</span> {p.nat} {p.name}</div>
+                      <div style={{ fontSize: 12, color: "#fff", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}><span style={{ color: POS_COLOR[p.pos], fontFamily: MONO, fontSize: 10 }}>{p.pos}</span> {flagOf(p)} {p.name}</div>
                       <div style={{ fontSize: 10, color: DIM }}>{ptsOf(p, md)} xP · ${p.price}m</div>
                     </div>
                   );
@@ -2114,7 +2122,7 @@ function PlannerTab({ pool, mobile }) {
               .map(p => ({ p, s: ptsOf(p, md) })).sort((a, b) => b.s - a.s).slice(0, 40)
               .map(({ p, s }) => (
                 <div key={p.id} onClick={() => addPlayer(p)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", border: `1px solid ${BORDER}33` }}>
-                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, flex: "1 1 auto", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nat} {p.name} {scoutEligible(p) && "🔍"}</span>
+                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, flex: "1 1 auto", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{flagOf(p)} {p.name} {scoutEligible(p) && "🔍"}</span>
                   <span style={{ fontSize: 11, color: DIM }}>{p.team}</span>
                   <span style={{ fontSize: 11, color: "#94a3b8" }}>${p.price}m</span>
                   <span style={{ fontSize: 12, color: s > 6 ? "#f97316" : s > 4 ? "#22c55e" : DIM, fontWeight: 700, width: 34, textAlign: "right" }}>{s}</span>
@@ -2150,7 +2158,7 @@ function OddsTab({ pool, lineups, mobile }) {
   if (!pool || !pool.length) return <div style={{ color: DIM }}>No data.</div>;
   const teams = {};
   pool.forEach(p => {
-    if (!teams[p.team]) teams[p.team] = { flag: lineups?.teams?.[p.team]?.flag || p.nat || "", fx: {}, players: [] };
+    if (!teams[p.team]) teams[p.team] = { flag: lineups?.teams?.[p.team]?.flag || TEAM_FLAG[p.team] || p.nat || "", fx: {}, players: [] };
     teams[p.team].players.push(p);
     (p.fixtures || []).forEach((f, idx) => { teams[p.team].fx[idx] = f; });   // key by 0-based MD index (matches mdScore)
   });
