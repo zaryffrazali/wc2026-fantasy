@@ -1,4 +1,41 @@
 {
-  "generated_at": "2026-06-07T12:00:00Z",
-  "items": []
+  "generated_at": "2026-06-08T12:00:00Z",
+  "items": [
+    {
+      "id": 1,
+      "timestamp": null,
+      "category": "LINEUP",
+      "priority": "MEDIUM",
+      "player_name": null,
+      "team": "General",
+      "headline": "News feed loading — check back shortly",
+      "summary": "AI-powered news feed will populate with WC2026 injury updates, lineup news and press conference reports during the tournament.",
+      "fantasy_impact": "NEUTRAL",
+      "source_hint": "WC26 Scout"
+    },
+    {
+      "id": 2,
+      "timestamp": null,
+      "category": "INJURY",
+      "priority": "LOW",
+      "player_name": null,
+      "team": "General",
+      "headline": "Injury & availability updates arrive during the tournament",
+      "summary": "Live injury and availability news is fetched before each matchday once the World Cup begins.",
+      "fantasy_impact": "NEUTRAL",
+      "source_hint": "WC26 Scout"
+    },
+    {
+      "id": 3,
+      "timestamp": null,
+      "category": "GENERAL",
+      "priority": "LOW",
+      "player_name": null,
+      "team": "General",
+      "headline": "Use the AI Lineups tab for predicted XIs",
+      "summary": "Until live news is active, use the AI Lineups tab for predicted starting elevens and the Players tab for projections.",
+      "fantasy_impact": "NEUTRAL",
+      "source_hint": "WC26 Scout"
+    }
+  ]
 }

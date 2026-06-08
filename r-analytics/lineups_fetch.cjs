@@ -13,7 +13,7 @@ const TEAMS_PER_RUN = 8;
 const DELAY_MS = 3000;             // between teams
 const REVIEW_DELAY_MS = 3000;      // between Agent 1 and Agent 2 for the same team (rate-limit buffer)
 const CHECKPOINT_FILE = "public/data/lineups_checkpoint.json";
-const MODEL = "claude-sonnet-4-6"; // Haiku's training data is too outdated for 2026 squads
+const MODEL = "claude-opus-4-6"; // Opus: most recent/accurate 2026 squad knowledge (expensive — manual runs only)
 const PREDICT_MAX_TOKENS = 1500;   // 11 starters + 4 bench + notes
 const REVIEW_MAX_TOKENS = 1000;
 

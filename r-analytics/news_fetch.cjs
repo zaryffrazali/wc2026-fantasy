@@ -24,7 +24,19 @@ Return a JSON ARRAY of news items (most recent first, max 15), each item:
   "summary": "1-2 sentence summary",
   "fantasy_impact": "what it means for fantasy managers, one sentence",
   "source_hint": "publication / source name"
-}`;
+}
+
+CRITICAL: Your entire response must be a single valid JSON array starting with [ and ending with ].
+Do not include any text before or after the JSON.
+Do not use markdown code fences.
+Do not include any explanation.
+Start your response with [ immediately.`;
+
+const PLACEHOLDER_NEWS = [
+  { id: 1, timestamp: null, category: "LINEUP", priority: "MEDIUM", player_name: null, team: "General", headline: "News feed loading — check back shortly", summary: "AI-powered news feed will populate with WC2026 injury updates, lineup news and press conference reports during the tournament.", fantasy_impact: "NEUTRAL", source_hint: "WC26 Scout" },
+  { id: 2, timestamp: null, category: "INJURY", priority: "LOW", player_name: null, team: "General", headline: "Injury & availability updates arrive during the tournament", summary: "Live injury and availability news is fetched before each matchday once the World Cup begins.", fantasy_impact: "NEUTRAL", source_hint: "WC26 Scout" },
+  { id: 3, timestamp: null, category: "GENERAL", priority: "LOW", player_name: null, team: "General", headline: "Use the AI Lineups tab for predicted XIs", summary: "Until live news is active, use the AI Lineups tab for predicted starting elevens and the Players tab for projections.", fantasy_impact: "NEUTRAL", source_hint: "WC26 Scout" },
+];
 
 async function callApi() {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -37,7 +49,7 @@ async function callApi() {
       model: "claude-sonnet-4-6", max_tokens: 1500,
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }],
       system: SYSTEM,
-      messages: [{ role: "user", content: "Search for the latest WC2026 fantasy-relevant news (injuries, lineups, suspensions, training, form). Return a JSON array only, most recent first." }],
+      messages: [{ role: "user", content: "Search for the latest WC2026 fantasy-relevant news (injuries, lineups, suspensions, training, form). Return a JSON array only, most recent first. Return the JSON array now, starting with [:" }],
     }),
   });
   if (!res.ok) {
@@ -76,14 +88,16 @@ function logResponse(data) {
   return text;
 }
 
-// don't crash the workflow and don't wipe good data: keep existing items if present, else write []
+// never leave the tab empty: keep existing real items if present, else write 3 placeholders
 function writeFallback() {
   try {
     const ex = JSON.parse(fs.readFileSync(OUT, "utf8"));
-    if (Array.isArray(ex.items) && ex.items.length) { console.log(`kept existing news.json (${ex.items.length} items)`); return; }
+    if (Array.isArray(ex.items) && ex.items.length && !ex.items.every((i) => i.source_hint === "WC26 Scout")) {
+      console.log(`kept existing news.json (${ex.items.length} items)`); return;
+    }
   } catch { /* no/!invalid existing file */ }
-  fs.writeFileSync(OUT, JSON.stringify({ generated_at: new Date().toISOString(), items: [] }, null, 2));
-  console.log("wrote empty news.json");
+  fs.writeFileSync(OUT, JSON.stringify({ generated_at: new Date().toISOString(), items: PLACEHOLDER_NEWS }, null, 2));
+  console.log("wrote placeholder news.json (3 items)");
 }
 
 (async () => {
@@ -105,6 +119,7 @@ function writeFallback() {
   }
 
   items = items.slice(0, 15);
+  if (!items.length) { console.log("0 items parsed → writing placeholder fallback"); writeFallback(); process.exit(0); }
   fs.writeFileSync(OUT, JSON.stringify({ generated_at: new Date().toISOString(), items }, null, 2));
   console.log(`✓ News fetched: ${items.length} items → public/data/news.json`);
   if (TEST) console.log("\nPARSED ITEMS:\n", JSON.stringify(items, null, 2));

@@ -532,7 +532,7 @@ function StartingXITab({ pool, mobile }) {
       const arr=[g,...D,...M,...F], tot=arr.reduce((s,p)=>s+p.mdPts,0);
       if (!best||tot>best.tot) best={form:`${d}-${m}-${f}`, dims:[d,m,f], arr, tot};
     }
-    const [d,m,f]=best.dims, xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[6,...Array(d).fill(28),...Array(m).fill(55),...Array(f).fill(82)];
+    const [d,m,f]=best.dims, xs=[50,...ROW(d),...ROW(m),...ROW(f)], ys=[88,...Array(d).fill(72),...Array(m).fill(50),...Array(f).fill(22)];
     const cap=best.arr.reduce((a,b)=>b.mdPts>a.mdPts?b:a);
     const cap2 = best.arr.filter(p=>p.id!==cap.id).reduce((a,b)=>((b.pts_diff||b.mdPts)>(a.pts_diff||a.mdPts)?b:a));
     const players=best.arr.map((p,i)=>({...p, x:xs[i], y:ys[i], pts_balanced:Math.round(p.mdPts*10)/10,
@@ -564,6 +564,8 @@ function StartingXITab({ pool, mobile }) {
 
   return (
     <div>
+      <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:2 }}>Econometrics Best Fantasy XI</div>
+      <div style={{ fontSize:11, color:DIM, marginBottom:12 }}>Model-selected optimal XI · Built from xPts, role regression, fixture difficulty and LP optimization</div>
       <div style={{ display:"flex", gap:4, marginBottom:12 }}>
         {[0,1,2].map(i=>(
           <button key={i} onClick={()=>setMd(i)} style={{ padding:"7px 16px", borderRadius:6, fontFamily:"inherit", fontSize:13, cursor:"pointer", fontWeight:md===i?700:400,
@@ -583,21 +585,21 @@ function StartingXITab({ pool, mobile }) {
       {!mobile && <div style={{ position:"relative", width:"100%", maxWidth:560, margin:"0 auto", aspectRatio:"3/4",
         background:"linear-gradient(#0a3d1f,#072d17)", border:`2px solid #1e6b3a`, borderRadius:10 }}>
         <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
-        <div style={{ position:"absolute", left:"30%", right:"30%", top:0, height:"14%", border:"1px solid #2e7d4f", borderTop:"none" }} />
+        <div style={{ position:"absolute", left:"30%", right:"30%", bottom:0, height:"14%", border:"1px solid #2e7d4f", borderBottom:"none" }} />
         {xi.players.map(pl => (
           <div key={pl.id} onClick={()=>setOpen(open===pl.id?null:pl.id)}
             style={{ position:"absolute", left:`${pl.x}%`, top:`${pl.y}%`, transform:"translate(-50%,-50%)",
               textAlign:"center", cursor:"pointer", width:84 }}>
-            <div style={{ width:40, height:40, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
-              alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:800, color:"#06121f",
+            <div style={{ width:52, height:52, margin:"0 auto", borderRadius:"50%", background:POS_COLOR[pl.pos], display:"flex",
+              alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:800, color:"#fff",
               border: pl.is_captain ? "3px solid #fbbf24" : pl.is_vc ? "3px solid #cbd5e1" : "2px solid #ffffff55", position:"relative" }}>
               {pl.pts_balanced}
-              {pl.is_captain && <span style={{ position:"absolute", top:-9, right:-9, fontSize:10, fontWeight:800, background:"#fbbf24", color:"#000", borderRadius:"50%", width:17, height:17, display:"flex", alignItems:"center", justifyContent:"center" }}>C</span>}
-              {pl.is_vc && <span style={{ position:"absolute", top:-9, right:-11, fontSize:8, fontWeight:800, background:"#cbd5e1", color:"#000", borderRadius:8, padding:"1px 3px" }}>VC</span>}
+              {pl.is_captain && <span style={{ position:"absolute", top:-6, right:-6, width:18, height:18, fontSize:10, fontWeight:800, background:"#fbbf24", color:"#000", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>C</span>}
+              {pl.is_vc && <span style={{ position:"absolute", top:-6, right:-6, width:18, height:18, fontSize:8, fontWeight:800, background:"#cbd5e1", color:"#000", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center" }}>VC</span>}
             </div>
-            <div style={{ fontSize:11, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000" }}>{pl.name}</div>
-            {pl.is_captain && <div style={{ fontSize:8, color:"#fbbf24", fontWeight:700 }}>2× pts</div>}
-            {pl.is_vc && <div style={{ fontSize:8, color:"#cbd5e1" }}>2× if C DNP</div>}
+            <div style={{ fontSize:12, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000", maxWidth:80, marginLeft:"auto", marginRight:"auto", lineHeight:1.1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{pl.name}</div>
+            {pl.is_captain && <div style={{ fontSize:10, color:"#f97316", fontWeight:700 }}>2× pts</div>}
+            {pl.is_vc && <div style={{ fontSize:10, color:"#f97316" }}>2× if C DNP</div>}
           </div>
         ))}
       </div>}
@@ -1075,15 +1077,22 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
     const L = teamsData[t];
     if (!L) return { txt:"○ Not yet fetched", c:DIM };
     if (L.confidence==="SEED_DATA") return { txt:"🤖 AI predicted lineup — based on squad knowledge", c:"#60a5fa" };
-    return { txt:"🤖 AI predicted · updated daily", c:"#60a5fa" };
+    return { txt:"🤖 AI predicted · updated manually before each matchday", c:"#60a5fa" };
   };
   const status = statusFor(sel);
 
   return (
     <div>
       <div style={{ marginBottom:4, fontSize:16, fontWeight:800, color:"#fff" }}>📋 Predicted Lineups — WC2026</div>
-      <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI web-search based · latest press conferences & team news · updates daily at 3pm MYT</div>
+      <div style={{ fontSize:11, color:DIM, marginBottom:2 }}>AI squad-knowledge based · Updated manually before each matchday</div>
       <div style={{ fontSize:11, color:"#475569", marginBottom:12 }}>Last updated: {lineups.generated_at}</div>
+
+      {/* prominent AI disclaimer (always shown) */}
+      <div style={{ background:"#1e1010", border:"1px solid #7f1d1d", color:"#fca5a5", borderRadius:10, padding:"12px 14px", marginBottom:14, fontSize:12, lineHeight:1.55 }}>
+        <div style={{ fontWeight:800, marginBottom:4 }}>🤖 AI-Predicted Lineups — Powered by Claude AI</div>
+        These lineups are generated by artificial intelligence based on squad knowledge and training data. They are NOT scraped from official sources and may contain errors, outdated information, or hallucinations.
+        <div style={{ marginTop:6 }}>Always verify against official team announcements before making fantasy decisions. Take with a heap of salt.</div>
+      </div>
 
       {/* selector row */}
       <div style={{ display:"flex", gap:10, flexWrap:"wrap", alignItems:"center", marginBottom:8 }}>
@@ -1373,7 +1382,7 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the Causal tab first</b> — open the Causal tab → Teams to Attack section. Find the weakest defences facing your matchday; these are captain targets.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Use smart filters</b> — "MD1 Captain Picks" surfaces late-kickoff players with easy fixtures.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check for mispricing</b> — "Role Arbitrage" finds players deployed more offensively internationally than their club price implies.</li>
-        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — predicted lineups are generated by Claude using its knowledge of WC 2026 squads and typical national-team formations. They are refreshed daily and represent the model's best assessment of likely starting XIs based on known squad compositions, injuries, and manager preferences. Confirm key picks are in the predicted XI; if DOUBT, consider alternatives.</li>
+        <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Validate with Lineups</b> — predicted lineups are generated by Claude using its knowledge of WC 2026 squads and typical national-team formations. They are updated manually before each matchday and represent the model's best assessment of likely starting XIs based on known squad compositions, injuries, and manager preferences. Confirm key picks are in the predicted XI; if DOUBT, consider alternatives.</li>
         <li style={{ marginBottom:8 }}><b style={{color:"#fff"}}>Check the News tab</b> — Check the 📡 News tab for the latest injury and lineup news before each matchday deadline. One late withdrawal can change your captain decision.</li>
         <li><b style={{color:"#fff"}}>Use Optimal Squads for budget</b> — Start from the Balanced squad, then swap in your differentials.</li>
       </ol>
@@ -1628,7 +1637,7 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Starting XI"],["lineups","📋 Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["lineups","📋 AI Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
