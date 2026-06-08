@@ -913,6 +913,47 @@ const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""
 const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
   : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
 
+function LineupReview({ L }) {
+  const [open, setOpen] = useState(false);
+  const conf = L.confidence, rev = L.review || {};
+  const nCorr = (rev.errors_found || []).length;
+  let b;
+  if (conf === "SEED_DATA" || conf === "AI_PREDICTED") b = { txt:"🤖 AI predicted lineup — based on squad knowledge", bg:"#0a1322", bd:BORDER, fg:"#60a5fa" };
+  else if (conf === "UNREVIEWED") b = { txt:"🔍 Unreviewed prediction", bg:"#1e293b", bd:"#334155", fg:"#94a3b8" };
+  else if (conf === "LOW") b = { txt:"⚠️ Low confidence — verify independently", bg:"#3a1e00", bd:"#b45309", fg:"#fb923c" };
+  else if (conf === "MEDIUM" || nCorr > 0) b = { txt:`⚠️ Reviewed — ${nCorr} correction${nCorr === 1 ? "" : "s"} applied`, bg:"#3d2a00", bd:"#a16207", fg:"#eab308" };
+  else if (conf === "HIGH") b = { txt:"✅ Reviewed — high confidence", bg:"#052e16", bd:"#15803d", fg:"#4ade80" };
+  else b = { txt:`🔍 ${conf || "Unreviewed"}`, bg:"#1e293b", bd:"#334155", fg:"#94a3b8" };
+  const details = rev.reviewer_note || nCorr > 0;
+  return (
+    <div style={{ marginTop:6 }}>
+      <span style={{ display:"inline-block", fontSize:11, fontWeight:600, background:b.bg, border:`1px solid ${b.bd}`, color:b.fg, borderRadius:6, padding:"3px 9px" }}>{b.txt}</span>
+      {details && <span onClick={()=>setOpen(o=>!o)} style={{ marginLeft:8, fontSize:11, color:DIM, cursor:"pointer" }}>Show review details {open?"↑":"↓"}</span>}
+      {open && details && (
+        <div style={{ marginTop:6, background:BG, border:`1px solid ${BORDER}`, borderRadius:8, padding:"8px 11px", fontSize:11, color:"#c8c8c8", lineHeight:1.5 }}>
+          {rev.reviewer_note && <div style={{ marginBottom: nCorr ? 6 : 0 }}><b style={{ color:DIM }}>Reviewer:</b> {rev.reviewer_note}</div>}
+          {(rev.errors_found || []).map((e,i)=>(
+            <div key={i} style={{ color:"#ff8c42", marginBottom:3 }}>• <b>{e.type}</b>{e.player_affected ? ` (${e.player_affected})` : ""} — {e.description}{e.correction ? ` → ${e.correction}` : ""}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FullSquad({ players }) {
+  const [open, setOpen] = useState(false);
+  if (!players || !players.length) return null;
+  return (
+    <div style={{ marginTop:10 }}>
+      <span onClick={()=>setOpen(o=>!o)} style={{ fontSize:11, color:DIM, cursor:"pointer" }}>{open ? "− Hide full squad" : `+ Show full squad (${players.length} players)`}</span>
+      {open && <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:6 }}>
+        {players.map((p,i)=><span key={i} style={{ fontSize:11, background:BG, border:`1px solid ${BORDER}`, borderRadius:14, padding:"3px 9px", color:"#cbd5e1" }}>{p.name} <span style={{ color:DIM }}>{p.slot || p.position}</span></span>)}
+      </div>}
+    </div>
+  );
+}
+
 function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cmp, setCmp }) {
   const [compareMode, setCompareMode] = useState(false);
   if (!lineups) return <div style={{ color:DIM }}>Loading lineups… (run <code>npm run fetch-lineups</code> to populate)</div>;
@@ -926,45 +967,55 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
   const renderLineup = (team) => {
     const L = teamsData[team];
     if (!L) return <div style={{ color:DIM, padding:12 }}>No lineup fetched for {team}. Run <code>npm run fetch-lineups</code>.</div>;
-    const confTxt = { HIGH:"✓ High confidence — confirmed lineup", MEDIUM:"~ Medium confidence — recent form + injury news", LOW:"? Low confidence — limited info", SEED_DATA:"🤖 AI predicted lineup — based on squad knowledge", AI_PREDICTED:"🤖 AI predicted lineup — based on squad knowledge" }[L.confidence] || L.confidence;
     const picks = (L.players||[]).map(pl=>({pl, m:matchPool(pl.name, team)})).filter(x=>x.m)
       .map(x=>({...x.pl, m:x.m})).sort((a,b)=>(b.m.pts_balanced||0)-(a.m.pts_balanced||0));
     return (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"14px 16px", marginTop:8 }}>
         <div style={{ display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
           <div style={{ fontSize:16, fontWeight:800, color:"#fff" }}>{L.flag} {L.team} <span style={{ fontSize:12, color:DIM, fontWeight:400 }}>{L.formation} · {L.manager}</span></div>
-          <div style={{ fontSize:11, color: L.confidence==="AI_PREDICTED"||L.confidence==="SEED_DATA"?"#60a5fa":L.confidence==="HIGH"?"#4ade80":L.confidence==="LOW"?"#ff8c42":"#eab308" }}>{confTxt}</div>
         </div>
+        <LineupReview L={L} />
         <div style={{ display:"grid", gridTemplateColumns: mobile ? "1fr" : "minmax(220px,1fr) minmax(220px,1.2fr)", gap:14, marginTop:10 }}>
-          {/* pitch — hidden on very narrow screens (<480) in favour of the list */}
+          {/* pitch — hidden on very narrow screens (<480); positions computed per line with ≥18% x spacing */}
           {!narrow && <div style={{ position:"relative", aspectRatio:"3/4", maxWidth:"100%", background:"linear-gradient(#0a3d1f,#072d17)", border:"2px solid #1e6b3a", borderRadius:10 }}>
             <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
-            {(L.players||[]).map((pl,i)=>{ const xy=SLOT_XY[pl.slot]||[50, 50-(["GK","DEF","MID","FWD"].indexOf(pl.position)-1.5)*22];
-              return (
-                <div key={i} title={pl.doubt_reason||pl.status} style={{ position:"absolute", left:`${xy[0]}%`, top:`${xy[1]}%`, transform:"translate(-50%,-50%)", textAlign:"center", width:70 }}>
-                  <div style={{ width:30, height:30, margin:"0 auto", borderRadius:"50%", background:luStatusColor(pl.status,pl.position), border:"2px solid #ffffff55", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#06121f", fontWeight:800 }}>
+            {(() => {
+              const players = L.players || [];
+              const midN = players.filter(p=>p.position==="MID").length, fwdN = players.filter(p=>p.position==="FWD").length;
+              const yOf = { GK:88, DEF:72, MID: midN>=5?48:50, FWD: fwdN<=2?20:22 };
+              const positioned = [];
+              ["GK","DEF","MID","FWD"].forEach(ln => {
+                const arr = players.filter(p=>p.position===ln), n = arr.length; if (!n) return;
+                const width = Math.min(76, 18*(n-1));   // ≥18% apart, centred, capped to the pitch
+                arr.forEach((pl,i) => positioned.push({ pl, x: n===1 ? 50 : (50 - width/2) + i*(width/(n-1)), y: yOf[ln] }));
+              });
+              return positioned.map(({pl,x,y},i)=>(
+                <div key={i} title={pl.doubt_reason||pl.status} style={{ position:"absolute", left:`${x}%`, top:`${y}%`, transform:"translate(-50%,-50%)", textAlign:"center", width:64 }}>
+                  <div style={{ width:52, height:52, margin:"0 auto", borderRadius:"50%", background:luStatusColor(pl.status,pl.position), border:"2px solid #ffffff55", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, color:"#06121f", fontWeight:800 }}>
                     {pl.status==="DOUBT"?"⚠":pl.status==="OUT"?"✕":pl.slot}
                   </div>
-                  <div style={{ fontSize:9, color:"#fff", fontWeight:700, marginTop:2, textShadow:"0 1px 3px #000", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{(pl.name||"").split(" ").slice(-1)[0]}</div>
-                  <div style={{ fontSize:8, color:"#cbd5e1" }}>{pl.caps}c</div>
-                </div>);
-            })}
+                  <div style={{ fontSize:11, color:"#fff", fontWeight:700, marginTop:3, textShadow:"0 1px 3px #000", lineHeight:1.1, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{pl.name}</div>
+                </div>
+              ));
+            })()}
           </div>}
-          {/* list */}
+          {/* list — name prominent, slot/status/price below (ISSUE 3) */}
           <div>
             {(L.players||[]).map((pl,i)=>{ const m=matchPool(pl.name,team);
-              const nm = mobile && (pl.name||"").length>15 ? (pl.name||"").slice(0,15)+"…" : pl.name;
-              return (<div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 0", borderBottom:`1px solid ${BORDER}33`, fontSize:12, minHeight:mobile?40:0 }}>
-                {!mobile && <span style={{ width:18, color:DIM, fontFamily:MONO }}>{i+1}</span>}
-                <span style={{ width:34, flex:"0 0 auto", fontSize:10, color:POS_COLOR[pl.position], fontFamily:MONO }}>{pl.slot}</span>
-                <span style={{ flex:"1 1 auto", minWidth:0, color:"#fff", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{nm}
-                  {m && !mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ marginLeft:6, fontSize:9, color:"#f97316", cursor:"pointer", border:"1px solid #f9731655", borderRadius:3, padding:"0 4px" }}>VIEW →</span>}
-                  {m && !mobile && <span style={{ marginLeft:6, fontSize:10, color:DIM }}>${m.price}m · {m.pts_balanced} xPts · {m.own}%</span>}
-                  {pl.doubt_reason && !mobile && <div style={{ fontSize:10, color:"#ff6b6b" }}>{pl.doubt_reason}</div>}
-                </span>
-                {m && mobile && <span style={{ flex:"0 0 auto", fontSize:11, color:DIM }}>${m.price}m</span>}
-                {m && mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ flex:"0 0 auto", fontSize:14, color:"#f97316", cursor:"pointer", padding:"0 4px" }}>→</span>}
-                <Badge bg={pl.status==="CERTAIN"?"#16a34a22":pl.status==="DOUBT"?"#3d2a00":"#1e293b"} bd={pl.status==="CERTAIN"?"#22c55e88":pl.status==="DOUBT"?"#eab30888":"#334155"} fg={pl.status==="CERTAIN"?"#4ade80":pl.status==="DOUBT"?"#eab308":"#94a3b8"}>{pl.status}</Badge>
+              return (<div key={i} style={{ display:"flex", gap:8, padding:"7px 0", borderBottom:`1px solid ${BORDER}33`, alignItems:"flex-start" }}>
+                <span style={{ width:18, flex:"0 0 auto", color:DIM, fontFamily:MONO, fontSize:12, paddingTop:1 }}>{i+1}</span>
+                <div style={{ flex:"1 1 auto", minWidth:0 }}>
+                  <div style={{ fontSize:14, fontWeight:700, color:"#fff", whiteSpace: mobile?"nowrap":"normal", overflow:"hidden", textOverflow:"ellipsis" }}>{pl.name}
+                    {m && !mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ marginLeft:6, fontSize:9, color:"#f97316", cursor:"pointer", border:"1px solid #f9731655", borderRadius:3, padding:"0 4px", whiteSpace:"nowrap" }}>VIEW →</span>}
+                  </div>
+                  <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap", marginTop:2 }}>
+                    <span style={{ fontSize:10, color:POS_COLOR[pl.position], fontFamily:MONO }}>{pl.slot}</span>
+                    <Badge bg={pl.status==="CERTAIN"?"#16a34a22":pl.status==="DOUBT"?"#3d2a00":"#1e293b"} bd={pl.status==="CERTAIN"?"#22c55e88":pl.status==="DOUBT"?"#eab30888":"#334155"} fg={pl.status==="CERTAIN"?"#4ade80":pl.status==="DOUBT"?"#eab308":"#94a3b8"}>{pl.status}</Badge>
+                    {m && <span style={{ fontSize:10, color:DIM }}>${m.price}m · {m.pts_balanced} xPts · {m.own}%</span>}
+                    {m && mobile && <span onClick={(e)=>{e.stopPropagation();goToPlayer(m.name);}} style={{ fontSize:13, color:"#f97316", cursor:"pointer" }}>→</span>}
+                  </div>
+                  {pl.doubt_reason && <div style={{ fontSize:10, color:"#ff6b6b", marginTop:2 }}>{pl.doubt_reason}</div>}
+                </div>
               </div>);
             })}
           </div>
@@ -975,6 +1026,22 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
         </div>}
         {L.tactical_note && <div style={{ fontSize:12, color:"#c8c8c8", marginTop:10 }}><b style={{color:DIM}}>Tactical:</b> {L.tactical_note}</div>}
         {L.fantasy_note && <div style={{ fontSize:12, color:"#4ade80", marginTop:4 }}><b style={{color:DIM}}>Fantasy:</b> {L.fantasy_note}</div>}
+        {(L.bench||[]).length>0 && <div style={{ marginTop:12 }}>
+          <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>BENCH</div>
+          <div style={{ display:"flex", gap:8, flexWrap: mobile?"nowrap":"wrap", overflowX: mobile?"auto":"visible", paddingBottom: mobile?6:0 }}>
+            {L.bench.map((bp,i)=>(
+              <div key={i} style={{ flex: mobile?"0 0 58%":"0 0 auto", background:BG, border:`1px solid ${BORDER}`, borderRadius:8, padding:"7px 10px", minWidth:120 }}>
+                <div style={{ color:"#fff", fontWeight:700, fontSize:12 }}>{bp.name}</div>
+                <div style={{ fontSize:10, color:DIM, marginTop:1 }}><span style={{ color:POS_COLOR[bp.position], fontFamily:MONO }}>{bp.slot}</span> · {bp.status}</div>
+              </div>
+            ))}
+          </div>
+        </div>}
+        {(() => {
+          const seen = new Set([...(L.players||[]), ...(L.bench||[])].map(p=>luNorm(p.name)));
+          const extras = (L.squad||[]).filter(p=>!seen.has(luNorm(p.name)));
+          return <FullSquad players={extras} />;
+        })()}
         {picks.length>0 && <div style={{ marginTop:12, borderTop:`1px solid ${BORDER}`, paddingTop:10 }}>
           <div style={{ fontSize:11, letterSpacing:1, color:"#f97316", fontWeight:700, marginBottom:8 }}>⭐ FANTASY PICKS FROM THIS XI</div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>{picks.map(x=>(
@@ -983,6 +1050,7 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
               <div style={{ fontSize:11, color:DIM }}>${x.m.price}m · {x.m.pts_balanced} xPts · {x.m.own}% {x.m.tier&&<b style={{color:TIER_COLOR[x.m.tier]}}>· {x.m.tier}</b>}</div>
             </div>))}</div>
         </div>}
+        <div style={{ marginTop:12, fontSize:10, color:DIM, fontStyle:"italic" }}>🤖 AI predicted lineup based on squad knowledge · Verify against official team announcements</div>
       </div>
     );
   };
