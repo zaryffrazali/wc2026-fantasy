@@ -75,6 +75,22 @@ function mdScore(p, mi) {
   const mf = (p.startProb ?? 0.85) * (p.minsIfStarted ?? 90) / 90;
   return { pts: (p.startProb ?? 0.85) * 2 + r * mf, opp: f.opponent, win: f.oddsWin };
 }
+// model-implied anytime-scorer / anytime-assister probabilities for a player in matchday mi.
+// Poisson: P(≥1) = 1 − e^(−λ), where λ is the player's expected goals (μ for assists) THIS match —
+// xG/90 (role-, form-, premium-adjusted) × minutes share × the fixture's goal-context multiplier.
+function mdScorerProb(p, mi) {
+  const f = (p.fixtures || [])[mi]; if (!f) return { pGoal: 0, pAssist: 0, opp: null };
+  const rm = ROLE_MULT[p.roleShift] || [1, 1], fm = p.form_mult || 1;
+  let xG = (p.xGp90 || 0) * rm[0] * fm, xA = (p.xAp90 || 0) * rm[1] * fm;
+  if (typeof p.intl_premium_xG === "number") xG *= 1 + p.intl_premium_xG * 0.3;
+  const goalMult = (f.oddsWin * 1.6 + f.oddsDraw * 0.5) / 1.1;     // team scores more when favoured
+  const mins = (p.startProb ?? 0.85) * (p.minsIfStarted ?? 90) / 90;
+  let lam = xG * goalMult * mins, mu = xA * goalMult * mins;
+  if (p.penTaker) lam += 0.06 * mins;                              // small penalty bump
+  return { pGoal: 1 - Math.exp(-lam), pAssist: 1 - Math.exp(-mu), opp: f.opponent };
+}
+// clean-sheet probability for a team given one of its fixtures (win/draw weighted, model-consistent)
+const csFromFixture = f => (f ? f.oddsWin * 0.72 + f.oddsDraw * 0.28 : 0);
 // "Next matchday" index from today's date (MD1 Jun11-15, MD2 Jun16-21, MD3 Jun22-27).
 function currentNextMd() {
   const t = new Date(), n = t.getFullYear() * 10000 + (t.getMonth() + 1) * 100 + t.getDate();
@@ -367,7 +383,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           <div style={{textAlign:"center"}}>ROLE</div>
           {SH("displayPts","xPTS·GS","right","Group-stage xPts (sum of MD1–3) — same 3 games for every player")}
           {SH("mdnext",`MD${NEXT_MD+1}`,"right",`Sort by next-matchday (MD${NEXT_MD+1}) xPts`)}
-          <div style={{textAlign:"right"}}>PREM</div>
+          <div title="International premium (σ): how much a player out- or under-performs their CLUB output when playing for their COUNTRY — the model's mispricing signal. Positive (green) = underrated vs price; negative (red) = overrated. Shown in standard deviations." style={{textAlign:"right", cursor:"help"}}>INTL σ</div>
           {SH("own","OWN")}
           {SH("tier","TIER","center")}
           <div style={{textAlign:"right"}}>FIX</div>
@@ -2124,6 +2140,83 @@ function PlannerTab({ pool, mobile }) {
   );
 }
 
+// ─── TAB: ODDS (model-implied match + scorer/assist probabilities, MD1–3) ─────────
+function OddsTab({ pool, lineups, mobile }) {
+  const [md, setMd] = useState(NEXT_MD);
+  if (!pool || !pool.length) return <div style={{ color: DIM }}>No data.</div>;
+  const teams = {};
+  pool.forEach(p => {
+    if (!teams[p.team]) teams[p.team] = { flag: lineups?.teams?.[p.team]?.flag || p.nat || "", fx: {}, players: [] };
+    teams[p.team].players.push(p);
+    (p.fixtures || []).forEach(f => { teams[p.team].fx[f.md] = f; });
+  });
+  const seen = new Set(), matches = [];
+  Object.entries(teams).forEach(([t, info]) => {
+    const f = info.fx[md]; if (!f) return;
+    const key = [t, f.opponent].sort().join("|");
+    if (seen.has(key)) return; seen.add(key);
+    matches.push({ a: t, b: f.opponent, fa: f });
+  });
+  matches.sort((x, y) => Math.max(y.fa.oddsWin, y.fa.oddsLoss) - Math.max(x.fa.oddsWin, x.fa.oddsLoss));
+  const pct = v => Math.round((v || 0) * 100);
+  const flag = t => teams[t]?.flag || "";
+  const scorers = (mt) => {
+    const ps = [...(teams[mt.a]?.players || []), ...(teams[mt.b]?.players || [])]
+      .map(p => ({ p, ...mdScorerProb(p, md) })).filter(x => x.pGoal > 0.03);
+    return { goals: ps.slice().sort((a, b) => b.pGoal - a.pGoal).slice(0, 5), assists: ps.slice().sort((a, b) => b.pAssist - a.pAssist).slice(0, 3) };
+  };
+  const MD_DATES = ["Jun 11–15", "Jun 16–21", "Jun 22–27"];
+  const Row = ({ g, key2 }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "2px 0" }}>
+      <span style={{ color: "#e2e8f0", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.p.name} <span style={{ color: DIM, fontSize: 10 }}>{g.p.team}</span></span>
+      <span style={{ color: g[key2] > 0.4 ? "#f97316" : g[key2] > 0.22 ? "#22c55e" : DIM, fontWeight: 700, flex: "0 0 auto", marginLeft: 8 }}>{pct(g[key2])}%</span>
+    </div>
+  );
+  return (
+    <div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>🎲 Match Odds & Scorer Probabilities</div>
+      <div style={{ fontSize: 11, color: DIM, marginBottom: 10 }}>Model-implied probabilities (Poisson on the xG/xA model) — not bookmaker lines. Group stage · {matches.length} fixtures.</div>
+      <div style={{ display: "flex", gap: 4, marginBottom: 12, alignItems: "center" }}>
+        {[0, 1, 2].map(i => <button key={i} onClick={() => setMd(i)} style={{ padding: "7px 16px", borderRadius: 6, fontFamily: "inherit", fontSize: 13, cursor: "pointer", fontWeight: md === i ? 700 : 400, border: `1px solid ${md === i ? "#f97316" : BORDER}`, background: md === i ? "#f9731618" : "transparent", color: md === i ? "#f97316" : DIM }}>MD{i + 1}</button>)}
+        <span style={{ marginLeft: "auto", fontSize: 11, color: DIM }}>{MD_DATES[md]}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(330px,1fr))", gap: 12 }}>
+        {matches.map((mt, i) => {
+          const fa = mt.fa, wA = fa.oddsWin, dr = fa.oddsDraw, wB = fa.oddsLoss;
+          const csA = csFromFixture(fa), csB = wB * 0.72 + dr * 0.28;
+          const { goals, assists } = scorers(mt);
+          return (
+            <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 8, gap: 6 }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{flag(mt.a)} {mt.a}</span>
+                <span style={{ color: DIM, fontSize: 10, flex: "0 0 auto" }}>vs</span>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{mt.b} {flag(mt.b)}</span>
+              </div>
+              <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", marginBottom: 4 }}>
+                <div style={{ width: `${pct(wA)}%`, background: "#22c55e" }} />
+                <div style={{ width: `${pct(dr)}%`, background: "#475569" }} />
+                <div style={{ width: `${pct(wB)}%`, background: "#3b82f6" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 8 }}>
+                <span style={{ color: "#4ade80" }}>{pct(wA)}% W</span><span style={{ color: DIM }}>{pct(dr)}% D</span><span style={{ color: "#60a5fa" }}>{pct(wB)}% W</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94a3b8", marginBottom: 8, borderBottom: `1px solid ${BORDER}`, paddingBottom: 8 }}>
+                <span>🧤 {mt.a}: <b style={{ color: csA > 0.4 ? "#4ade80" : TEXT }}>{pct(csA)}%</b> CS</span>
+                <span>🧤 {mt.b}: <b style={{ color: csB > 0.4 ? "#4ade80" : TEXT }}>{pct(csB)}%</b> CS</span>
+              </div>
+              <div style={{ fontSize: 10, letterSpacing: 1, color: DIM, marginBottom: 4, fontFamily: MONO }}>⚽ ANYTIME SCORER</div>
+              {goals.length ? goals.map((g, j) => <Row key={j} g={g} key2="pGoal" />) : <div style={{ fontSize: 11, color: DIM }}>—</div>}
+              <div style={{ fontSize: 10, letterSpacing: 1, color: DIM, margin: "8px 0 4px", fontFamily: MONO }}>🅰 ANYTIME ASSIST</div>
+              {assists.length ? assists.map((g, j) => <Row key={j} g={g} key2="pAssist" />) : <div style={{ fontSize: 11, color: DIM }}>—</div>}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ fontSize: 10, color: "#475569", marginTop: 12, fontStyle: "italic" }}>Win/draw/loss from odds-derived fixture probabilities. Clean sheet = win×0.72 + draw×0.28. Anytime scorer/assist = 1 − e^(−λ), λ = expected goals/assists this match (xG/xA × minutes × fixture goal-context). Model estimates, not betting advice.</div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState("table");
@@ -2256,7 +2349,7 @@ export default function App() {
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["odds","🎲 Odds"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
@@ -2302,6 +2395,7 @@ export default function App() {
         {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} />}
         {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} sel={lineupSel} setSel={setLineupSel} cmp={lineupCmp} setCmp={setLineupCmp} />}
         {tab==="news" && <NewsTab news={news} mobile={mobile} />}
+        {tab==="odds" && <OddsTab pool={rawPlayers} lineups={lineups} mobile={mobile} />}
         {tab==="squads" && <OptimalSquadsTab squads={optimal.squads} meta={optimal.meta} mobile={mobile} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} mobile={mobile} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
