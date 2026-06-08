@@ -44,7 +44,7 @@ function computePrediction(p, riskMode) {
 
   const E_MATCHES = 3;   // GROUP STAGE ONLY (MD1–3): same 3 games for every player so xPts is comparable.
   // (Knockout matches are added matchday-by-matchday as teams actually advance — not pre-credited here.)
-  const scoutBonusEV = p.own < 5 ? 1.8 : p.own < 10 ? 0.6 : 0;
+  const scoutBonusEV = p.own < 5 ? 1.8 : 0;   // FIFA scouting bonus: +2 only when owned by <5%
   const shiftDiff = /ATT|STRIKER/.test(p.roleShift || "") && p.own < 15 ? 1.4 : 1; // role arbitrage
   const capMult = p.captainSlot === 3 ? 1.15 : p.captainSlot === 2 ? 1.08 : 1.0;
   const causalAdj = 0.5 * (p.causal_pts_adjustment || 0);  // discounted causal nudge (matches R)
@@ -136,7 +136,7 @@ const ROLE_PREDS = {
   pen:p=>p.penTaker, fk:p=>p.fkTaker, corner:p=>p.cornerTaker,
   roleUp:p=>/to_ATT|DEF_to_ATT/.test(p.roleShift||""),
   setCombo:p=>[p.penTaker,p.fkTaker,p.cornerTaker].filter(Boolean).length>=2,
-  csFort:p=>(p.csP||0)>0.52, scout:p=>p.own<10,
+  csFort:p=>(p.csP||0)>0.52, scout:p=>p.own<5,
   budgetEnabler:p=>p.price<=5.0 && p.pts_balanced>12,
   multiThreat:p=>(p.xGp90||0)>0.25 && (p.xAp90||0)>0.25,
   captainViable:p=>p.captainSlot===3 && p.startProb>0.90,
@@ -148,15 +148,17 @@ const ROLE_DEFS = [["pen","🎯 PEN"],["fk","🦶 FK"],["corner","📐 CORNER"],
   ["multiThreat","💥 MULTI THREAT"],["captainViable","⚡ CAPTAIN VIABLE"],["cardSafe","🃏 CARD SAFE"],
   ["koThreat","🏆 KO THREAT"],["overperfTeam","⭐ OVERPERF TEAM"],["inForm","⭐ IN FORM"]];
 const SMART_PREDS = {
-  captainPicks:p=>p.captainSlot===3 && p.startProb>0.90 && (p.fixtures?.[0]?.oddsWin||0)>0.65,
-  scoutTargets:p=>p.own<10 && p.pts_balanced>10 && p.startProb>0.85,
+  // attacking starters who contribute a lot; the auto-set MD + "easy fixture" filter adds the
+  // high-win-probability-vs-weak-opponent half (switch MD via the Matchday dropdown).
+  captainPicks:p=>p.startProb>=0.85 && (p.pts_balanced||0)>10 && (p.pos==="MID"||p.pos==="FWD"),
+  scoutTargets:p=>p.own<5 && p.pts_balanced>10 && p.startProb>0.85,
   budgetBuilders:p=>p.price<=5.5 && (p.pts_balanced||0)>8 && (p.startProb||0)>0.70,
   // role/usage mispricing: attacking role-shift OR model-underrated, low-owned, and a plausible starter
   roleArb:p=>(/ATT/.test(p.roleShift||"") || p.mispricing_flag==="UNDERRATED") && p.own<20 && (p.startProb||0)>=0.65 && (p.pts_balanced||0)>8,
   defHolds:p=>(p.pos==="DEF"||p.pos==="GK") && (p.csP||0)>0.50 && p.advP>65 && p.cardRisk==="low",
   diffStack:p=>p.own<15 && overperfTeam(p) && (p.pts_diff||0)>20,
 };
-const SMART_DEFS = [["captainPicks","🎯 MD1 Captain Picks"],["scoutTargets","🔍 Scouting Bonus"],
+const SMART_DEFS = [["captainPicks","🎯 Captain Picks (pick MD)"],["scoutTargets","🔍 Scouting Bonus"],
   ["budgetBuilders","💰 Budget Builders"],["roleArb","⬆️ Role Arbitrage"],["defHolds","🏰 Defensive Holds"],["diffStack","📈 Differential Stack"]];
 const CLUSTERS = ["HIGH_PRESS_POSSESSION","COUNTER_DEFENSIVE","DIRECT_PHYSICAL","TECHNICAL_LOWBLOCK","BALANCED_TRANSITIONAL"];
 const FILTER_DEFAULT = { roles:{}, smart:null, md:null, fixStr:"all", teamPlay:"All", oppPlay:"All", xMins:60, advMin:40, ptsMin:0 };
@@ -184,7 +186,7 @@ function passesFilters(p, F, cl) {
 const activeFilterCount = F => Object.values(F.roles).filter(Boolean).length + (F.smart?1:0) + (F.md!=null?1:0)
   + (F.fixStr!=="all"?1:0) + (F.teamPlay!=="All"?1:0) + (F.oppPlay!=="All"?1:0)
   + (F.xMins!==60?1:0) + (F.advMin!==40?1:0) + (F.ptsMin!==0?1:0);
-const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title="Scouting Bonus eligible — under 10% owned. +2 bonus pts when scoring >4 in a match. Mini-league swing pick.">🎯 SCOUT</Badge>;
+const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title="Scouting Bonus eligible — under 5% owned. +2 bonus pts when scoring >4 pts in a match. Mini-league swing pick.">🎯 SCOUT</Badge>;
 const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc" title="Confirmed penalty taker — adds +0.5 pts EV per game from penalties.">PEN</Badge>;
 function RoleArrow({ shift, note }) {
   if (!shift || shift === "SAME") return <span style={{ color:DIM }} title="Same as club role">—</span>;
@@ -363,7 +365,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   <span style={{ color:"#94a3b8" }}>${p.price}m</span>
                   <span style={{ color:p.E_mins<60?"#eab308":"#94a3b8" }}>{Math.round(p.E_mins)}'</span>
                   <span style={{ color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT, fontWeight:700 }}>xPTS {p.displayPts.toFixed(1)}</span>
-                  <span style={{ color:"#7b8cde" }}>MD{NEXT_MD+1} {mdScore(p,NEXT_MD).pts.toFixed(1)}</span>
+                  <span style={{ color:"#7b8cde" }} title="MD1·MD2·MD3 xPts">MD {mdScore(p,0).pts.toFixed(0)}·{mdScore(p,1).pts.toFixed(0)}·{mdScore(p,2).pts.toFixed(0)}</span>
                   <span>Own {p.own}%</span>
                 </div>
               </div>);
@@ -371,7 +373,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 44px 38px 56px 48px 56px 84px 34px 48px",
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 48px 42px 36px 50px 34px 34px 34px 50px 80px 30px 42px",
           gap:8, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           {(() => { const SH = (k, label, align="right", title) => (
             <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
@@ -380,9 +382,11 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           <div>#</div><div>PLAYER</div>
           {SH("price","£")}
           {SH("xmins","xMIN")}
-          <div style={{textAlign:"center"}}>ROLE</div>
+          {SH("role","ROLE","center","Role shift vs club role: attacking shifts (↑, e.g. DEF→ATT) rank first, defensive shifts (↓) last. Click to sort high → low.")}
           {SH("displayPts","xPTS·GS","right","Group-stage xPts (sum of MD1–3) — same 3 games for every player")}
-          {SH("mdnext",`MD${NEXT_MD+1}`,"right",`Sort by next-matchday (MD${NEXT_MD+1}) xPts`)}
+          {SH("md0","MD1","right","Projected xPts in Matchday 1")}
+          {SH("md1","MD2","right","Projected xPts in Matchday 2")}
+          {SH("md2","MD3","right","Projected xPts in Matchday 3")}
           {SH("intl","INTL σ","right","International premium (σ): how much a player out- or under-performs their CLUB output when playing for their COUNTRY — the model's mispricing signal. Positive = underrated vs price, negative = overrated. Click to sort high → low.")}
           {SH("own","OWN")}
           {SH("tier","TIER","center")}
@@ -393,7 +397,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 44px 38px 56px 48px 56px 84px 34px 48px",
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 48px 42px 36px 50px 34px 34px 34px 50px 80px 30px 42px",
                 gap:8, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
@@ -404,7 +408,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                   <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
                   {p.qualifyingForm==="EXCELLENT" && <Badge bg="#052e16" bd="#22c55e" fg="#86efac" title="Excellent qualifying form — 0.6+ goal contributions/game in recent competitive internationals.">QF ★★★</Badge>}
                   {p.qualifyingForm==="GOOD" && <Badge bg="#0a1f1c" bd="#22c55e88" fg="#4ade80" title="Good qualifying form — 0.3–0.6 goal contributions/game in recent competitive internationals.">QF ★★</Badge>}
-                  {p.scout && p.own<10 && <ScoutBadge/>}
+                  {p.own<5 && <ScoutBadge/>}
                   {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: outperforms club stats internationally by +${(p.intl_premium_score||0).toFixed(2)}σ. May be undervalued.`}>★ EDGE</Badge>}
                   {p.penTaker && <PenBadge/>}
                   {p.data_tier && p.data_tier!=="curated" && <Badge bg="#1e293b" bd="#334155" fg="#64748b" title="Prior-filled — stats from position/price priors (not hand-curated or FBref-matched). Lower confidence.">prior</Badge>}
@@ -422,9 +426,9 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div title={`Predicted ${p.displayPts.toFixed(1)} pts (${riskMode}). Floor ${p.pts_median?.toFixed(1)} · ceiling ${p.pts_p90?.toFixed(1)}`}
                 style={{ textAlign:"right", fontSize:18, fontWeight:800, cursor:"help",
                 color:p.displayPts>30?"#f97316":p.displayPts>20?"#22c55e":TEXT }}>{p.displayPts.toFixed(1)}</div>
-              {(() => { const ms = mdScore(p, NEXT_MD); return (
-                <div title={`MD${NEXT_MD+1}${ms.opp?` vs ${ms.opp}`:""} — projected ${ms.pts.toFixed(1)} pts`} style={{ textAlign:"right", fontSize:13, fontWeight:700, cursor:"help", color: ms.pts>6?"#f97316":ms.pts>4?"#22c55e":DIM }}>{ms.pts.toFixed(1)}</div>
-              ); })()}
+              {[0,1,2].map(mi => { const ms = mdScore(p, mi); return (
+                <div key={mi} title={`MD${mi+1}${ms.opp?` vs ${ms.opp}`:""} — projected ${ms.pts.toFixed(1)} pts`} style={{ textAlign:"right", fontSize:12, fontWeight:700, cursor:"help", color: ms.pts>6?"#f97316":ms.pts>4?"#22c55e":DIM }}>{ms.pts.toFixed(1)}</div>
+              ); })}
               <div style={{ textAlign:"right" }}><MispriceTag flag={p.mispricing_flag} score={p.intl_premium_score}/></div>
               <div style={{ display:"flex", justifyContent:"flex-end" }}><OwnBar pct={p.own}/></div>
               <div title={TIER_TIP[p.tier]||""} style={{ textAlign:"center", fontSize:13, fontWeight:800, fontFamily:MONO, cursor:"help",
@@ -816,7 +820,7 @@ function buildBalancedSquad(pool, scoreFn, spMin, opts = {}) {
 }
 function buildOptimalSquads(pool) {
   if (!pool || !pool.length) return { squads: null, meta: {} };
-  const scoutB = p => (p.own < 5 ? 3 : p.own < 10 ? 1.5 : 0);   // scout-bonus EV tilt
+  const scoutB = p => (p.own < 5 ? 3 : 0);   // scout-bonus tilt (FIFA: eligible only <5% owned)
   const defs = {
     safe:      { label: "Safe — Minutes Certainty", description: "Nailed-on starters only (start prob ≥ 0.80). Bench are the cheapest dependable starters, not passengers.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
     balanced:  { label: "Balanced — Core + Edge", description: "Best expected group-stage points; every pick (incl. bench) is a real starter.", objective: "max XI Σ pts_balanced", score: p => p.pts_balanced || 0, sp: 0.75 },
@@ -834,7 +838,7 @@ function buildOptimalSquads(pool) {
     const own = sq.length ? sq.reduce((s, p) => s + (p.own || 0), 0) / sq.length : 0;
     meta[k] = { label: d.label, description: d.description + ` · ${r.form} · client-side, group-stage xPts`, objective: d.objective,
       total_pts: Math.round(tot), budget: Math.round(bud * 10) / 10, avg_own: Math.round(own * 10) / 10,
-      n_scout: sq.filter(p => (p.own || 0) < 10).length, template_overlap_pct: Math.round(sq.filter(p => (p.own || 0) > 20).length / (sq.length || 1) * 100) };
+      n_scout: sq.filter(p => (p.own || 0) < 5).length, template_overlap_pct: Math.round(sq.filter(p => (p.own || 0) > 20).length / (sq.length || 1) * 100) };
   });
   return { squads, meta };
 }
@@ -906,7 +910,7 @@ function TiersTab({ tiers, pool, riskMode, posFilter, setPosFilter, pureDiff, se
           <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:POS_COLOR[p.pos], border:`1px solid ${POS_COLOR[p.pos]}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
           <span style={{ fontSize:11, color:DIM }}>${p.price}m · {band}</span>
           {isBest && <Badge bg="#3b2f0a" bd="#fbbf24" fg="#fbbf24" title="Highest tier score in this position + price band">BEST IN BAND</Badge>}
-          {p.own<10 && <ScoutBadge/>}
+          {p.own<5 && <ScoutBadge/>}
           {p.mispricing_flag==="UNDERRATED" && <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title={`Model edge: +${(p.intl_premium_score||0).toFixed(2)}σ vs club stats`}>★ MODEL EDGE</Badge>}
           {p.roleShift && p.roleShift!=="SAME" && <Badge bg="#f9731618" bd="#f9731688" fg="#f97316" title={`Role shift: ${p.roleShiftNote||p.roleShift}`}>↑ ROLE SHIFT</Badge>}
         </div>
@@ -2256,19 +2260,24 @@ export default function App() {
         // from analytics.player_analytics by id — without this the Tiers tab/badges and smart filters are empty
         const paById = {}; (a?.player_analytics || []).forEach(r => { if (r && r.id != null) paById[r.id] = r; });
         // ground start probability in the predicted lineups: build a per-team name→role (XI/bench) lookup
+        const lutok = nm => luNorm(nm).split(" ").filter(t => t.length > 2);
         const luByTeam = {};
         Object.entries(l?.teams || {}).forEach(([team, L]) => {
           const m = [];
-          (L.players || []).forEach(pl => m.push({ toks: new Set(luNorm(pl.name).split(" ").filter(t => t.length > 2)), role: "XI" }));
-          (L.bench || []).forEach(pl => m.push({ toks: new Set(luNorm(pl.name).split(" ").filter(t => t.length > 2)), role: "BENCH" }));
+          const add = (pl, role) => { const a = lutok(pl.name); m.push({ set: new Set(a), surname: a[a.length - 1] || "", role }); };
+          (L.players || []).forEach(pl => add(pl, "XI"));
+          (L.bench || []).forEach(pl => add(pl, "BENCH"));
           luByTeam[team] = m;
         });
         const roleOf = (p) => {
           const list = luByTeam[p.team]; if (!list) return null;            // team has no predicted lineup → keep prior
-          const toks = luNorm(p.name).split(" ").filter(t => t.length > 2);
-          let role = null, best = 0;
-          list.forEach(e => { const s = toks.filter(t => e.toks.has(t)).length; if (s > best) { best = s; role = e.role; } });
-          return best > 0 ? role : "OUT";                                   // in lineup but not XI/bench → deep squad
+          const toks = lutok(p.name), ps = toks[toks.length - 1] || "";
+          // require a SURNAME match — keying on any shared token wrongly matched "James" Trafford to Reece "James"
+          const cands = list.filter(e => e.surname === ps);                 // surname match only
+          if (!cands.length) return "OUT";                                  // in squad but not XI/bench → deep squad
+          let best = cands[0], bestS = -1;                                  // disambiguate same-surname by full overlap
+          cands.forEach(e => { const s = toks.filter(t => e.set.has(t)).length; if (s > bestS) { bestS = s; best = e; } });
+          return best.role;
         };
         const merged = arr.map(p => {
           const q = paById[p.id] ? { ...p, ...paById[p.id], id: p.id } : { ...p };
@@ -2285,7 +2294,7 @@ export default function App() {
         // re-derive tier_score + tier letters (S/A/B/C/D) on the group-stage numbers, replacing the
         // R pipeline's full-tournament tiers so the Tiers tab matches the rest of the dashboard
         const tierScoreOf = q => {
-          const scoutEV = q.own < 5 ? 1.8 : q.own < 10 ? 0.6 : 0;
+          const scoutEV = q.own < 5 ? 1.8 : 0;
           const capB = q.captainSlot === 3 ? 1 : q.captainSlot === 2 ? 0.5 : 0;
           const setP = (q.penTaker ? 1 : 0) + (q.fkTaker ? 0.6 : 0) + (q.cornerTaker ? 0.4 : 0);
           const cardPen = q.cardRisk === "high" ? 1.5 : q.cardRisk === "medium" ? 0.6 : 0;
@@ -2338,9 +2347,12 @@ export default function App() {
         if (sortBy === "price")      return b.price - a.price;
         if (sortBy === "own")        return b.own - a.own;
         if (sortBy === "tier")       return (b.tier_score||0) - (a.tier_score||0);
-        if (sortBy === "mdnext")     return mdScore(b, NEXT_MD).pts - mdScore(a, NEXT_MD).pts;
+        if (sortBy === "md0")        return mdScore(b, 0).pts - mdScore(a, 0).pts;
+        if (sortBy === "md1")        return mdScore(b, 1).pts - mdScore(a, 1).pts;
+        if (sortBy === "md2")        return mdScore(b, 2).pts - mdScore(a, 2).pts;
         if (sortBy === "xmins")      return (b.E_mins||0) - (a.E_mins||0);
         if (sortBy === "intl")       return (b.intl_premium_score||0) - (a.intl_premium_score||0);
+        if (sortBy === "role")       return ((ROLE_MULT[b.roleShift]||[1])[0]) - ((ROLE_MULT[a.roleShift]||[1])[0]);
         return 0;
       });
   }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
