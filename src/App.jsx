@@ -1394,9 +1394,10 @@ function MethodTab({ analytics }) {
         <div style={{ fontSize:10, letterSpacing:3, color:OR, marginBottom:8, fontFamily:MONO }}>TL;DR</div>
         <div style={{ fontSize:14.5, lineHeight:1.65, color:"#e2e8f0" }}>
           WC26 SCOUT builds predicted fantasy points from the ground up — combining club-level performance stats, international role adjustments, betting market signals, and a causal model of tournament overperformance. <b style={{ color:"#fff" }}>Every number has a source. Every pick has a reason.</b>
+          <div style={{ marginTop:10, fontSize:12.5, color:"#94a3b8" }}>Current scope: xPts is the <b style={{color:"#fff"}}>group stage (MD1–3)</b>, so everyone's compared over the same three games; <b style={{color:"#fff"}}>start probability is grounded in the predicted XIs</b>; tiers and the four optimal squads are recomputed on those numbers; and the new <b style={{color:"#fff"}}>Planner</b> (build your own XI) and <b style={{color:"#fff"}}>Odds</b> (scorer/assist/CS/win probabilities) tabs run entirely client-side.</div>
         </div>
         <div style={{ display:"flex", gap:8, marginTop:14, flexWrap:"wrap" }}>
-          {["58 seed players","9 R model files","4 prediction layers"].map(t=>(
+          {["group-stage xPts","lineup-grounded minutes","client-side tiers & squads"].map(t=>(
             <span key={t} style={{ background:"#0a1322", border:`1px solid ${BORDER}`, borderRadius:20, padding:"6px 14px", fontSize:12, color:"#fff", fontWeight:600 }}>{t}</span>
           ))}
         </div>
@@ -1440,11 +1441,11 @@ function MethodTab({ analytics }) {
           ["ALL","Appearance <60 mins","+1"],["ALL","Appearance 60+ mins","+2"],["ALL","Assist","+3"],["ALL","Yellow card","−1"],["ALL","Red card","−2"],["ALL","Scouting Bonus (>4pts, <5% owned)","+2"],
         ]} />
       </MtCollapse>
-      <MtCollapse title="2.2 — Expected Minutes" sub="the single biggest lever">
+      <MtCollapse title="2.2 — Expected Minutes" sub="grounded in the predicted lineups">
         <div>Every prediction is weighted by expected minutes:</div>
         <MtFormula>{`E[mins]            = startProb × minsIfStarted
 E[appearance_pts]  = startProb × 2   (60+ min players)`}</MtFormula>
-        <div><MtO>startProb</MtO> ranges 0.40 (fringe) to 0.97 (nailed starter). This adjustment has more impact on predicted points than almost any other variable.</div>
+        <div><MtO>startProb</MtO> is <b style={{color:"#fff"}}>grounded in the AI-predicted starting XIs</b>: a predicted starter ≈ <MtO>0.90</MtO>, a named substitute ≈ <MtO>0.32</MtO>, anyone outside the predicted 15 ≈ <MtO>0.12</MtO>. This stops backup keepers and rotation players from inheriting a starter's points — fix a team's predicted XI and every player's xPts follows. (Players are matched to the lineup by <b>surname</b> to avoid first-name collisions.)</div>
       </MtCollapse>
       <MtCollapse title="2.3 — Per-Matchday Fixture Difficulty" sub="MD1/MD2/MD3 separately">
         <div>Difficulty is computed for each of the three group-stage matchdays, not a single FDR:</div>
@@ -1476,10 +1477,15 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
           <li>Penalty taker: <MtO>+0.5</MtO> pts/match (pen win EV + conversion)</li>
         </ul>
       </MtCollapse>
-      <MtCollapse title="2.6 — Tournament Scale" sub="points/match × expected matches">
-        <MtFormula>{`E[matches] = 3 + (advP/100) × 5
-             (min 3 group games, max 8 if team wins it)`}</MtFormula>
-        <div>A team at 85% advancement (e.g. France) → <MtO>7.25</MtO> expected matches; a 40% team → <MtO>5.0</MtO>. This 45% gap dominates most other variables.</div>
+      <MtCollapse title="2.6 — Tournament Scale" sub="group stage only (MD1–3)">
+        <MtFormula>{`E[matches] = 3   (the three group-stage games — same for everyone)`}</MtFormula>
+        <div>xPts is currently scoped to the <b style={{color:"#fff"}}>group stage</b> so every player is compared over the same three games. We deliberately do <b>not</b> pre-credit a deep knockout run — the old <code>3 + advP/100 × 5</code> rule rewarded strong teams for matches they hadn't played yet and inflated their squads. Knockout games are added matchday-by-matchday as teams actually advance.</div>
+      </MtCollapse>
+      <MtCollapse title="2.7 — Scorer / Assist Probabilities" sub="the Odds tab">
+        <div>The Odds tab turns the same xG/xA into model-implied <b style={{color:"#fff"}}>anytime-scorer</b> and <b style={{color:"#fff"}}>anytime-assist</b> probabilities via a Poisson transform:</div>
+        <MtFormula>{`P(≥1 goal)   = 1 − e^(−λ),  λ = xG × minutes × fixture goal-context
+P(≥1 assist) = 1 − e^(−μ),  μ = xA × minutes × fixture goal-context`}</MtFormula>
+        <div>Shown alongside win/draw/loss and clean-sheet % per fixture. These are <b>model estimates, not bookmaker lines</b> — World Cup player-prop odds aren't sold on the cheap data feeds, so we derive them from the model (the more useful comparison anyway).</div>
       </MtCollapse>
 
       {/* SECTION 3 — Regression */}
@@ -1550,18 +1556,11 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
         </ul>
       </MtCollapse>
       <MtCollapse title="5.3 — Four Objective Functions" sub="same constraints, 4 objectives">
-        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Safe (Minutes Certainty)</b></div>
-        <MtFormula>{`max Σ(startProb × minsIfStarted × pts_per_min)
-+ constraint: startProb ≥ 0.85 for all picks`}</MtFormula>
-        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Balanced (Core + Edge)</b></div>
-        <MtFormula>{`max Σ(pts_mean)
-+ constraint: ≥8 picks own>20%, ≥3 picks own<15%`}</MtFormula>
-        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Differential (Value Hunt)</b></div>
-        <MtFormula>{`max Σ(pts_mean / price)
-+ constraint: ≥6 picks own<15%`}</MtFormula>
-        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Pure Differential (Ceiling × Scarcity)</b></div>
-        <MtFormula>{`max Σ(pts_p90 × (1 / (own + 1)))
-+ constraint: max 2 picks own>30%`}</MtFormula>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Safe (Minutes Certainty)</b> — nailed starters only (startProb ≥ 0.80), max Σ pts_safe.</div>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Balanced (Core + Edge)</b> — max Σ pts_balanced across the XI.</div>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Differential (Value Hunt)</b> — low-owned (&lt;25%) starters with real minutes & points, tilted toward scout-bonus (&lt;5% owned) picks.</div>
+        <div style={{ marginBottom:6 }}><b style={{color:"#fff"}}>Psychopath (Giant-Killers)</b> — starters at underdog / giant-killer sides (Morocco, Japan, NZ), maximising <code>pts_p90 × giant-killer × 1/(own+1)</code>.</div>
+        <MtNote>Recomputed client-side on the group-stage numbers via a budget-aware greedy (2 GK / 5 DEF / 5 MID / 3 FWD, ≤3 per nation, ≤$100m). Bench slots get the cheapest <b>dependable starters</b> (startProb ≥ 0.70, decent points) — never $3.5 passengers.</MtNote>
       </MtCollapse>
       <MtCollapse title="5.4 — Why four squads?">
         <div>Strategy depends on your mini-league position. Leading? Play <b>Safe</b> — protect the lead. 10 points behind? Go <b>Differential</b> — you need variance. Starting fresh? <b>Balanced</b> is optimal for overall rank.</div>
@@ -1581,7 +1580,7 @@ goalP_md = oddsWin × 1.60 + oddsDraw × 0.50`}</MtFormula>
            − early_exit_penalty`}</MtFormula>
       <div style={{ fontSize:13, color:"#cbd5e1", lineHeight:1.6 }}>The heaviest weight (<MtO>0.45</MtO>) goes to ceiling (pts_p90), not mean. The variance premium (<MtO>0.20</MtO>) explicitly rewards boom-or-bust players — in a mini-league a 2-or-20 player beats a steady 8.</div>
       <MtTable head={["Tier","Cutoff"]} rows={[["S","top 8%"],["A","next 17%"],["B","next 25%"],["C","next 25%"],["D","bottom 25%"]]} />
-      <MtNote>Hard rules: startProb &lt; 0.70 → cannot be S/A. advP &lt; 40% → cannot be S. own &gt; 55% → downgraded one tier (template players lose gambling value).</MtNote>
+      <MtNote>Re-derived client-side on the group-stage xPts so tiers match the rest of the dashboard. Hard rules: startProb &lt; 0.70 → cannot be S/A; advP &lt; 40% → cannot be S; own &gt; 55% → downgraded one tier; intl-premium &gt; 1.5σ AND own &lt; 10% → upgraded one tier.</MtNote>
 
       {/* SECTION 7 — Limitations */}
       <MtH>What this model doesn't do well</MtH>
@@ -2152,7 +2151,7 @@ function OddsTab({ pool, lineups, mobile }) {
   pool.forEach(p => {
     if (!teams[p.team]) teams[p.team] = { flag: lineups?.teams?.[p.team]?.flag || p.nat || "", fx: {}, players: [] };
     teams[p.team].players.push(p);
-    (p.fixtures || []).forEach(f => { teams[p.team].fx[f.md] = f; });
+    (p.fixtures || []).forEach((f, idx) => { teams[p.team].fx[idx] = f; });   // key by 0-based MD index (matches mdScore)
   });
   const seen = new Set(), matches = [];
   Object.entries(teams).forEach(([t, info]) => {
