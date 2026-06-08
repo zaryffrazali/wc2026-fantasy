@@ -428,14 +428,16 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
               style={{ display:"grid", gridTemplateColumns:"24px 1fr 46px 40px 34px 50px 44px 32px 32px 32px 48px 76px 28px 40px",
-                gap:8, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
+                gap:8, padding:"9px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
               <div style={{ fontSize:10, color:i<3?"#f97316":DIM }}>{i+1}</div>
               <div style={{ minWidth:0 }}>
-                <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-                  <span onClick={e=>{e.stopPropagation(); toggleWatch&&toggleWatch(p.id);}} title="Highlight → adds to Squad Planner watchlist" style={{ cursor:"pointer", color:(watch||[]).includes(p.id)?"#fbbf24":"#475569", fontSize:15, marginRight:1 }}>{(watch||[]).includes(p.id)?"★":"☆"}</span>
-                  <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{flagOf(p)} {p.name}</span>
+                <div style={{ display:"flex", gap:6, alignItems:"center", minWidth:0 }}>
+                  <span onClick={e=>{e.stopPropagation(); toggleWatch&&toggleWatch(p.id);}} title="Highlight → adds to Squad Planner watchlist" style={{ cursor:"pointer", color:(watch||[]).includes(p.id)?"#fbbf24":"#475569", fontSize:15, flexShrink:0 }}>{(watch||[]).includes(p.id)?"★":"☆"}</span>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:15, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", minWidth:0 }}>{flagOf(p)} {p.name}</span>
+                </div>
+                <div style={{ display:"flex", gap:5, alignItems:"center", flexWrap:"wrap", marginTop:3 }}>
                   <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
                   {p.qualifyingForm==="EXCELLENT" && <Badge bg="#052e16" bd="#22c55e" fg="#86efac" title="Excellent qualifying form — 0.6+ goal contributions/game in recent competitive internationals.">QF ★★★</Badge>}
                   {p.qualifyingForm==="GOOD" && <Badge bg="#0a1f1c" bd="#22c55e88" fg="#4ade80" title="Good qualifying form — 0.3–0.6 goal contributions/game in recent competitive internationals.">QF ★★</Badge>}
@@ -472,7 +474,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       </div>
       )}
       </div>{/* left: table */}
-      <div style={{ flex: mobile?"1 1 auto":"0 0 340px", width: mobile?"100%":340, position: mobile?"static":"sticky", top:8, alignSelf:"flex-start", maxHeight: mobile?"none":"calc(100vh - 24px)", overflowY: mobile?"visible":"auto" }}>
+      <div style={{ flex: mobile?"1 1 auto":"0 0 320px", width: mobile?"100%":320, position: mobile?"static":"sticky", top:8, alignSelf:"flex-start", maxHeight: mobile?"none":"calc(100vh - 24px)", overflowY: mobile?"visible":"auto" }}>
         <WatchlistBox players={allPlayers} watch={watch} toggleWatch={toggleWatch} onPick={(p)=>setSelected(p)} pickLabel="view" />
         {selected ? <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
           : <div style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:10, padding:"24px 16px", textAlign:"center", color:DIM, fontSize:12 }}>Click a player to see their full breakdown here.</div>}
@@ -850,10 +852,10 @@ function buildOptimalSquads(pool) {
   if (!pool || !pool.length) return { squads: null, meta: {} };
   const scoutB = p => (p.own < 5 ? 3 : 0);   // scout-bonus tilt (FIFA: eligible only <5% owned)
   const defs = {
-    safe:      { label: "Safe — Minutes Certainty", description: "Nailed-on starters only (start prob ≥ 0.80). Bench are the cheapest dependable starters, not passengers.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
+    safe:      { label: "Safe — Minutes Certainty", description: "Nailed-on starters only (start prob ≥ 0.80). Bench are the cheapest dependable starters, not passengers. For people who put on a helmet when driving their car to work — this is Arteta-ball in fantasy mode.", objective: "max XI Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
     balanced:  { label: "Balanced — Core + Edge", description: "Best expected group-stage points; every pick (incl. bench) is a real starter.", objective: "max XI Σ pts_balanced", score: p => p.pts_balanced || 0, sp: 0.75 },
     diff:      { label: "Differential — Value Hunt", description: "Low-owned starters (<25%) with decent minutes & points, tilted toward scout-bonus picks.", objective: "max XI Σ (pts_balanced + scout-bonus EV) · own < 25%", score: p => (p.pts_balanced || 0) + scoutB(p), sp: 0.70, opts: { candFilter: p => p.own < 25, benchMinPts: 8 } },
-    psychopath:{ label: "Psychopath — Giant-Killers", description: "Starters at underdog / giant-killer sides (Morocco, Japan, NZ…) who could pull an upset — high ceiling, barely owned. For the brave.", objective: "max XI Σ pts_diff × giant-killer × scarcity", score: p => (p.pts_diff || 0) * (p.giant_killer_flag ? 2.2 : 1) * (p.own < 10 ? 1.3 : 1) * ((p.pos === "MID" || p.pos === "FWD") ? 1.15 : 1), sp: 0.70, opts: { candFilter: p => p.own < 35, benchMinPts: 7 } },
+    psychopath:{ label: "Psychopath — Giant-Killers", description: "Starters at underdog / giant-killer sides (Morocco, Japan, NZ…) who could pull an upset — high ceiling, barely owned. For absolutely fucking mentally ill people who should be locked up — but if things go right they'll win this shit.", objective: "max XI Σ pts_diff × giant-killer × scarcity", score: p => (p.pts_diff || 0) * (p.giant_killer_flag ? 2.2 : 1) * (p.own < 10 ? 1.3 : 1) * ((p.pos === "MID" || p.pos === "FWD") ? 1.15 : 1), sp: 0.70, opts: { candFilter: p => p.own < 35, benchMinPts: 7 } },
   };
   const squads = {}, meta = {};
   Object.entries(defs).forEach(([k, d]) => {
@@ -864,7 +866,7 @@ function buildOptimalSquads(pool) {
     const xi = sq.filter(p => p.start);
     const tot = xi.reduce((s, p) => s + p.pts, 0), bud = sq.reduce((s, p) => s + p.price, 0);
     const own = sq.length ? sq.reduce((s, p) => s + (p.own || 0), 0) / sq.length : 0;
-    meta[k] = { label: d.label, description: d.description + ` · ${r.form} · client-side, group-stage xPts`, objective: d.objective,
+    meta[k] = { label: d.label, description: d.description + ` · ${r.form} · group-stage xPts`, objective: d.objective,
       total_pts: Math.round(tot), budget: Math.round(bud * 10) / 10, avg_own: Math.round(own * 10) / 10,
       n_scout: sq.filter(p => (p.own || 0) < 5).length, template_overlap_pct: Math.round(sq.filter(p => (p.own || 0) > 20).length / (sq.length || 1) * 100) };
   });
@@ -880,7 +882,7 @@ function OptimalSquadsTab({ squads, meta, mobile }) {
         const m = (meta && meta[key]) || {};
         return (
           <div key={key} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3, display:"flex", alignItems:"center", gap:6 }}>{key==="psychopath" && <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:24 }} />}{m.label||key}</div>
+            <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3, display:"flex", alignItems:"center", gap:6 }}>{key==="psychopath" && <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:24 }} />}{key==="safe" && <img src="/img/tucheliban.png" alt="tucheliban" title="tucheliban" className="mki-shake" style={{ height:28, width:28, borderRadius:"50%", objectFit:"cover" }} />}{m.label||key}</div>
             <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, lineHeight:1.45 }}>{m.description||""}</div>
             <div style={{ fontSize:mobile?11:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:10, fontSize:11, color:DIM, marginBottom:10, borderBottom:`1px solid ${BORDER}`, paddingBottom:8 }}>
@@ -1723,7 +1725,7 @@ function DeadlineBanner({ mobile }) {
   }
   return (
     <div style={{ ...base, height:36, background:bg, animation:anim, padding:"0 20px" }}>
-      <div style={{ maxWidth:1100, width:"100%", margin:"0 auto", display:"flex", alignItems:"center", gap:14 }}>
+      <div style={{ maxWidth:1240, width:"100%", margin:"0 auto", display:"flex", alignItems:"center", gap:14 }}>
         {under24 && <img src="/img/makkauijau.png" alt="" title="Mak kau ijau — deadline dah dekat!" className="mki-shake" style={{ height:30, filter:"drop-shadow(0 1px 2px #000a)" }} />}
         <span style={{ fontSize:9, letterSpacing:2, color:"#fde68a", fontFamily:MONO }}>NEXT DEADLINE</span>
         <span style={{ fontSize:13, fontWeight:700 }}>{center}</span>
@@ -2433,7 +2435,7 @@ export default function App() {
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
       <div style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}`, padding:mobile?"12px 12px 0":"16px 20px 0" }}>
-        <div style={{ maxWidth:1100, margin:"0 auto" }}>
+        <div style={{ maxWidth:1240, margin:"0 auto" }}>
           {!mobile && <div style={{ fontSize:9, letterSpacing:5, color:"#f97316", marginBottom:4, fontFamily:MONO }}>FIFA WORLD CUP 2026 · FANTASY ANALYTICS</div>}
           <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
             <div title="Mak kau ijau" style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:"0 0 auto" }}>
@@ -2455,7 +2457,7 @@ export default function App() {
       <DeadlineBanner mobile={mobile} />
 
       <div className="tabwrap" style={{ background:"linear-gradient(135deg,#0d1829,#0a1020)", borderBottom:`1px solid ${BORDER}` }}>
-        <div style={{ maxWidth:1100, margin:"0 auto", padding:mobile?"0 12px":"0 20px" }}>
+        <div style={{ maxWidth:1240, margin:"0 auto", padding:mobile?"0 12px":"0 20px" }}>
           <div className="tabbar" style={{ display:"flex", gap:mobile?2:4 }}>
             {TABS.map(([k,l]) => (
               <button key={k} onClick={()=>setTab(k)} style={{ padding:mobile?"8px 10px":"8px 14px", minHeight:mobile?44:0, border:"none", whiteSpace:"nowrap",
@@ -2466,7 +2468,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth:1100, margin:"0 auto", padding:mobile?"14px 12px 40px":"16px 16px 40px" }}>
+      <div style={{ maxWidth:1240, margin:"0 auto", padding:mobile?"14px 12px 40px":"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp, watch, toggleWatch }} />}
