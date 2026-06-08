@@ -42,7 +42,8 @@ function computePrediction(p, riskMode) {
   returns -= p.cardRisk === "high" ? 0.4 : p.cardRisk === "medium" ? 0.2 : 0;
   const pts = sp * 2 + returns * minsFactor;  // appearance + minute-scaled returns
 
-  const E_MATCHES = 3 + (p.advP / 100) * 5;
+  const E_MATCHES = 3;   // GROUP STAGE ONLY (MD1–3): same 3 games for every player so xPts is comparable.
+  // (Knockout matches are added matchday-by-matchday as teams actually advance — not pre-credited here.)
   const scoutBonusEV = p.own < 5 ? 1.8 : p.own < 10 ? 0.6 : 0;
   const shiftDiff = /ATT|STRIKER/.test(p.roleShift || "") && p.own < 15 ? 1.4 : 1; // role arbitrage
   const capMult = p.captainSlot === 3 ? 1.15 : p.captainSlot === 2 ? 1.08 : 1.0;
@@ -133,8 +134,9 @@ const ROLE_DEFS = [["pen","🎯 PEN"],["fk","🦶 FK"],["corner","📐 CORNER"],
 const SMART_PREDS = {
   captainPicks:p=>p.captainSlot===3 && p.startProb>0.90 && (p.fixtures?.[0]?.oddsWin||0)>0.65,
   scoutTargets:p=>p.own<10 && p.pts_balanced>10 && p.startProb>0.85,
-  budgetBuilders:p=>p.price<=5.0 && p.pts_balanced>12 && p.startProb>0.85,
-  roleArb:p=>/ATT/.test(p.roleShift||"") && p.own<20 && p.mispricing_flag==="UNDERRATED",
+  budgetBuilders:p=>p.price<=5.5 && (p.pts_balanced||0)>8 && (p.startProb||0)>0.70,
+  // role/usage mispricing: attacking role-shift OR model-underrated, low-owned, and a plausible starter
+  roleArb:p=>(/ATT/.test(p.roleShift||"") || p.mispricing_flag==="UNDERRATED") && p.own<20 && (p.startProb||0)>=0.65 && (p.pts_balanced||0)>8,
   defHolds:p=>(p.pos==="DEF"||p.pos==="GK") && (p.csP||0)>0.50 && p.advP>65 && p.cardRisk==="low",
   diffStack:p=>p.own<15 && overperfTeam(p) && (p.pts_diff||0)>20,
 };
@@ -154,8 +156,12 @@ function passesFilters(p, F, cl) {
   }
   if (F.teamPlay!=="All" && (p.team_cluster||"").replace(/_\d+$/,"")!==F.teamPlay) return false;
   if (F.md!=null && F.oppPlay!=="All" && (!fx || cl[fx.opponent]!==F.oppPlay)) return false;
-  if ((p.startProb||0)*(p.minsIfStarted||0) < F.xMins) return false;
-  if ((p.advP||0) < F.advMin) return false;
+  // when a smart filter is active, don't let the DEFAULT minutes/survival sliders silently empty the
+  // cohort (that made the badge count and the table disagree) — only apply them if the user raised them
+  const applyXMins = !F.smart || F.xMins !== 60;
+  const applyAdv = !F.smart || F.advMin !== 40;
+  if (applyXMins && (p.startProb||0)*(p.minsIfStarted||0) < F.xMins) return false;
+  if (applyAdv && (p.advP||0) < F.advMin) return false;
   if ((p.pts_balanced||0) < F.ptsMin) return false;
   return true;
 }
@@ -314,7 +320,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
 
       {/* sort tabs */}
       <div style={{ display:"flex", gap:2, borderBottom:`1px solid ${BORDER}` }}>
-        {[["displayPts","xPts"],["value","Value/£"],["price","Price"],["own","Own"],["tier","Tier"]].map(([k,l])=>(
+        {[["displayPts","xPts (Group Stage)"],["value","Value/£"],["price","Price"],["own","Own"],["tier","Tier"]].map(([k,l])=>(
           <button key={k} className="sort-tab" onClick={()=>setSortBy(k)} style={{ padding:"6px 12px", border:"none",
             borderBottom:`2px solid ${sortBy===k?"#f97316":"transparent"}`, background:"transparent",
             color:sortBy===k?"#f97316":DIM, cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>{l}</button>
@@ -349,8 +355,8 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         </div>
       ) : (
       <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:"0 0 10px 10px", overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 50px 56px 44px 34px 56px",
-          gap:0, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"24px 1fr 52px 46px 40px 58px 50px 60px 48px 34px 50px",
+          gap:8, padding:"8px 12px", borderBottom:`1px solid ${BORDER}`, fontSize:9, letterSpacing:1, color:DIM, background:"#0a121f" }}>
           {(() => { const SH = (k, label, align="right", title) => (
             <div onClick={()=>setSortBy(k)} title={title || `Sort by ${label} (high → low)`}
               style={{ textAlign:align, cursor:"pointer", color:sortBy===k?"#f97316":DIM, fontWeight:sortBy===k?800:400 }}>
@@ -359,7 +365,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           {SH("price","£")}
           {SH("xmins","xMIN")}
           <div style={{textAlign:"center"}}>ROLE</div>
-          {SH("displayPts","xPTS")}
+          {SH("displayPts","xPTS·GS","right","Group-stage xPts (sum of MD1–3) — same 3 games for every player")}
           {SH("mdnext",`MD${NEXT_MD+1}`,"right",`Sort by next-matchday (MD${NEXT_MD+1}) xPts`)}
           <div style={{textAlign:"right"}}>PREM</div>
           {SH("own","OWN")}
@@ -371,8 +377,8 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           const posCol = POS_COLOR[p.pos];
           return (
             <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
-              style={{ display:"grid", gridTemplateColumns:"24px 1fr 50px 46px 42px 60px 50px 56px 44px 34px 56px",
-                gap:0, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
+              style={{ display:"grid", gridTemplateColumns:"24px 1fr 52px 46px 40px 58px 50px 60px 48px 34px 50px",
+                gap:8, padding:"13px 12px", borderBottom:`1px solid ${BORDER}33`,
                 background:selected?.id===p.id?"#f9731610": i<3?"#0f1c2d":"transparent",
                 cursor:"pointer", alignItems:"center" }}>
               <div style={{ fontSize:10, color:i<3?"#f97316":DIM }}>{i+1}</div>
@@ -654,7 +660,7 @@ function StartingXITab({ pool, mobile }) {
             </div>
             <div style={{ fontSize:11, color:DIM, margin:"4px 0" }}>{pl.team} · ${pl.price}m · {pl.pts_balanced} xPts · {pl.value} val</div>
             {showDesc && (() => {
-              const E = (3 + (pl.advP/100)*5).toFixed(1);
+              const E = "3";   // group-stage scope (MD1–3)
               const why = `MD${md+1} pick — ${Math.round(pl.mdWin*100)}% win vs ${pl.mdOpp}, ${pl.pts_balanced} xPts.`;
               const key = (pl.pos==="GK"||pl.pos==="DEF")
                 ? `Clean sheet prob ${Math.round((pl.csP||0)*100)}% → expected CS pts (adv ${pl.advP}%, ~${E} matches)`
@@ -698,6 +704,48 @@ function StartingXITab({ pool, mobile }) {
 }
 
 // ─── TAB: OPTIMAL SQUADS ─────────────────────────────────────────────────────────
+// greedy squad builder (client-side) — 2/5/5/3, $100m, ≤3 per team, budget-reserved so it always fills 15
+function pickGreedySquad(pool, scoreFn, startProbMin) {
+  const NEED = { GK: 2, DEF: 5, MID: 5, FWD: 3 };
+  const elig = pool.filter(p => p.price > 0 && (!startProbMin || (p.startProb || 0) >= startProbMin));
+  const minPrice = elig.reduce((m, p) => Math.min(m, p.price), 99) || 3.8;
+  const ranked = elig.slice().sort((a, b) => scoreFn(b) - scoreFn(a));
+  const chosen = [], teamCnt = {}; let spent = 0;
+  const cnt = pos => chosen.filter(p => p.pos === pos).length;
+  for (let pass = 0; pass < 6 && chosen.length < 15; pass++) {
+    for (const p of ranked) {
+      if (chosen.length >= 15) break;
+      if (chosen.indexOf(p) >= 0) continue;
+      if (cnt(p.pos) >= NEED[p.pos]) continue;
+      if ((teamCnt[p.team] || 0) >= 3) continue;
+      const reserve = (15 - chosen.length - 1) * minPrice;
+      if (spent + p.price > 100 - reserve + 1e-9) continue;
+      chosen.push(p); spent += p.price; teamCnt[p.team] = (teamCnt[p.team] || 0) + 1;
+    }
+  }
+  return chosen;
+}
+function buildOptimalSquads(pool) {
+  if (!pool || !pool.length) return { squads: null, meta: {} };
+  const defs = {
+    safe:     { label: "Safe — Minutes Certainty", description: "Nailed starters only (start prob ≥ 0.80). Maximises guaranteed group-stage minutes.", objective: "max Σ pts_safe", score: p => p.pts_safe || 0, sp: 0.80 },
+    balanced: { label: "Balanced — Core + Edge", description: "Best expected group-stage points across a $100m squad.", objective: "max Σ pts_balanced", score: p => p.pts_balanced || 0 },
+    diff:     { label: "Differential — Value Hunt", description: "Best points per $ — targets underpriced group-stage scorers.", objective: "max Σ (pts_balanced ÷ price)", score: p => (p.pts_balanced || 0) / p.price },
+    pure:     { label: "Pure Differential — Ceiling × Scarcity", description: "Explosive ceiling concentrated in low-owned players.", objective: "max Σ pts_diff × 1/(own+1)", score: p => (p.pts_diff || 0) * (1 / ((p.own || 0) + 1)) },
+  };
+  const squads = {}, meta = {};
+  Object.entries(defs).forEach(([k, d]) => {
+    const sq = pickGreedySquad(pool, d.score, d.sp).map(p => ({ id: p.id, name: p.name, pos: p.pos, price: p.price, pts: Math.round((p.pts_balanced || 0) * 10) / 10, own: p.own }));
+    squads[k] = sq;
+    const tot = sq.reduce((s, p) => s + p.pts, 0), bud = sq.reduce((s, p) => s + p.price, 0);
+    const own = sq.length ? sq.reduce((s, p) => s + (p.own || 0), 0) / sq.length : 0;
+    meta[k] = { label: d.label, description: d.description + " · client-side greedy on group-stage xPts", objective: d.objective,
+      total_pts: Math.round(tot), budget: Math.round(bud * 10) / 10, avg_own: Math.round(own * 10) / 10,
+      n_scout: sq.filter(p => (p.own || 0) < 10).length, template_overlap_pct: Math.round(sq.filter(p => (p.own || 0) > 20).length / (sq.length || 1) * 100) };
+  });
+  return { squads, meta };
+}
+
 function OptimalSquadsTab({ squads, meta, mobile }) {
   if (!squads) return <div style={{ color:DIM }}>No squad data — run the R pipeline.</div>;
   return (
@@ -960,12 +1008,20 @@ function CausalTab({ causal, players }) {
 const LU_GROUPS = {A:["Mexico","South Korea","South Africa","Czech Republic"],B:["Canada","Switzerland","Qatar","Bosnia and Herzegovina"],C:["Brazil","Morocco","Scotland","Haiti"],D:["United States","Paraguay","Australia","Turkey"],E:["Germany","Curacao","Ivory Coast","Ecuador"],F:["Netherlands","Japan","Sweden","Tunisia"],G:["Belgium","Egypt","Iran","New Zealand"],H:["Spain","Cape Verde","Saudi Arabia","Uruguay"],I:["France","Senegal","Iraq","Norway"],J:["Argentina","Algeria","Austria","Jordan"],K:["Portugal","DR Congo","Uzbekistan","Colombia"],L:["England","Croatia","Ghana","Panama"]};
 const LU_CONF = {UEFA:["Spain","France","England","Germany","Portugal","Netherlands","Belgium","Croatia","Switzerland","Austria","Norway","Scotland","Sweden","Czech Republic","Bosnia and Herzegovina","Turkey"],CONMEBOL:["Brazil","Argentina","Uruguay","Colombia","Ecuador","Paraguay"],CAF:["Morocco","Senegal","Egypt","Algeria","Tunisia","Ivory Coast","South Africa","DR Congo","Cape Verde","Ghana"],AFC:["Japan","South Korea","Iran","Saudi Arabia","Qatar","Australia","Iraq","Uzbekistan","Jordan"],CONCACAF:["Mexico","United States","Canada","Panama","Haiti","Curacao"],OFC:["New Zealand"]};
 const LU_GROUP_OF = {}; Object.entries(LU_GROUPS).forEach(([g,ts])=>ts.forEach(t=>LU_GROUP_OF[t]=g));
-const SLOT_XY = { GK:[50,88], LB:[16,68], LCB:[38,72], RCB:[62,72], CB:[50,72], RB:[84,68],
-  LWB:[12,60], RWB:[88,60],
-  CDM:[50,60], LDM:[38,60], RDM:[62,60], LM:[18,50], CM:[50,50], LCM:[36,50], RCM:[64,50], RM:[82,50], CAM:[50,40],
-  LAM:[34,40], RAM:[66,40], LW:[18,22], ST:[50,14], CF:[50,20], RW:[82,22], LF:[32,17], RF:[68,17] };
-// band (vertical zone) for a slot — used to order players top→bottom when laying out a formation
-const SLOT_BAND = { GK:0, LB:1,LCB:1,CB:1,RCB:1,RB:1,LWB:1,RWB:1, CDM:2,LDM:2,RDM:2,LM:2,CM:2,LCM:2,RCM:2,RM:2,CAM:3,LAM:3,RAM:3, LW:4,RW:4,CF:4,ST:4,LF:4,RF:4 };
+// pitch layout: each slot → a vertical row + a left-right order. Players in the same row are
+// spread horizontally (so a double pivot sits side-by-side, two strikers sit central, LB/RB on
+// the correct flanks, and CAM sits on its own row ABOVE the CM/CDM line).
+const PITCH_ROW_Y = { GK:88, DEF:70, MID:50, AM:34, FWD:18 };
+const SLOT_ROW = { GK:"GK",
+  LB:"DEF",LWB:"DEF",LCB:"DEF",CB:"DEF",RCB:"DEF",RB:"DEF",RWB:"DEF",
+  CDM:"MID",LDM:"MID",RDM:"MID",LM:"MID",LCM:"MID",CM:"MID",RCM:"MID",RM:"MID",
+  CAM:"AM",LAM:"AM",RAM:"AM",
+  LW:"FWD",LF:"FWD",ST:"FWD",CF:"FWD",RF:"FWD",RW:"FWD" };
+const SLOT_ORDER = { GK:50,
+  LB:10,LWB:6,LCB:34,CB:50,RCB:66,RB:90,RWB:94,
+  LDM:36,CDM:50,RDM:64, LM:12,LCM:36,CM:50,RCM:64,RM:88,
+  LAM:30,CAM:50,RAM:70, LW:14,LF:36,ST:50,CF:50,RF:64,RW:86 };
+const POS_ROW = { GK:"GK", DEF:"DEF", MID:"MID", FWD:"FWD" };
 const luNorm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z ]/g," ").trim();
 const luStatusColor = (status, pos) => status==="DOUBT" ? "#eab308" : status==="OUT" ? "#475569"
   : status==="PROBABLE" ? (POS_COLOR[pos]||"#888")+"aa" : (POS_COLOR[pos]||"#888");
@@ -1041,20 +1097,16 @@ function LineupsTab({ lineups, pool, goToPlayer, mobile, narrow, sel, setSel, cm
             <div style={{ position:"absolute", top:"50%", left:0, right:0, height:1, background:"#2e7d4f" }} />
             {(() => {
               const players = L.players || [];
-              // position each player by its SLOT coordinate (LB left, RB right, CDM deep, CAM high,
-              // LW/RW wide, ST central) — falling back to the slot's vertical band if a slot is unknown,
-              // and spreading any players that share the same slot (e.g. two CMs) horizontally so they don't stack.
-              const bandY = { 0:88, 1:72, 2:56, 3:40, 4:20 };
-              const posBand = { GK:0, DEF:1, MID:2, FWD:4 };
-              const groups = {};
-              players.forEach(pl => { (groups[pl.slot] = groups[pl.slot] || []).push(pl); });
+              // group players into vertical rows (GK/DEF/MID/AM/FWD), order each row left→right by slot,
+              // then spread evenly so nothing stacks: double pivots sit side-by-side, CAM sits above the
+              // CM/CDM line, two strikers sit central, full-backs hug the flanks.
+              const rows = {};
+              players.forEach(pl => { const r = SLOT_ROW[pl.slot] || POS_ROW[pl.position] || "MID"; (rows[r] = rows[r] || []).push(pl); });
               const positioned = [];
-              Object.entries(groups).forEach(([slot, arr]) => {
-                const base = SLOT_XY[slot] || [50, bandY[SLOT_BAND[slot] ?? posBand[arr[0].position] ?? 2]];
-                arr.forEach((pl, i) => {
-                  const off = arr.length === 1 ? 0 : (i - (arr.length - 1) / 2) * 15;   // spread shared slots ±
-                  positioned.push({ pl, x: Math.max(8, Math.min(92, base[0] + off)), y: base[1] });
-                });
+              Object.entries(rows).forEach(([r, arr]) => {
+                arr.sort((a, b) => (SLOT_ORDER[a.slot] ?? 50) - (SLOT_ORDER[b.slot] ?? 50));
+                const n = arr.length, step = n > 1 ? Math.min(22, 76 / (n - 1)) : 0;
+                arr.forEach((pl, i) => positioned.push({ pl, x: n === 1 ? (SLOT_ORDER[pl.slot] ?? 50) : 50 + (i - (n - 1) / 2) * step, y: PITCH_ROW_Y[r] }));
               });
               return positioned.map(({pl,x,y},i)=>(
                 <div key={i} title={pl.doubt_reason||pl.status} style={{ position:"absolute", left:`${x}%`, top:`${y}%`, transform:"translate(-50%,-50%)", textAlign:"center", width:64 }}>
@@ -1655,6 +1707,7 @@ function PlannerTab({ pool, mobile }) {
   const [md, setMd] = useState(NEXT_MD);
   const [pickPos, setPickPos] = useState(null);
   const [pickQ, setPickQ] = useState("");
+  const [pickMax, setPickMax] = useState("");   // optional max-price cap in the picker
   const [pngBusy, setPngBusy] = useState(false);
   const [menuId, setMenuId] = useState(null);        // pitch player whose action menu is open
   const [subbingId, setSubbingId] = useState(null);  // starter being subbed out (awaiting bench pick)
@@ -1731,6 +1784,24 @@ function PlannerTab({ pool, mobile }) {
       if (!best || tot > best.tot) best = { ids: arr.map(x => x.id), tot };
     }
     if (best) { setStarters(best.ids); const capId = best.ids.reduce((a, b) => ptsOf(byId[b], mi) > ptsOf(byId[a], mi) ? b : a); setCaptain(capId); }
+  };
+
+  // Autofill: fill remaining squad slots with the highest next-MD xP players that are affordable,
+  // reserving ~$3.9m per still-empty slot so the squad can always be completed to 15.
+  const autofill = () => {
+    const sq = [...squad];
+    const priceOf = id => byId[id]?.price || 0;
+    const cntP = pos => sq.map(id => byId[id]).filter(p => p && p.pos === pos).length;
+    let guard = 0;
+    while (sq.length < 15 && guard++ < 80) {
+      const rem = PL_BUDGET - sq.reduce((s, id) => s + priceOf(id), 0);
+      const reserve = (15 - sq.length - 1) * 3.9;   // keep enough for the cheapest remaining fills
+      const cands = (pool || []).filter(p => !sq.includes(p.id) && cntP(p.pos) < PL_LIMITS[p.pos] && p.price <= rem - reserve + 1e-9);
+      if (!cands.length) break;
+      cands.sort((x, y) => ptsOf(y, NEXT_MD) - ptsOf(x, NEXT_MD) || (y.pts_balanced || 0) / y.price - (x.pts_balanced || 0) / x.price);
+      sq.push(cands[0].id);
+    }
+    setSquad(sq);
   };
 
   const mdTotal = (mi) => {
@@ -1831,6 +1902,7 @@ function PlannerTab({ pool, mobile }) {
           <div style={{ height: "100%", width: `${Math.min(100, spent)}%`, background: remaining < 0 ? "#ef4444" : "linear-gradient(90deg,#22c55e,#f97316)" }} />
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+          <button onClick={autofill} disabled={squad.length >= 15} style={btn(false)}>✨ Autofill (best xP, affordable)</button>
           <button onClick={() => autoXI(md)} disabled={squad.length < 11} style={btn(false)}>⚡ Auto-pick XI (MD{md + 1})</button>
           <button onClick={exportPng} disabled={!starters.length || pngBusy} style={btn(false)}>{pngBusy ? "…rendering" : "📸 Save PNG (3 MDs)"}</button>
           <button onClick={() => { if (confirm("Clear your whole squad?")) { setSquad([]); setStarters([]); setCaptain(null); setViceCaptain(null); setTransfers(0); setPendingOut(0); setSubbingId(null); setMenuId(null); } }} style={{ ...btn(false), color: "#ff6b6b", borderColor: "#ef444455" }}>Clear</button>
@@ -1857,7 +1929,7 @@ function PlannerTab({ pool, mobile }) {
             {[["GK", 88], ["DEF", 70], ["MID", 48], ["FWD", 24]].flatMap(([ln, y]) => {
               const arr = starters.map(id => byId[id]).filter(p => p && p.pos === ln), n = arr.length;
               return arr.map((p, i) => {
-                const x = n === 1 ? 50 : 15 + (i / (n - 1)) * 70, isC = captain === p.id, isVC = viceCaptain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
+                const x = n === 1 ? 50 : 50 + (i - (n - 1) / 2) * Math.min(22, 76 / (n - 1)), isC = captain === p.id, isVC = viceCaptain === p.id, pts = ptsOf(p, md), opp = oppOf(p, md);
                 const bord = isC ? "3px solid #fbbf24" : isVC ? "3px solid #cbd5e1" : subbingId === p.id ? "3px dashed #f97316" : "2px solid #ffffff55";
                 return (
                   <div key={p.id} style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center", width: 78, zIndex: menuId === p.id ? 30 : 1 }}>
@@ -1917,7 +1989,7 @@ function PlannerTab({ pool, mobile }) {
           <div style={{ fontSize: 10, letterSpacing: 1, color: POS_COLOR[pos], fontFamily: MONO, marginBottom: 4 }}>{pos} ({countPos(pos)}/{PL_LIMITS[pos]})</div>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(auto-fill,minmax(300px,1fr))", gap: 6 }}>
             {sp.filter(p => p.pos === pos).sort((a, b) => ptsOf(b, md) - ptsOf(a, md)).map(SquadCard)}
-            {countPos(pos) < PL_LIMITS[pos] && <button onClick={() => { setPickPos(pos); setPickQ(""); }} style={{ ...btn(pickPos === pos), padding: "10px", borderStyle: "dashed" }}>+ Add {pos}</button>}
+            {countPos(pos) < PL_LIMITS[pos] && <button onClick={() => { setPickPos(pos); setPickQ(""); setPickMax(""); }} style={{ ...btn(pickPos === pos), padding: "10px", borderStyle: "dashed" }}>+ Add {pos}</button>}
           </div>
         </div>
       ))}
@@ -1926,12 +1998,19 @@ function PlannerTab({ pool, mobile }) {
       {pickPos && (
         <div style={{ background: CARD, border: `1px solid #f9731655`, borderRadius: 10, padding: 12, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <b style={{ color: "#fff", fontSize: 13 }}>Add a {pickPos} — sorted by MD{md + 1} xP (≤ ${remaining}m)</b>
+            <b style={{ color: "#fff", fontSize: 13 }}>Add a {pickPos} — highest MD{md + 1} xP first</b>
             <button onClick={() => setPickPos(null)} style={{ ...btn(false), padding: "4px 8px" }}>close</button>
           </div>
-          <input autoFocus placeholder="Search player or team…" value={pickQ} onChange={e => setPickQ(e.target.value)} style={{ width: "100%", background: "#0a121f", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "8px 10px", color: TEXT, fontFamily: "inherit", fontSize: 13, marginBottom: 8 }} />
+          <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <input autoFocus placeholder="Search player or team…" value={pickQ} onChange={e => setPickQ(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0, background: "#0a121f", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "8px 10px", color: TEXT, fontFamily: "inherit", fontSize: 13 }} />
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: DIM, whiteSpace: "nowrap" }}>Max £
+              <input type="number" min="0" step="0.1" placeholder={`${remaining}`} value={pickMax} onChange={e => setPickMax(e.target.value)} style={{ width: 64, background: "#0a121f", border: `1px solid ${BORDER}`, borderRadius: 6, padding: "8px 8px", color: TEXT, fontFamily: "inherit", fontSize: 13 }} />m
+            </label>
+            <span style={{ fontSize: 10, color: DIM }}>affordable ≤ ${remaining}m</span>
+          </div>
+          {(() => { const cap = pickMax !== "" ? Math.min(remaining, +pickMax || 0) : remaining; return (
           <div style={{ maxHeight: 280, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-            {(pool || []).filter(p => p.pos === pickPos && !squad.includes(p.id) && p.price <= remaining + 1e-9)
+            {(pool || []).filter(p => p.pos === pickPos && !squad.includes(p.id) && p.price <= cap + 1e-9)
               .filter(p => { const s = pickQ.toLowerCase(); return !s || p.name.toLowerCase().includes(s) || p.team.toLowerCase().includes(s); })
               .map(p => ({ p, s: ptsOf(p, md) })).sort((a, b) => b.s - a.s).slice(0, 40)
               .map(({ p, s }) => (
@@ -1943,6 +2022,7 @@ function PlannerTab({ pool, mobile }) {
                 </div>
               ))}
           </div>
+          ); })()}
         </div>
       )}
 
@@ -2000,11 +2080,36 @@ export default function App() {
       .then(([players, a, l, nw]) => {
         // players.json may be a bare array (legacy) or { generated_at, players }
         const arr = Array.isArray(players) ? players : players.players;
-        // merge R-model outputs (tier, tier_score, pts_safe/balanced/diff, intl_premium_*,
-        // causal_pts_adjustment, form_mult, …) from analytics.player_analytics by id — without
-        // this merge the Tiers tab and tier badges are empty and the model loses its adjustments
+        // merge R-model outputs (tier, tier_score, intl_premium_*, causal_pts_adjustment, form_mult, …)
+        // from analytics.player_analytics by id — without this the Tiers tab/badges and smart filters are empty
         const paById = {}; (a?.player_analytics || []).forEach(r => { if (r && r.id != null) paById[r.id] = r; });
-        const merged = arr.map(p => paById[p.id] ? { ...p, ...paById[p.id], id: p.id } : p);
+        // ground start probability in the predicted lineups: build a per-team name→role (XI/bench) lookup
+        const luByTeam = {};
+        Object.entries(l?.teams || {}).forEach(([team, L]) => {
+          const m = [];
+          (L.players || []).forEach(pl => m.push({ toks: new Set(luNorm(pl.name).split(" ").filter(t => t.length > 2)), role: "XI" }));
+          (L.bench || []).forEach(pl => m.push({ toks: new Set(luNorm(pl.name).split(" ").filter(t => t.length > 2)), role: "BENCH" }));
+          luByTeam[team] = m;
+        });
+        const roleOf = (p) => {
+          const list = luByTeam[p.team]; if (!list) return null;            // team has no predicted lineup → keep prior
+          const toks = luNorm(p.name).split(" ").filter(t => t.length > 2);
+          let role = null, best = 0;
+          list.forEach(e => { const s = toks.filter(t => e.toks.has(t)).length; if (s > best) { best = s; role = e.role; } });
+          return best > 0 ? role : "OUT";                                   // in lineup but not XI/bench → deep squad
+        };
+        const merged = arr.map(p => {
+          const q = paById[p.id] ? { ...p, ...paById[p.id], id: p.id } : { ...p };
+          const role = roleOf(q);
+          if (role === "XI") { q.startProb = 0.90; q.minsIfStarted = Math.max(q.minsIfStarted || 80, 85); }
+          else if (role === "BENCH") { q.startProb = 0.32; q.minsIfStarted = Math.min(q.minsIfStarted || 45, 35); }
+          else if (role === "OUT") { q.startProb = 0.12; q.minsIfStarted = Math.min(q.minsIfStarted || 25, 20); }
+          // recompute the GROUP-STAGE points distribution with the grounded start prob so the Players
+          // table, Tiers and smart filters all read the same numbers (E_MATCHES is fixed at 3 inside)
+          const cp = computePrediction(q);
+          q.pts_safe = +cp.pts_median.toFixed(1); q.pts_balanced = +cp.pts_mean.toFixed(1); q.pts_diff = +cp.pts_p90.toFixed(1);
+          return q;
+        });
         setRawPlayers(merged);
         setDataTimestamp(Array.isArray(players) ? null : players.generated_at);
         setAnalytics(a); setLineups(l); setNews(nw);
@@ -2042,10 +2147,12 @@ export default function App() {
       });
   }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
 
+  const optimal = useMemo(() => buildOptimalSquads(rawPlayers || []), [rawPlayers]);
+
   if (loadError) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Failed to load data</div>;
   if (!rawPlayers) return <div style={{ background:BG, minHeight:"100vh", color:TEXT, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"monospace" }}>Loading...</div>;
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Lineups"],["news","📡 News"],["squads","🧮 Optimal Squads"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Optimal Squads"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
@@ -2060,6 +2167,7 @@ export default function App() {
             <span style={{ fontSize:11, fontStyle:"italic", color:"#64748b" }}>it's coming home 🏴󠁧󠁢󠁥󠁮󠁧󠁿</span>
             <span style={{ marginLeft:"auto" }}><UrlBadge /></span>
           </div>
+          <div style={{ fontSize:mobile?10:11, color:"#475569", marginTop:3, fontStyle:"italic" }}>makscouthijau — .uk because that was the cheapest domain</div>
           <div style={{ fontSize:mobile?11:12, color:DIM, marginTop:4 }}>Points Prediction Engine · {rawPlayers.length} players · R-model engine{analytics ? " · analytics loaded" : ""}</div>
         </div>
       </div>
@@ -2086,7 +2194,7 @@ export default function App() {
         {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} />}
         {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} sel={lineupSel} setSel={setLineupSel} cmp={lineupCmp} setCmp={setLineupCmp} />}
         {tab==="news" && <NewsTab news={news} mobile={mobile} />}
-        {tab==="squads" && <OptimalSquadsTab squads={analytics?.optimal_squads} meta={analytics?.optimal_squads_meta} mobile={mobile} />}
+        {tab==="squads" && <OptimalSquadsTab squads={optimal.squads} meta={optimal.meta} mobile={mobile} />}
         {tab==="tiers" && <TiersTab tiers={analytics?.tier_list} pool={rawPlayers} riskMode={riskMode} posFilter={tierPos} setPosFilter={setTierPos} pureDiff={pureDiff} setPureDiff={setPureDiff} mobile={mobile} />}
         {tab==="causal" && <CausalTab causal={analytics?.causal_analysis} players={rawPlayers} />}
         {tab==="method" && <MethodTab analytics={analytics} />}
