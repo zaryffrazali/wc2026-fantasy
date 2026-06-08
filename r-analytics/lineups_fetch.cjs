@@ -13,7 +13,7 @@ const TEAMS_PER_RUN = 8;
 const DELAY_MS = 3000;             // between teams
 const REVIEW_DELAY_MS = 3000;      // between Agent 1 and Agent 2 for the same team
 const CHECKPOINT_FILE = "public/data/lineups_checkpoint.json";
-const MODEL = "claude-opus-4-6";   // most accurate 2026 knowledge (expensive — manual runs only)
+const MODEL = "claude-sonnet-4-6";   // Sonnet ~5× cheaper than Opus; lineups are usually done by hand anyway
 const PREDICT_MAX_TOKENS = 1500;
 const REVIEW_MAX_TOKENS = 1200;
 
