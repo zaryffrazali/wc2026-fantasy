@@ -289,7 +289,6 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
           <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>THRESHOLDS</div>
           <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
             <label style={{fontSize:11,color:DIM}}>Min minutes: {F.xMins}'<br/><input type="range" min={45} max={90} value={F.xMins} onChange={e=>set("xMins",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
-            <label style={{fontSize:11,color:DIM}}>Survival (advance %): {F.advMin}%+<br/><input type="range" min={0} max={90} value={F.advMin} onChange={e=>set("advMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
             <label style={{fontSize:11,color:DIM}}>Min xPts: {F.ptsMin}<br/><input type="range" min={0} max={40} value={F.ptsMin} onChange={e=>set("ptsMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
           </div>
         </div>
@@ -318,7 +317,7 @@ function WatchlistBox({ players, watch, toggleWatch, onPick, pickLabel, md }) {
 // ─── TAB: PLAYER TABLE ──────────────────────────────────────────────────────────
 function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch,
-                          ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
+                          ownMax, setOwnMax, priceMax, setPriceMax, mispricedOnly, setMispricedOnly,
                           F, setF, showFilters, setShowFilters, allPlayers, mobile, dataTimestamp, watch, toggleWatch }) {
   const refreshed = dataTimestamp
     ? new Date(dataTimestamp).toLocaleString("en-US", { timeZone:"Asia/Kuala_Lumpur", month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true })
@@ -358,7 +357,10 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
           style={{ padding:"7px 12px", borderRadius:6, fontFamily:"inherit", fontSize:12, cursor:"pointer",
           border:`1px solid ${mispricedOnly?"#4ade80":BORDER}`, background:mispricedOnly?"#16a34a22":"transparent",
           color:mispricedOnly?"#4ade80":DIM }}>★ MISPRICED</button>
-        <div style={{ display:"flex", alignItems:"center", gap:8, marginLeft:"auto" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginLeft:"auto", flexWrap:"wrap" }}>
+          <span style={{ fontSize:11, color:DIM, whiteSpace:"nowrap" }}>£ ≤ ${priceMax}m</span>
+          <input type="range" min={3.5} max={11} step={0.5} value={priceMax} onChange={e=>setPriceMax(+e.target.value)}
+            style={{ width:70, accentColor:"#f97316" }} />
           <span style={{ fontSize:11, color:DIM, whiteSpace:"nowrap" }}>Own ≤ {ownMax}%</span>
           <input type="range" min={1} max={100} value={ownMax} onChange={e=>setOwnMax(+e.target.value)}
             style={{ width:70, accentColor:"#f97316" }} />
@@ -385,7 +387,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         <div style={{ textAlign:"center", padding:"44px 20px", color:DIM }}>
           <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:78, filter:"drop-shadow(0 3px 6px #000a)" }} />
           <div style={{ fontSize:14, fontWeight:800, color:"#4ade80", marginTop:10, fontStyle:"italic" }}>Mak kau ijau — takde sapa 😤</div>
-          <div style={{ fontSize:12, marginTop:4 }}>No players match these filters. Loosen them or hit CLEAR ALL.</div>
+          <div style={{ fontSize:12, marginTop:4 }}>No players match these filters.{posFilter!=="ALL" ? ` You're filtered to ${posFilter} — most role filters (set-pieces, scout, etc.) have few or no ${posFilter}s, so try ALL positions.` : " Loosen them or hit CLEAR ALL."}</div>
         </div>
       ) : mobile ? (
         <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:4 }}>
@@ -2296,6 +2298,7 @@ export default function App() {
   const [sortBy, setSortBy] = useState("displayPts");
   const [search, setSearch] = useState("");
   const [ownMax, setOwnMax] = useState(100);
+  const [priceMax, setPriceMax] = useState(11);
   const [selected, setSelected] = useState(null);
   const [mispricedOnly, setMispricedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -2427,6 +2430,7 @@ export default function App() {
       .filter(p => posFilter === "ALL" || p.pos === posFilter)
       .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.team.toLowerCase().includes(search.toLowerCase()))
       .filter(p => p.own <= ownMax)
+      .filter(p => p.price <= priceMax)
       .filter(p => !mispricedOnly || ((p.roleShift !== "SAME" || p.mispricing_flag === "UNDERRATED") && p.own < 20))
       .filter(p => passesFilters(p, F, clusterByTeam))
       .map(p => ({ ...p, ...computePrediction(p, riskMode), formMatches: formById[p.id] || [] }))
@@ -2444,7 +2448,7 @@ export default function App() {
         if (sortBy === "role")       return ((ROLE_MULT[b.roleShift]||[1])[0]) - ((ROLE_MULT[a.roleShift]||[1])[0]);
         return 0;
       });
-  }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, mispricedOnly, formById, F, clusterByTeam]);
+  }, [rawPlayers, riskMode, posFilter, sortBy, search, ownMax, priceMax, mispricedOnly, formById, F, clusterByTeam]);
 
   const optimal = useMemo(() => buildOptimalSquads(rawPlayers || []), [rawPlayers]);
 
@@ -2507,7 +2511,7 @@ export default function App() {
 
       <div style={{ maxWidth:1240, margin:"0 auto", padding:mobile?"14px 12px 40px":"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
-          posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
+          posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, priceMax, setPriceMax, mispricedOnly, setMispricedOnly,
           F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp, watch, toggleWatch }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} mobile={mobile} />}
         {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} watch={watch} toggleWatch={toggleWatch} />}
