@@ -1988,7 +1988,14 @@ function PlannerTab({ pool, mobile, watch, toggleWatch }) {
       const h2c = mod.default || mod;
       const node = document.getElementById("planner-export");
       const canvas = await h2c(node, { backgroundColor: "#0d1829", scale: 2 });
-      const a = document.createElement("a"); a.download = "wc26-planner-3mds.png"; a.href = canvas.toDataURL("image/png"); a.click();
+      const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+      const file = new File([blob], "wc26-planner-3mds.png", { type: "image/png" });
+      const download = () => { const a = document.createElement("a"); a.download = file.name; a.href = URL.createObjectURL(blob); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+      // mobile: open the share sheet (→ "Save to Photos"); desktop or unsupported: download to Files
+      if (mobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "WC26 Planner — my squad" }); }
+        catch (e) { if (e && e.name !== "AbortError") download(); }   // not a user-cancel → fall back
+      } else { download(); }
     } catch (e) { alert("PNG export needs an internet connection to load the renderer.\n(" + e.message + ")"); }
     setPngBusy(false);
   };
