@@ -168,7 +168,7 @@ const SMART_PREDS = {
 const SMART_DEFS = [["captainPicks","🎯 Captain Picks (pick MD)"],["scoutTargets","🔍 Scouting Bonus"],
   ["budgetBuilders","💰 Budget Builders"],["roleArb","⬆️ Role Arbitrage"],["defHolds","🏰 Defensive Holds"],["diffStack","📈 Differential Stack"]];
 const CLUSTERS = ["HIGH_PRESS_POSSESSION","COUNTER_DEFENSIVE","DIRECT_PHYSICAL","TECHNICAL_LOWBLOCK","BALANCED_TRANSITIONAL"];
-const FILTER_DEFAULT = { roles:{}, smart:null, md:null, fixStr:"all", teamPlay:"All", oppPlay:"All", xMins:60, advMin:40, ptsMin:0 };
+const FILTER_DEFAULT = { roles:{}, smart:null, md:null, fixStr:"all", teamPlay:"All", oppPlay:"All", xMins:60, advMin:0, ptsMin:0 };
 function passesFilters(p, F, cl) {
   for (const k in F.roles) if (F.roles[k] && !ROLE_PREDS[k](p)) return false;
   if (F.smart && SMART_PREDS[F.smart] && !SMART_PREDS[F.smart](p)) return false;
@@ -184,7 +184,7 @@ function passesFilters(p, F, cl) {
   // when a smart filter is active, don't let the DEFAULT minutes/survival sliders silently empty the
   // cohort (that made the badge count and the table disagree) — only apply them if the user raised them
   const applyXMins = !F.smart || F.xMins !== 60;
-  const applyAdv = !F.smart || F.advMin !== 40;
+  const applyAdv = !F.smart || F.advMin !== 0;
   if (applyXMins && (p.startProb||0)*(p.minsIfStarted||0) < F.xMins) return false;
   if (applyAdv && (p.advP||0) < F.advMin) return false;
   if ((p.pts_balanced||0) < F.ptsMin) return false;
@@ -192,7 +192,7 @@ function passesFilters(p, F, cl) {
 }
 const activeFilterCount = F => Object.values(F.roles).filter(Boolean).length + (F.smart?1:0) + (F.md!=null?1:0)
   + (F.fixStr!=="all"?1:0) + (F.teamPlay!=="All"?1:0) + (F.oppPlay!=="All"?1:0)
-  + (F.xMins!==60?1:0) + (F.advMin!==40?1:0) + (F.ptsMin!==0?1:0);
+  + (F.xMins!==60?1:0) + (F.advMin!==0?1:0) + (F.ptsMin!==0?1:0);
 const ScoutBadge = () => <Badge bg="#16a34a22" bd="#22c55e88" fg="#4ade80" title="Scouting Bonus eligible — under 5% owned. +2 bonus pts when scoring >4 pts in a match. Mini-league swing pick.">🎯 SCOUT</Badge>;
 const PenBadge   = () => <Badge bg="#7c3aed22" bd="#a855f788" fg="#c084fc" title="Confirmed penalty taker — adds +0.5 pts EV per game from penalties.">PEN</Badge>;
 function RoleArrow({ shift, note }) {
@@ -247,7 +247,7 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
   if(F.teamPlay!=="All") pills.push([`Team: ${F.teamPlay.replace(/_/g," ")}`, ()=>set("teamPlay","All")]);
   if(F.oppPlay!=="All") pills.push([`Opp: ${F.oppPlay.replace(/_/g," ")}`, ()=>set("oppPlay","All")]);
   if(F.xMins!==60) pills.push([`xMins ≥ ${F.xMins}'`, ()=>set("xMins",60)]);
-  if(F.advMin!==40) pills.push([`adv ≥ ${F.advMin}%`, ()=>set("advMin",40)]);
+  if(F.advMin!==0) pills.push([`adv ≥ ${F.advMin}%`, ()=>set("advMin",0)]);
   if(F.ptsMin!==0) pills.push([`xPts ≥ ${F.ptsMin}`, ()=>set("ptsMin",0)]);
   const btn = (a,ex={}) => ({ padding:"5px 9px", borderRadius:6, fontFamily:"inherit", fontSize:11, cursor:"pointer",
     border:`1px solid ${a?"#f97316":BORDER}`, background:a?"#f9731618":"transparent", color:a?"#f97316":DIM, ...ex });
@@ -281,7 +281,7 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
           <div style={{ fontSize:9, letterSpacing:2, color:DIM, marginBottom:6 }}>THRESHOLDS</div>
           <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
             <label style={{fontSize:11,color:DIM}}>Min minutes: {F.xMins}'<br/><input type="range" min={45} max={90} value={F.xMins} onChange={e=>set("xMins",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
-            <label style={{fontSize:11,color:DIM}}>Survival: {F.advMin}%+<br/><input type="range" min={40} max={90} value={F.advMin} onChange={e=>set("advMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
+            <label style={{fontSize:11,color:DIM}}>Survival (advance %): {F.advMin}%+<br/><input type="range" min={0} max={90} value={F.advMin} onChange={e=>set("advMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
             <label style={{fontSize:11,color:DIM}}>Min xPts: {F.ptsMin}<br/><input type="range" min={0} max={40} value={F.ptsMin} onChange={e=>set("ptsMin",+e.target.value)} style={{accentColor:"#f97316"}}/></label>
           </div>
         </div>
@@ -290,11 +290,28 @@ function FilterPanel({ F, setF, show, setShow, pool }) {
   );
 }
 
+// ─── WATCHLIST (shared between Players tab and Planner) ───────────────────────────
+function WatchlistBox({ players, watch, toggleWatch, onPick, pickLabel, md }) {
+  const ws = (watch || []).map(id => (players || []).find(p => p.id === id)).filter(Boolean);
+  return (
+    <div style={{ background:CARD, border:`1px solid #fbbf2455`, borderRadius:10, padding:"10px 12px", marginBottom:10 }}>
+      <div style={{ fontSize:12, fontWeight:800, color:"#fbbf24", marginBottom:6 }}>⭐ Watchlist ({ws.length})</div>
+      {ws.length === 0 ? <div style={{ fontSize:11, color:DIM }}>Highlight players (★) in the Players tab to pin them here.</div>
+        : <div style={{ maxHeight:220, overflowY:"auto" }}>{ws.map(p => (
+            <div key={p.id} style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 0", borderTop:`1px solid ${BORDER}33` }}>
+              <span style={{ flex:"1 1 auto", minWidth:0, fontSize:12, color:"#fff", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{flagOf(p)} {p.name} <span style={{ color:DIM, fontSize:10 }}>{p.pos} ${p.price}m{md!=null?` · ${mdScore(p,md).pts.toFixed(1)}xP`:""}</span></span>
+              {onPick && <button onClick={()=>onPick(p)} style={{ fontSize:10, padding:"2px 7px", borderRadius:4, border:`1px solid ${BORDER}`, background:"transparent", color:"#4ade80", cursor:"pointer", whiteSpace:"nowrap" }}>{pickLabel||"view"}</button>}
+              <button onClick={()=>toggleWatch(p.id)} title="Remove from watchlist" style={{ fontSize:12, padding:"2px 5px", borderRadius:4, border:"none", background:"transparent", color:"#fbbf24", cursor:"pointer" }}>★</button>
+            </div>))}</div>}
+    </div>
+  );
+}
+
 // ─── TAB: PLAYER TABLE ──────────────────────────────────────────────────────────
 function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
                           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch,
                           ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
-                          F, setF, showFilters, setShowFilters, allPlayers, mobile, dataTimestamp }) {
+                          F, setF, showFilters, setShowFilters, allPlayers, mobile, dataTimestamp, watch, toggleWatch }) {
   const refreshed = dataTimestamp
     ? new Date(dataTimestamp).toLocaleString("en-US", { timeZone:"Asia/Kuala_Lumpur", month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit", hour12:true })
     : null;
@@ -343,6 +360,8 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
       {/* filter panel */}
       <FilterPanel F={F} setF={setF} show={showFilters} setShow={setShowFilters} pool={allPlayers||[]} />
 
+      <div style={{ display:"flex", gap:14, alignItems:"flex-start", flexDirection: mobile?"column":"row" }}>
+      <div style={{ flex:"1 1 0", minWidth:0 }}>
       {/* sort hint + count (sorting now lives on the clickable column headers) */}
       <div style={{ display:"flex", alignItems:"center", borderBottom:`1px solid ${BORDER}`, padding:"6px 2px" }}>
         <span style={{ fontSize:11, color:DIM }}>Tip: click any column header (xPTS·GS, VAL, MD1–3, OWN, TIER…) to sort high → low</span>
@@ -366,6 +385,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div key={p.id} onClick={()=>setSelected(selected?.id===p.id?null:p)}
                 style={{ background:selected?.id===p.id?"#f9731610":CARD, border:`1px solid ${BORDER}`, borderRadius:8, padding:"8px 11px", maxHeight:60, overflow:"hidden", cursor:"pointer" }}>
                 <div style={{ display:"flex", flexWrap:"nowrap", alignItems:"center", gap:6, overflow:"hidden" }}>
+                  <span onClick={e=>{e.stopPropagation(); toggleWatch&&toggleWatch(p.id);}} style={{ cursor:"pointer", color:(watch||[]).includes(p.id)?"#fbbf24":"#475569", fontSize:13, flex:"0 0 auto" }}>{(watch||[]).includes(p.id)?"★":"☆"}</span>
                   <span style={{ color:"#fff", fontWeight:700, fontSize:14, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", flex:"1 1 auto", minWidth:0 }}>{flagOf(p)} {p.name}</span>
                   <span title={POS_TIP[p.pos]} style={{ flex:"0 0 auto", fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO }}>{p.pos}</span>
                   <span style={{ flex:"0 0 auto", fontSize:12, fontWeight:800, fontFamily:MONO, color:p.tier==="S"?"#fbbf24":p.tier==="A"?"#cbd5e1":p.tier==="B"?"#d97706":DIM }}>{p.tier||"-"}</span>
@@ -414,6 +434,7 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
               <div style={{ fontSize:10, color:i<3?"#f97316":DIM }}>{i+1}</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
+                  <span onClick={e=>{e.stopPropagation(); toggleWatch&&toggleWatch(p.id);}} title="Highlight → adds to Squad Planner watchlist" style={{ cursor:"pointer", color:(watch||[]).includes(p.id)?"#fbbf24":"#475569", fontSize:15, marginRight:1 }}>{(watch||[]).includes(p.id)?"★":"☆"}</span>
                   <span style={{ color:"#fff", fontWeight:700, fontSize:16 }}>{flagOf(p)} {p.name}</span>
                   <span title={POS_TIP[p.pos]} style={{ fontSize:10, color:posCol, border:`1px solid ${posCol}44`, padding:"0 5px", borderRadius:3, fontFamily:MONO, cursor:"help" }}>{p.pos}</span>
                   {p.qualifyingForm==="EXCELLENT" && <Badge bg="#052e16" bd="#22c55e" fg="#86efac" title="Excellent qualifying form — 0.6+ goal contributions/game in recent competitive internationals.">QF ★★★</Badge>}
@@ -450,14 +471,20 @@ function PlayerTableTab({ players, selected, setSelected, riskMode, setRiskMode,
         })}
       </div>
       )}
-
-      {selected && <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} />}
+      </div>{/* left: table */}
+      <div style={{ flex: mobile?"1 1 auto":"0 0 340px", width: mobile?"100%":340, position: mobile?"static":"sticky", top:8, alignSelf:"flex-start", maxHeight: mobile?"none":"calc(100vh - 24px)", overflowY: mobile?"visible":"auto" }}>
+        <WatchlistBox players={allPlayers} watch={watch} toggleWatch={toggleWatch} onPick={(p)=>setSelected(p)} pickLabel="view" />
+        {selected ? <PlayerDetail p={selected} riskMode={riskMode} onClose={()=>setSelected(null)} watch={watch} toggleWatch={toggleWatch} />
+          : <div style={{ background:CARD, border:`1px dashed ${BORDER}`, borderRadius:10, padding:"24px 16px", textAlign:"center", color:DIM, fontSize:12 }}>Click a player to see their full breakdown here.</div>}
+      </div>
+      </div>{/* 2-col */}
     </>
   );
 }
 
 // ─── PLAYER DETAIL (with MODEL DEEP DIVE + fixtures + role analysis) ────────────
-function PlayerDetail({ p, riskMode, onClose }) {
+function PlayerDetail({ p, riskMode, onClose, watch, toggleWatch }) {
+  const hot = (watch || []).includes(p.id);
   const pred = computePrediction(p, riskMode);
   const posCol = POS_COLOR[p.pos];
   const rm = ROLE_MULT[p.roleShift] || [1,1];
@@ -468,9 +495,13 @@ function PlayerDetail({ p, riskMode, onClose }) {
         <div>
           <div style={{ fontSize:20, fontWeight:900, color:"#fff" }}>{flagOf(p)} {p.name}</div>
           <div style={{ fontSize:12, color:DIM, marginTop:3 }}>{p.team} · {p.pos} · ${p.price}m · {p.own}% owned · {cleanCluster(p.team_cluster)}</div>
+          {toggleWatch && <div style={{ fontSize:10, color:"#fbbf2599", marginTop:3 }}>Highlighted players appear in the Squad Planner ⭐</div>}
         </div>
-        <button onClick={onClose} style={{ background:"transparent", border:`1px solid ${BORDER}`, color:DIM,
-          padding:"4px 10px", borderRadius:6, cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>close ✕</button>
+        <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+          {toggleWatch && <button onClick={()=>toggleWatch(p.id)} style={{ background: hot?"#fbbf2422":"transparent", border:`1px solid ${hot?"#fbbf24":BORDER}`, color: hot?"#fbbf24":DIM, padding:"4px 10px", borderRadius:6, cursor:"pointer", fontFamily:"inherit", fontSize:11, fontWeight:700, whiteSpace:"nowrap" }}>{hot?"★ Highlighted":"☆ Highlight"}</button>}
+          <button onClick={onClose} style={{ background:"transparent", border:`1px solid ${BORDER}`, color:DIM,
+            padding:"4px 10px", borderRadius:6, cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>✕</button>
+        </div>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))", gap:10 }}>
@@ -849,7 +880,7 @@ function OptimalSquadsTab({ squads, meta, mobile }) {
         const m = (meta && meta[key]) || {};
         return (
           <div key={key} style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 14px" }}>
-            <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3 }}>{m.label||key}</div>
+            <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:3, display:"flex", alignItems:"center", gap:6 }}>{key==="psychopath" && <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:24 }} />}{m.label||key}</div>
             <div style={{ fontSize:11, color:"#94a3b8", marginBottom:6, lineHeight:1.45 }}>{m.description||""}</div>
             <div style={{ fontSize:mobile?11:10, color:"#475569", fontFamily:MONO, marginBottom:8 }}>{m.objective||""}</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:10, fontSize:11, color:DIM, marginBottom:10, borderBottom:`1px solid ${BORDER}`, paddingBottom:8 }}>
@@ -1684,6 +1715,7 @@ function DeadlineBanner({ mobile }) {
   if (mobile) {
     return (
       <div style={{ ...base, height:28, fontSize:12, background:bg, animation:anim, gap:8, padding:"0 12px" }}>
+        {under24 && <img src="/img/makkauijau.png" alt="" className="mki-shake" style={{ height:22 }} />}
         <span style={{ fontFamily:MONO, fontWeight:700, animation:cdAnim }}>{short} · {d}d {pad2(h)}h {pad2(m)}m</span>
         {under1 && <span style={{ fontSize:10, fontWeight:800 }}>⚠ LOCK</span>}
       </div>
@@ -1692,6 +1724,7 @@ function DeadlineBanner({ mobile }) {
   return (
     <div style={{ ...base, height:36, background:bg, animation:anim, padding:"0 20px" }}>
       <div style={{ maxWidth:1100, width:"100%", margin:"0 auto", display:"flex", alignItems:"center", gap:14 }}>
+        {under24 && <img src="/img/makkauijau.png" alt="" title="Mak kau ijau — deadline dah dekat!" className="mki-shake" style={{ height:30, filter:"drop-shadow(0 1px 2px #000a)" }} />}
         <span style={{ fontSize:9, letterSpacing:2, color:"#fde68a", fontFamily:MONO }}>NEXT DEADLINE</span>
         <span style={{ fontSize:13, fontWeight:700 }}>{center}</span>
         {under1 && <span style={{ fontSize:11, fontWeight:800, color:"#fff" }}>⚠ LOCK IMMINENT</span>}
@@ -1789,7 +1822,7 @@ const PL_FORMS = [[3, 4, 3], [3, 5, 2], [4, 3, 3], [4, 4, 2], [4, 5, 1], [5, 3, 
 const PL_KEY = "wc26_planner_v1";
 const PL_MD_DATES = ["Jun 11-15", "Jun 16-21", "Jun 22-27"];
 
-function PlannerTab({ pool, mobile }) {
+function PlannerTab({ pool, mobile, watch, toggleWatch }) {
   const byId = useMemo(() => { const m = {}; (pool || []).forEach(p => { m[p.id] = p; }); return m; }, [pool]);
   const load = () => { try { return JSON.parse(localStorage.getItem(PL_KEY)) || {}; } catch { return {}; } };
   const init = load();
@@ -2012,6 +2045,8 @@ function PlannerTab({ pool, mobile }) {
         <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 800, color: "#fff" }}>MD{md + 1} projected: <span style={{ color: "#f97316" }}>{mdTotal(md)} xPts</span></span>
       </div>
 
+      <div style={{ display:"flex", gap:14, alignItems:"flex-start", flexDirection: mobile?"column":"row", marginBottom:10 }}>
+      <div style={{ flex:"1 1 0", minWidth:0 }}>
       {/* PITCH — selected starting XI in auto-formation + bench (shown on mobile too) */}
       {(
         <div style={{ marginBottom: 16 }}>
@@ -2078,7 +2113,9 @@ function PlannerTab({ pool, mobile }) {
           </div>
         </div>
       )}
-
+      </div>{/* left: pitch + bench */}
+      <div style={{ flex:"1 1 0", minWidth:0 }}>
+      <div style={{ fontSize:11, letterSpacing:1, color:DIM, fontFamily:MONO, marginBottom:6 }}>YOUR SQUAD ({squad.length}/15) — toggle XI / captain</div>
       {/* squad by position + add buttons */}
       {POS_ORDER.map(pos => (
         <div key={pos} style={{ marginBottom: 10 }}>
@@ -2089,6 +2126,8 @@ function PlannerTab({ pool, mobile }) {
           </div>
         </div>
       ))}
+      </div>{/* right: squad selection */}
+      </div>{/* pitch + squad 2-col */}
 
       {/* inline picker */}
       {pickPos && (
@@ -2121,6 +2160,9 @@ function PlannerTab({ pool, mobile }) {
           ); })()}
         </div>
       )}
+
+      {/* watchlist (highlighted in the Players tab) → quick-add to squad */}
+      <WatchlistBox players={pool} watch={watch} toggleWatch={toggleWatch} md={md} onPick={(p) => addPlayer(p)} pickLabel="+ add" />
 
       {/* suggested transfers */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 12, marginTop: 6 }}>
@@ -2241,6 +2283,9 @@ export default function App() {
   const [lineups, setLineups] = useState(null);
   const [news, setNews] = useState(null);
   const [loadError, setLoadError] = useState(false);
+  const [watch, setWatch] = useState(() => { try { return JSON.parse(localStorage.getItem("wc26_watch") || "[]"); } catch { return []; } });
+  const toggleWatch = (id) => setWatch(w => w.includes(id) ? w.filter(x => x !== id) : [...w, id]);
+  useEffect(() => { try { localStorage.setItem("wc26_watch", JSON.stringify(watch)); } catch { /* private mode */ } }, [watch]);
   const { mobile, narrow } = useIsMobile();
 
   useEffect(() => {
@@ -2261,7 +2306,7 @@ export default function App() {
         const luByTeam = {};
         Object.entries(l?.teams || {}).forEach(([team, L]) => {
           const m = [];
-          const add = (pl, role) => { const a = lutok(pl.name); m.push({ set: new Set(a), surname: a[a.length - 1] || "", role }); };
+          const add = (pl, role) => { const a = lutok(pl.name); m.push({ set: new Set(a), surname: a[a.length - 1] || "", role, status: pl.status || "CERTAIN" }); };
           (L.players || []).forEach(pl => add(pl, "XI"));
           (L.bench || []).forEach(pl => add(pl, "BENCH"));
           luByTeam[team] = m;
@@ -2275,17 +2320,22 @@ export default function App() {
             e.surname === ps ||                                  // surname == surname
             (e.set.size === 1 && tset.has(e.surname)) ||         // lineup mononym appears in the pool name
             (toks.length === 1 && e.set.has(ps)));               // pool mononym appears in the lineup name
-          if (!cands.length) return "OUT";                                  // in squad but not XI/bench → deep squad
+          if (!cands.length) return { role: "OUT" };                        // in squad but not XI/bench → deep squad
           let best = cands[0], bestS = -1;                                  // disambiguate same-surname by full overlap
           cands.forEach(e => { const s = toks.filter(t => e.set.has(t)).length; if (s > bestS) { bestS = s; best = e; } });
-          return best.role;
+          return best;
         };
         const merged = arr.map(p => {
           const q = paById[p.id] ? { ...p, ...paById[p.id], id: p.id } : { ...p };
-          const role = roleOf(q);
-          if (role === "XI") { q.startProb = 0.90; q.minsIfStarted = Math.max(q.minsIfStarted || 80, 85); }
-          else if (role === "BENCH") { q.startProb = 0.32; q.minsIfStarted = Math.min(q.minsIfStarted || 45, 35); }
-          else if (role === "OUT") { q.startProb = 0.12; q.minsIfStarted = Math.min(q.minsIfStarted || 25, 20); }
+          const m = roleOf(q);
+          if (m) {
+            if (m.role === "XI") {
+              // start prob from the lineup's confidence; minutes by position (forwards subbed more than keepers)
+              q.startProb = m.status === "DOUBT" ? 0.62 : m.status === "PROBABLE" ? 0.82 : 0.92;
+              q.minsIfStarted = q.pos === "GK" ? 90 : q.pos === "DEF" ? 88 : q.pos === "MID" ? 84 : 80;
+            } else if (m.role === "BENCH") { q.startProb = 0.30; q.minsIfStarted = 30; }
+            else { q.startProb = 0.10; q.minsIfStarted = 15; }              // OUT (deep squad)
+          }
           // recompute the GROUP-STAGE points distribution with the grounded start prob so the Players
           // table, Tiers and smart filters all read the same numbers (E_MATCHES is fixed at 3 inside)
           const cp = computePrediction(q);
@@ -2305,9 +2355,11 @@ export default function App() {
         };
         merged.forEach(q => { q.tier_score = +tierScoreOf(q).toFixed(1); });
         const ORD = ["S", "A", "B", "C", "D"];
-        const rankedT = merged.slice().sort((x, y) => y.tier_score - x.tier_score);
-        const NT = rankedT.length || 1;
-        rankedT.forEach((q, i) => {
+        // rank tiers WITHIN the realistic fantasy pool (likely starters, startProb ≥ 0.5), not all 1481 —
+        // otherwise the ~745 deep-squad players dilute the cutoffs and S-tier balloons.
+        const relevant = merged.filter(q => (q.startProb ?? 0) >= 0.5).sort((x, y) => y.tier_score - x.tier_score);
+        const NT = relevant.length || 1;
+        relevant.forEach((q, i) => {
           const pct = i / NT;
           let t = pct < 0.08 ? "S" : pct < 0.25 ? "A" : pct < 0.50 ? "B" : pct < 0.75 ? "C" : "D";
           if ((q.startProb ?? 1) < 0.70 && (t === "S" || t === "A")) t = "B";        // not a nailed starter → cap at B
@@ -2317,6 +2369,7 @@ export default function App() {
           if ((q.intl_premium_score || 0) > 1.5 && q.own < 10) idx = Math.max(0, idx - 1); // hidden edge → up one
           q.tier = ORD[idx];
         });
+        merged.forEach(q => { if ((q.startProb ?? 0) < 0.5) q.tier = "D"; });          // deep squad → bottom tier
         setRawPlayers(merged);
         setDataTimestamp(Array.isArray(players) ? null : players.generated_at);
         setAnalytics(a); setLineups(l); setNews(nw);
@@ -2375,7 +2428,7 @@ export default function App() {
       <div style={{ fontSize:12, color:DIM }}>crunching the numbers</div>
     </div>);
 
-  const TABS = [["table","📊 Players"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["planner","🧑‍💼 Planner"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["odds","🎲 Odds"],["causal","🔮 Causal"],["method","🔬 Method"]];
+  const TABS = [["table","📊 Players"],["planner","🧑‍💼 Planner"],["xi","⚽ Fantasy XI"],["squads","🧮 Squad Strategies"],["lineups","📋 AI Predicted Starting XIs"],["news","📡 News"],["tiers","🏆 Tiers"],["odds","🎲 Odds"],["causal","🔮 Causal"],["method","🔬 Method"]];
   return (
     <div style={{ background:BG, minHeight:"100vh", color:TEXT, fontFamily:SANS, fontSize:mobile?14:13, fontVariantNumeric:"tabular-nums" }}>
       <GlobalCSS />
@@ -2416,9 +2469,9 @@ export default function App() {
       <div style={{ maxWidth:1100, margin:"0 auto", padding:mobile?"14px 12px 40px":"16px 16px 40px" }}>
         {tab==="table" && <PlayerTableTab {...{ players, selected, setSelected, riskMode, setRiskMode,
           posFilter, setPosFilter, sortBy, setSortBy, search, setSearch, ownMax, setOwnMax, mispricedOnly, setMispricedOnly,
-          F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp }} />}
+          F, setF, showFilters, setShowFilters, allPlayers: rawPlayers, mobile, dataTimestamp, watch, toggleWatch }} />}
         {tab==="xi" && <StartingXITab pool={rawPlayers} mobile={mobile} />}
-        {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} />}
+        {tab==="planner" && <PlannerTab pool={rawPlayers} mobile={mobile} watch={watch} toggleWatch={toggleWatch} />}
         {tab==="lineups" && <LineupsTab lineups={lineups} pool={rawPlayers} goToPlayer={goToPlayer} mobile={mobile} narrow={narrow} sel={lineupSel} setSel={setLineupSel} cmp={lineupCmp} setCmp={setLineupCmp} />}
         {tab==="news" && <NewsTab news={news} mobile={mobile} />}
         {tab==="odds" && <OddsTab pool={rawPlayers} lineups={lineups} mobile={mobile} />}
