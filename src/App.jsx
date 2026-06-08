@@ -1820,8 +1820,9 @@ function PlannerTab({ pool, mobile }) {
   const countPos = (pos) => sp.filter(p => p.pos === pos).length;
   const benchPlayers = sp.filter(p => !starters.includes(p.id));
 
-  // per-MD points incl. projected scout bonus (+2 if <5% owned and base > 4)
-  const ptsOf = (p, mi) => { const b = mdScore(p, mi).pts; return +(b + (scoutEligible(p) && b > 4 ? 2 : 0)).toFixed(1); };
+  // per-MD projected points — same model number the Players table shows (no flat scout bonus;
+  // scout upside is conditional, flagged by the 🔍 badge and already in the group-stage EV)
+  const ptsOf = (p, mi) => +mdScore(p, mi).pts.toFixed(1);
   const oppOf = (p, mi) => mdScore(p, mi).opp;
 
   const addPlayer = (p) => {
